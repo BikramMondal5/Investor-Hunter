@@ -106,15 +106,39 @@ export default function LandingPage() {
               description: "Connect directly with investors who are genuinely interested in your startup.",
             },
           ].map((item, index) => (
-            <Card key={index} className="relative group hover:shadow-lg transition-all duration-300">
+            <Card 
+              key={index} 
+              className="relative group hover:shadow-lg transition-all duration-300 cursor-pointer hover:bg-background/80 data-[active=true]:shadow-[0_0_20px_rgba(139,92,246,0.35)]"
+              tabIndex={0}
+              onClick={(e) => {
+                // Toggle active state on the card
+                const target = e.currentTarget;
+                const isActive = target.getAttribute('data-active') === 'true';
+                
+                // Remove active state from all cards
+                document.querySelectorAll('[data-active="true"]').forEach(card => {
+                  if (card !== target) card.setAttribute('data-active', 'false');
+                });
+                
+                // Toggle this card
+                target.setAttribute('data-active', !isActive ? 'true' : 'false');
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  e.currentTarget.click();
+                }
+              }}
+            >
               <CardContent className="p-8 text-center space-y-4">
                 <div className="text-4xl font-bold text-muted-foreground/30 mb-4">{item.step}</div>
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <item.icon className="h-8 w-8 text-primary" />
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 transition-transform duration-300 group-hover:scale-105 group-data-[active=true]:scale-110 group-data-[active=true]:bg-primary/20">
+                  <item.icon className="h-8 w-8 text-primary transition-all duration-300" />
                 </div>
                 <h3 className="text-xl font-semibold">{item.title}</h3>
                 <p className="text-muted-foreground">{item.description}</p>
               </CardContent>
+              <div className="absolute inset-0 pointer-events-none border border-transparent rounded-lg transition-all duration-300 group-hover:border-violet-500/30 dark:group-hover:border-violet-400/20 group-data-[active=true]:border-violet-500 dark:group-data-[active=true]:border-violet-400/70 group-data-[active=true]:shadow-[inset_0_0_0_1px_rgba(139,92,246,0.4)] dark:group-data-[active=true]:shadow-[inset_0_0_0_1px_rgba(167,139,250,0.4)] group-hover:shadow-[0_0_0_1px_rgba(139,92,246,0.1)] dark:group-hover:shadow-[0_0_0_1px_rgba(167,139,250,0.15)]"></div>
             </Card>
           ))}
         </div>
