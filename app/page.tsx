@@ -15,7 +15,7 @@ export default function LandingPage() {
       {/* Hero Section */}
       <section className="container mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-8 md:pb-16">
         <div className="grid lg:grid-cols-2 gap-6 lg:gap-12 items-center">
-          <div className="space-y-5">
+          <div className="space-y-5 pl-2">
             <div className="space-y-3">
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
                 Reimagining Startup{" "}
@@ -47,9 +47,9 @@ export default function LandingPage() {
           <div className="relative">
             <div className="aspect-[16/9] bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl flex items-center justify-center shadow-lg">
               <img
-                src="/placeholder.svg?h=300&w=600&text=Video"
+                src="/placeholder.svg?h=380&w=690&text=Video"
                 alt="Video player mockup"
-                className="rounded-lg shadow-lg w-full max-h-[300px]"
+                className="rounded-lg shadow-lg w-full max-h-[400px]"
               />
             </div>
           </div>
