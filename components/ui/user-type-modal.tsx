@@ -10,7 +10,6 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Briefcase, Lightbulb } from "lucide-react"
 
 interface UserTypeModalProps {
   isOpen: boolean
@@ -45,7 +44,7 @@ export function UserTypeModal({ isOpen, onClose }: UserTypeModalProps) {
             onClick={() => handleUserTypeSelection("entrepreneur")}
           >
             <div className="mb-4">
-              <Lightbulb className="h-20 w-20 text-blue-600" strokeWidth={1.5} />
+              <span className="text-6xl">💡</span>
             </div>
             <div className="font-medium text-2xl">Entrepreneur</div>
           </Button>
@@ -56,7 +55,7 @@ export function UserTypeModal({ isOpen, onClose }: UserTypeModalProps) {
             onClick={() => handleUserTypeSelection("investor")}
           >
             <div className="mb-4">
-              <Briefcase className="h-20 w-20 text-purple-600" strokeWidth={1.5} />
+              <span className="text-6xl">💼</span>
             </div>
             <div className="font-medium text-2xl">Investor</div>
           </Button>

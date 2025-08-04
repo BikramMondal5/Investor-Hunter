@@ -31,14 +31,14 @@ export default function InvestorPortal() {
   const startups = [
     {
       id: 1,
-      name: "TechFlow",
-      logo: "TF",
+      name: "Articuno.AI",
+      logo: "Ar",
       tagline: "AI-powered workflow automation for small businesses",
       location: "San Francisco, CA",
       stage: "MVP",
       industry: "SaaS",
       aiScore: 8.8,
-      founder: "John Doe",
+      founder: "Bikram Mondal",
       isVerified: true,
       views: 47,
       saved: false,
