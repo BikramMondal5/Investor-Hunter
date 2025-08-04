@@ -32,44 +32,46 @@ export function LandingPageContent() {
       <Header />
 
       {/* Hero Section */}
-      <section className="container mx-auto px-6 sm:px-8 lg:px-12 max-w-7xl pt-10 pb-10 md:pb-16">
-        <div className="grid lg:grid-cols-2 gap-6 lg:gap-12 items-center">
-          <div className="space-y-5">
-            <div className="space-y-3">
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-                Reimagining Startup{" "}
-                <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  Funding
-                </span>{" "}
-                for Everyone
-              </h1>
-              <p className="text-xl text-muted-foreground max-w-lg">
-                Break the barriers of pitch decks, costly VC intros, and language limitations. Submit your idea with a
-                simple video.
-              </p>
-            </div>
+      <section className="min-h-[calc(100vh-4rem)] flex items-center w-full px-4 sm:px-6 lg:px-8 xl:px-12">
+        <div className="container mx-auto max-w-7xl w-full">
+          <div className="grid lg:grid-cols-2 gap-6 lg:gap-12 items-center">
+            <div className="space-y-6">
+              <div className="space-y-4">
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+                  Reimagining Startup{" "}
+                  <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                    Funding
+                  </span>{" "}
+                  for Everyone
+                </h1>
+                <p className="text-xl text-muted-foreground max-w-lg">
+                  Break the barriers of pitch decks, costly VC intros, and language limitations. Submit your idea with a
+                  simple video.
+                </p>
+              </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-              <Link href="/submit" className="w-full sm:w-auto">
-                <Button size="lg" className="w-full sm:w-auto">
-                  Submit Your Pitch
-                  <ArrowRight className="ml-2 h-4 w-4" />
+              <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                <Link href="/submit" className="w-full sm:w-auto">
+                  <Button size="lg" className="w-full sm:w-auto">
+                    Submit Your Pitch
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+                <Button variant="outline" size="lg" className="w-full sm:w-auto bg-transparent">
+                  <Play className="mr-2 h-4 w-4" />
+                  Explore Funded Ideas
                 </Button>
-              </Link>
-              <Button variant="outline" size="lg" className="w-full sm:w-auto bg-transparent">
-                <Play className="mr-2 h-4 w-4" />
-                Explore Funded Ideas
-              </Button>
+              </div>
             </div>
-          </div>
 
-          <div className="relative">
-            <div className="aspect-video bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl shadow-lg overflow-hidden">
-              <img
-                src="/video-pitch-image.png"
-                alt="Entrepreneur recording a pitch video"
-                className="w-full h-full object-cover rounded-lg"
-              />
+            <div className="relative mt-8 lg:mt-0">
+              <div className="aspect-video bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl shadow-lg overflow-hidden">
+                <img
+                  src="/video-pitch-image.png"
+                  alt="Entrepreneur recording a pitch video"
+                  className="w-full h-full object-cover rounded-lg"
+                />
+              </div>
             </div>
           </div>
         </div>
