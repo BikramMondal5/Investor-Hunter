@@ -164,8 +164,8 @@ export function LandingPageContent() {
                 <h3 className="text-lg font-semibold">{item.title}</h3>
                 <p className="text-sm text-muted-foreground">{item.description}</p>
               </CardContent>
-              <div className="absolute inset-0 pointer-events-none border border-purple-600/30 dark:border-purple-500/20 rounded-xl transition-all duration-300 opacity-0 group-hover:opacity-100"></div>
-              <div className="absolute inset-0 pointer-events-none rounded-xl transition-all duration-300 group-hover:shadow-[0_0_20px_rgba(139,92,246,0.25)] dark:group-hover:shadow-[0_0_30px_rgba(139,92,246,0.35)]"></div>
+              <div className="absolute inset-0 pointer-events-none border border-purple-500/40 dark:border-purple-400/30 rounded-xl transition-all duration-300 opacity-0 group-hover:opacity-100"></div>
+              <div className="absolute inset-0 pointer-events-none rounded-xl transition-all duration-300 group-hover:shadow-[0_4px_25px_-5px_rgba(139,92,246,0.5),0_0_10px_rgba(139,92,246,0.2)_inset] dark:group-hover:shadow-[0_4px_30px_-5px_rgba(139,92,246,0.6),0_0_15px_rgba(139,92,246,0.25)_inset]"></div>
             </Card>
           ))}
         </div>
@@ -233,8 +233,8 @@ export function LandingPageContent() {
                   <h3 className="text-lg font-semibold">{feature.title}</h3>
                   <p className="text-muted-foreground text-sm">{feature.description}</p>
                 </CardContent>
-                <div className="absolute inset-0 pointer-events-none border border-purple-600/30 dark:border-purple-500/20 rounded-xl transition-all duration-300 opacity-0 group-hover:opacity-100"></div>
-                <div className="absolute inset-0 pointer-events-none rounded-xl transition-all duration-300 group-hover:shadow-[0_0_20px_rgba(139,92,246,0.25)] dark:group-hover:shadow-[0_0_30px_rgba(139,92,246,0.35)]"></div>
+                <div className="absolute inset-0 pointer-events-none border border-purple-500/40 dark:border-purple-400/30 rounded-xl transition-all duration-300 opacity-0 group-hover:opacity-100"></div>
+                <div className="absolute inset-0 pointer-events-none rounded-xl transition-all duration-300 group-hover:shadow-[0_4px_25px_-5px_rgba(139,92,246,0.5),0_0_10px_rgba(139,92,246,0.2)_inset] dark:group-hover:shadow-[0_4px_30px_-5px_rgba(139,92,246,0.6),0_0_15px_rgba(139,92,246,0.25)_inset]"></div>
               </Card>
             ))}
           </div>
