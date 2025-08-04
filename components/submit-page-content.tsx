@@ -79,7 +79,7 @@ export function SubmitPageContent() {
           <div className="text-center space-y-4 mb-12">
             <h1 className="text-3xl md:text-4xl font-bold">Submit Your Startup Pitch</h1>
             <p className="text-xl text-muted-foreground">
-              All it takes is a 2-minute video. No pitch decks. No referrals.
+              All it takes is a 3-minute video. No pitch decks. No referrals.
             </p>
           </div>
 
@@ -112,7 +112,7 @@ export function SubmitPageContent() {
 
                     {/* File Upload */}
                     <div className="space-y-2">
-                      <Label>Pitch Video (Max 2 minutes)</Label>
+                      <Label>Pitch Video (Max 3 minutes)</Label>
                       <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center hover:border-muted-foreground/50 transition-colors relative">
                         <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                         <div className="space-y-2">

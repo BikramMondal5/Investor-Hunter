@@ -22,11 +22,19 @@ import {
   Eye,
   Heart,
 } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 export default function InvestorPortal() {
   const [activeTab, setActiveTab] = useState("discover")
   const [viewMode, setViewMode] = useState("grid")
   const [aiScoreRange, setAiScoreRange] = useState([7])
+  const [videoModalOpen, setVideoModalOpen] = useState(false)
+  const [currentStartup, setCurrentStartup] = useState<any>(null)
 
   const startups = [
     {
@@ -42,6 +50,7 @@ export default function InvestorPortal() {
       isVerified: true,
       views: 47,
       saved: false,
+      videoUrl: "/articuno.mp4"
     },
     {
       id: 2,
@@ -56,6 +65,7 @@ export default function InvestorPortal() {
       isVerified: true,
       views: 89,
       saved: true,
+      videoUrl: "/articuno.mp4" // Using same video for demo
     },
     {
       id: 3,
@@ -70,8 +80,14 @@ export default function InvestorPortal() {
       isVerified: true,
       views: 23,
       saved: false,
+      videoUrl: "/articuno.mp4" // Using same video for demo
     },
   ]
+
+  const openVideoModal = (startup) => {
+    setCurrentStartup(startup)
+    setVideoModalOpen(true)
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -284,7 +300,7 @@ export default function InvestorPortal() {
                         </div>
 
                         <div className="flex space-x-2">
-                          <Button size="sm" className="flex-1">
+                          <Button size="sm" className="flex-1" onClick={() => openVideoModal(startup)}>
                             <Play className="mr-2 h-3 w-3" />
                             Watch Pitch
                           </Button>
@@ -321,9 +337,56 @@ export default function InvestorPortal() {
                 </Card>
               </div>
             )}
+
+            {activeTab === "messages" && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-2xl font-bold">Messages</h2>
+                  <p className="text-muted-foreground">Connect with startup founders</p>
+                </div>
+
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="text-center py-12">
+                      <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold mb-2">Your inbox is empty</h3>
+                      <p className="text-muted-foreground mb-4">
+                        Start conversations with startups you're interested in
+                      </p>
+                      <Button onClick={() => setActiveTab("discover")}>Discover Startups</Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
           </div>
         </main>
       </div>
+
+      {/* Video Modal */}
+      <Dialog open={videoModalOpen} onOpenChange={setVideoModalOpen}>
+        <DialogContent className="max-w-[85vw] md:max-w-[75vw] lg:max-w-[70vw] p-0 overflow-hidden border-2 shadow-xl">
+          <DialogHeader className="p-3 pb-0">
+            <DialogTitle className="text-base">
+              {currentStartup?.name} - Pitch Video by {currentStartup?.founder}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="relative pb-[42.25%] mt-1">
+            <video 
+              src={currentStartup?.videoUrl} 
+              className="absolute inset-0 w-full h-full object-contain bg-black"
+              controls
+              autoPlay
+              playsInline
+            >
+              Your browser does not support the video tag.
+            </video>
+          </div>
+          <div className="p-2 flex justify-end">
+            <Button size="sm" onClick={() => setVideoModalOpen(false)}>Close</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
