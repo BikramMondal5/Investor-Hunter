@@ -21,7 +21,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto flex h-16 items-center justify-between px-6 sm:px-8 lg:px-12 max-w-7xl">
+      <div className="container mx-auto w-full max-w-[1400px] px-3 sm:px-4 md:px-6 flex h-16 items-center justify-between">
         <Link href="/" className="flex items-center space-x-2">
           <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
             InvestorHunt
@@ -70,7 +70,7 @@ export function Header() {
       {/* Mobile Navigation */}
       {isMenuOpen && (
         <div className="md:hidden border-t bg-background">
-          <nav className="container mx-auto py-4 px-6 sm:px-8 lg:px-12 max-w-7xl space-y-4">
+          <nav className="container mx-auto w-full max-w-[1400px] px-3 sm:px-4 md:px-6 py-4 space-y-4">
             <Link href="/" className="block text-sm font-medium hover:text-primary transition-colors">
               Home
             </Link>

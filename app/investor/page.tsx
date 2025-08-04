@@ -93,7 +93,7 @@ export default function InvestorPortal() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b bg-background/95 backdrop-blur">
-        <div className="flex h-16 items-center justify-between px-6">
+        <div className="container mx-auto w-full max-w-[1400px] px-3 sm:px-4 md:px-6 flex h-16 items-center justify-between">
           <div className="flex items-center space-x-4">
             <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
               InvestorHunt
@@ -148,17 +148,19 @@ export default function InvestorPortal() {
         <main className="flex-1">
           {/* Top Banner */}
           <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 p-6 border-b">
-            <div className="flex items-center space-x-2 text-sm">
-              <Shield className="h-4 w-4 text-green-600" />
-              <span className="font-medium">Empowering global innovation through inclusive pitching</span>
-              <Badge variant="secondary" className="ml-2">
-                <CheckCircle className="h-3 w-3 mr-1" />
-                End-to-end encrypted
-              </Badge>
+            <div className="container mx-auto w-full max-w-[1400px] px-3 sm:px-4 md:px-6">
+              <div className="flex items-center space-x-2 text-sm">
+                <Shield className="h-4 w-4 text-green-600" />
+                <span className="font-medium">Empowering global innovation through inclusive pitching</span>
+                <Badge variant="secondary" className="ml-2">
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  End-to-end encrypted
+                </Badge>
+              </div>
             </div>
           </div>
 
-          <div className="p-6">
+          <div className="container mx-auto w-full max-w-[1400px] px-3 sm:px-4 md:px-6 py-6">
             {activeTab === "discover" && (
               <div className="space-y-6">
                 {/* Filters */}

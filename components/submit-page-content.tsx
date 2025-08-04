@@ -73,12 +73,12 @@ export function SubmitPageContent() {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <div className="container py-12">
+      <div className="container mx-auto w-full max-w-[1400px] px-3 sm:px-4 md:px-6 py-12">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="text-center space-y-4 mb-12">
             <h1 className="text-3xl md:text-4xl font-bold">Submit Your Startup Pitch</h1>
-            <p className="text-xl text-muted-foreground">
+            <p className="text-lg md:text-xl text-muted-foreground">
               All it takes is a 3-minute video. No pitch decks. No referrals.
             </p>
           </div>
