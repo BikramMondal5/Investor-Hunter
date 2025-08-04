@@ -13,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Textarea } from "@/components/ui/textarea"
 import {
   Bell,
   BarChart3,
@@ -30,6 +31,38 @@ import {
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("dashboard")
   const [videoModalOpen, setVideoModalOpen] = useState(false)
+  const [feedbackLikes, setFeedbackLikes] = useState<{ [key: number]: number }>({})
+  const [replyingTo, setReplyingTo] = useState<number | null>(null)
+  const [replyText, setReplyText] = useState("")
+  const [communityFeedback, setCommunityFeedback] = useState([
+    {
+      id: 1,
+      user: "Sarah M.",
+      avatar: "SM",
+      comment: "Great idea! The market timing seems perfect for this solution.",
+      type: "positive",
+      likes: 12,
+      replies: [],
+    },
+    {
+      id: 2,
+      user: "Alex K.",
+      avatar: "AK",
+      comment: "Consider expanding on your go-to-market strategy in future pitches.",
+      type: "suggestion",
+      likes: 8,
+      replies: [],
+    },
+    {
+      id: 3,
+      user: "Maria L.",
+      avatar: "ML",
+      comment: "The demo was very compelling. Would love to see more technical details.",
+      type: "positive",
+      likes: 15,
+      replies: [],
+    },
+  ])
 
   const sidebarItems = [
     { id: "dashboard", label: "Dashboard", icon: BarChart3 },
@@ -38,6 +71,53 @@ export default function Dashboard() {
     { id: "messages", label: "Investor Messages", icon: MessageSquare },
     { id: "settings", label: "Settings", icon: Settings },
   ]
+
+  const handleLike = (feedbackId: number) => {
+    setCommunityFeedback(prev => 
+      prev.map(feedback => 
+        feedback.id === feedbackId 
+          ? { ...feedback, likes: feedback.likes + 1 } 
+          : feedback
+      )
+    )
+  }
+
+  const handleReply = (feedbackId: number) => {
+    setReplyingTo(feedbackId)
+    setReplyText("")
+  }
+
+  const submitReply = () => {
+    if (!replyingTo || !replyText.trim()) return
+
+    setCommunityFeedback(prev => 
+      prev.map(feedback => 
+        feedback.id === replyingTo 
+          ? { 
+              ...feedback, 
+              replies: [
+                ...feedback.replies, 
+                {
+                  id: Date.now(),
+                  user: "You",
+                  avatar: "BM",
+                  comment: replyText,
+                  timestamp: "Just now"
+                }
+              ] 
+            } 
+          : feedback
+      )
+    )
+
+    setReplyingTo(null)
+    setReplyText("")
+  }
+
+  const cancelReply = () => {
+    setReplyingTo(null)
+    setReplyText("")
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -358,48 +438,90 @@ export default function Dashboard() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {[
-                    {
-                      user: "Sarah M.",
-                      avatar: "SM",
-                      comment: "Great idea! The market timing seems perfect for this solution.",
-                      type: "positive",
-                      likes: 12,
-                    },
-                    {
-                      user: "Alex K.",
-                      avatar: "AK",
-                      comment: "Consider expanding on your go-to-market strategy in future pitches.",
-                      type: "suggestion",
-                      likes: 8,
-                    },
-                    {
-                      user: "Maria L.",
-                      avatar: "ML",
-                      comment: "The demo was very compelling. Would love to see more technical details.",
-                      type: "positive",
-                      likes: 15,
-                    },
-                  ].map((feedback, index) => (
-                    <div key={index} className="flex space-x-3 p-4 rounded-lg bg-muted/30">
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback className="text-xs">{feedback.avatar}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 space-y-2">
-                        <div className="flex items-center space-x-2">
-                          <span className="font-medium text-sm">{feedback.user}</span>
-                          <Badge variant={feedback.type === "positive" ? "default" : "secondary"} className="text-xs">
-                            {feedback.type}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">{feedback.comment}</p>
-                        <div className="flex items-center space-x-2">
-                          <Button variant="ghost" size="sm" className="h-6 px-2">
-                            <ThumbsUp className="h-3 w-3 mr-1" />
-                            {feedback.likes}
-                          </Button>
+                  {communityFeedback.map((feedback) => (
+                    <div key={feedback.id} className="flex flex-col space-y-2">
+                      <div className="flex space-x-3 p-4 rounded-lg bg-muted/30">
+                        <Avatar className="h-8 w-8">
+                          <AvatarFallback className="text-xs">{feedback.avatar}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium text-sm">{feedback.user}</span>
+                            <Badge variant={feedback.type === "positive" ? "default" : "secondary"} className="text-xs">
+                              {feedback.type}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">{feedback.comment}</p>
+                          <div className="flex items-center space-x-2">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-6 px-2"
+                              onClick={() => handleLike(feedback.id)}
+                            >
+                              <ThumbsUp className={`h-3 w-3 mr-1`} />
+                              {feedback.likes}
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-6 px-2"
+                              onClick={() => handleReply(feedback.id)}
+                            >
+                              <MessageCircle className="h-3 w-3 mr-1" />
+                              Reply
+                            </Button>
+                          </div>
                         </div>
                       </div>
+
+                      {/* Replies section */}
+                      {feedback.replies && feedback.replies.length > 0 && (
+                        <div className="pl-11">
+                          {feedback.replies.map((reply) => (
+                            <div key={reply.id} className="flex items-start space-x-3 p-3 rounded-lg bg-muted/20 mb-2">
+                              <Avatar className="h-7 w-7">
+                                <AvatarFallback className="text-xs">{reply.avatar}</AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-medium text-sm">{reply.user}</span>
+                                  <span className="text-xs text-muted-foreground">{reply.timestamp}</span>
+                                </div>
+                                <p className="text-sm text-muted-foreground mt-1">{reply.comment}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Reply form */}
+                      {replyingTo === feedback.id && (
+                        <div className="pl-11 pt-1">
+                          <Textarea 
+                            value={replyText}
+                            onChange={(e) => setReplyText(e.target.value)}
+                            placeholder="Write your reply..."
+                            className="resize-none min-h-[80px]"
+                          />
+                          <div className="flex space-x-2 mt-2">
+                            <Button 
+                              onClick={submitReply} 
+                              className="flex-1"
+                              disabled={!replyText.trim()}
+                            >
+                              Post Reply
+                            </Button>
+                            <Button 
+                              onClick={cancelReply} 
+                              variant="outline" 
+                              className="flex-1"
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </CardContent>
