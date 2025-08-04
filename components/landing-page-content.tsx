@@ -243,17 +243,15 @@ export function LandingPageContent() {
 
       {/* Testimonial Section */}
       <section className="py-16 md:py-20 bg-gradient-to-br from-blue-600/10 to-purple-600/10">
-        <div className="container mx-auto px-6 sm:px-8 lg:px-12 max-w-7xl">
-          <div className="text-center space-y-4 mb-12 md:mb-16">
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold">What Founders Say</h2>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-              Success stories from entrepreneurs who found their investors
-            </p>
-          </div>
+        <div className="text-center space-y-4 mb-12 md:mb-16">
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold">What Founders Say</h2>
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
+            Success stories from entrepreneurs who found their investors
+          </p>
+        </div>
 
-          <div className="relative">
-            <TestimonialCarousel />
-          </div>
+        <div className="relative">
+          <TestimonialCarousel />
         </div>
       </section>
 
