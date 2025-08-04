@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from 'react'
+import React from 'react'
 import { Card, CardContent } from "@/components/ui/card"
 import { Star } from "lucide-react"
 
@@ -44,17 +44,11 @@ const testimonials = [
 ]
 
 export default function TestimonialCarousel() {
-  const [isPaused, setIsPaused] = useState(false);
-  
   return (
-    <div 
-      className="relative overflow-hidden"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
-    >
+    <div className="relative overflow-hidden">
       <div className="overflow-hidden relative w-full py-4">
         <div 
-          className={`flex ${isPaused ? '' : 'animate-marquee'}`}
+          className="flex animate-marquee"
           style={{ 
             width: `${testimonials.length * 100}%`,
           }}
@@ -86,13 +80,6 @@ export default function TestimonialCarousel() {
               <TestimonialCard testimonial={testimonial} />
             </div>
           ))}
-        </div>
-      </div>
-      
-      {/* Pause indicator */}
-      <div className={`absolute bottom-2 right-2 transition-opacity duration-300 ${isPaused ? 'opacity-70' : 'opacity-0'}`}>
-        <div className="bg-background/80 text-xs px-2 py-1 rounded-full text-muted-foreground">
-          Paused
         </div>
       </div>
     </div>
