@@ -151,41 +151,21 @@ export function LandingPageContent() {
           ].map((item, index) => (
             <Card 
               key={index} 
-              className="relative group hover:shadow-lg transition-all duration-300 cursor-pointer hover:bg-background/80 border border-transparent dark:border-purple-900/20"
-              tabIndex={0}
-              onClick={(e) => {
-                // Toggle active state on the card
-                const target = e.currentTarget;
-                const isActive = target.getAttribute('data-active') === 'true';
-                
-                // Remove active state from all cards
-                document.querySelectorAll('[data-active="true"]').forEach(card => {
-                  if (card !== target) card.setAttribute('data-active', 'false');
-                });
-                
-                // Toggle this card
-                target.setAttribute('data-active', !isActive ? 'true' : 'false');
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  e.currentTarget.click();
-                }
-              }}
+              className="relative group hover:shadow-lg transition-all duration-300 cursor-default hover:bg-background/80 border border-transparent dark:border-purple-900/20"
               style={{
                 boxShadow: '0 0 0 1px rgba(139,92,246,0.05)',
               }}
             >
               <CardContent className="p-6 text-center space-y-4">
                 <div className="text-3xl font-bold text-muted-foreground/30 mb-2">{item.step}</div>
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3 transition-transform duration-300 group-hover:scale-105 group-data-[active=true]:scale-110 group-data-[active=true]:bg-primary/20">
-                  <item.icon className="h-6 w-6 text-primary transition-all duration-300" />
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3 transition-transform duration-300 group-hover:scale-105">
+                  <item.icon className="h-8 w-8 text-primary transition-all duration-300" />
                 </div>
                 <h3 className="text-lg font-semibold">{item.title}</h3>
                 <p className="text-sm text-muted-foreground">{item.description}</p>
               </CardContent>
               <div className="absolute inset-0 pointer-events-none border border-purple-600/30 dark:border-purple-500/20 rounded-xl transition-all duration-300 opacity-0 group-hover:opacity-100"></div>
-              <div className="absolute inset-0 pointer-events-none rounded-xl transition-all duration-300 group-hover:shadow-[0_0_20px_rgba(139,92,246,0.25)] dark:group-hover:shadow-[0_0_30px_rgba(139,92,246,0.35)] group-data-[active=true]:shadow-[0_0_30px_5px_rgba(139,92,246,0.4)] dark:group-data-[active=true]:shadow-[0_0_40px_5px_rgba(139,92,246,0.5)]"></div>
+              <div className="absolute inset-0 pointer-events-none rounded-xl transition-all duration-300 group-hover:shadow-[0_0_20px_rgba(139,92,246,0.25)] dark:group-hover:shadow-[0_0_30px_rgba(139,92,246,0.35)]"></div>
             </Card>
           ))}
         </div>
