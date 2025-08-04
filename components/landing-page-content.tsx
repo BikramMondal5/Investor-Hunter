@@ -32,8 +32,8 @@ export function LandingPageContent() {
       <Header />
 
       {/* Hero Section */}
-      <section className="min-h-[calc(100vh-4rem)] flex w-full px-3 sm:px-4 md:px-6 pt-12 mt-[-1px]">
-        <div className="container mx-auto w-full max-w-[1400px]">
+      <section className="bg-black text-white py-16 pt-12">
+        <div className="container mx-auto w-full max-w-[1400px] px-3 sm:px-4 md:px-6">
           <div className="grid lg:grid-cols-2 gap-6 xl:gap-16 items-center">
             <div className="space-y-6">
               <div className="space-y-4">
@@ -44,7 +44,7 @@ export function LandingPageContent() {
                   </span>{" "}
                   for Everyone
                 </h1>
-                <p className="text-xl text-muted-foreground max-w-lg">
+                <p className="text-xl text-gray-300 max-w-lg">
                   Break the barriers of pitch decks, costly VC intros, and language limitations. Submit your idea with a
                   simple video.
                 </p>
@@ -57,7 +57,7 @@ export function LandingPageContent() {
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
-                <Button variant="outline" size="lg" className="w-full sm:w-auto bg-transparent">
+                <Button variant="outline" size="lg" className="w-full sm:w-auto bg-transparent border-white/20 text-white hover:bg-white/10">
                   <Play className="mr-2 h-4 w-4" />
                   Explore Funded Ideas
                 </Button>
@@ -65,7 +65,7 @@ export function LandingPageContent() {
             </div>
 
             <div className="relative mt-8 lg:mt-0">
-              <div className="aspect-video bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl shadow-lg overflow-hidden">
+              <div className="aspect-video rounded-xl shadow-lg overflow-hidden">
                 <img
                   src="/video-pitch-image.png"
                   alt="Entrepreneur recording a pitch video"
