@@ -76,21 +76,90 @@ export function LandingPageContent() {
       </section>
 
       {/* Trusted Investors Section */}
-      <section className="container mx-auto px-6 sm:px-8 lg:px-12 max-w-7xl py-12 md:py-16 border-t">
-        <div className="text-center space-y-6 md:space-y-8">
-          <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-            Trusted by Investors Worldwide
-          </p>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 items-center opacity-60">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="h-12 bg-muted rounded flex items-center justify-center">
+      <section className="py-12 md:py-16 bg-black">
+        <div className="overflow-hidden">
+          <div className="text-center mb-8 md:mb-10 animate-fade-in">
+            <p className="text-sm md:text-base font-medium text-gray-300/80 uppercase tracking-widest">
+              Trusted by Investors Worldwide
+            </p>
+          </div>
+          
+          <div className="relative">
+            {/* First row - original */}
+            <div className="flex items-center space-x-16 md:space-x-24 animate-scroll">
+              <div className="h-16 flex-shrink-0 flex items-center justify-center">
                 <img
-                  src={`/placeholder.svg?h=48&w=120&text=VC${i}`}
-                  alt={`VC Logo ${i}`}
-                  className="h-8 opacity-70"
+                  src="/LetsVenture.png"
+                  alt="LetsVenture Logo"
+                  className="h-10 object-contain"
                 />
               </div>
-            ))}
+              <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                <img
+                  src="/MicroVentures.png"
+                  alt="MicroVentures Logo"
+                  className="h-10 object-contain"
+                />
+              </div>
+              <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                <img
+                  src="/IAN.png"
+                  alt="IAN Logo"
+                  className="h-10 object-contain"
+                />
+              </div>
+              <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                <img
+                  src="/Seedrs.png"
+                  alt="Seedrs Logo"
+                  className="h-10 object-contain"
+                />
+              </div>
+              <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                <img
+                  src="/Axilor-Ventures.png"
+                  alt="Axilor Ventures Logo"
+                  className="h-10 object-contain"
+                />
+              </div>
+              
+              {/* Duplicated set for seamless loop */}
+              <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                <img
+                  src="/LetsVenture.png"
+                  alt="LetsVenture Logo"
+                  className="h-10 object-contain"
+                />
+              </div>
+              <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                <img
+                  src="/MicroVentures.png"
+                  alt="MicroVentures Logo"
+                  className="h-10 object-contain"
+                />
+              </div>
+              <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                <img
+                  src="/IAN.png"
+                  alt="IAN Logo"
+                  className="h-10 object-contain"
+                />
+              </div>
+              <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                <img
+                  src="/Seedrs.png"
+                  alt="Seedrs Logo"
+                  className="h-10 object-contain"
+                />
+              </div>
+              <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                <img
+                  src="/Axilor-Ventures.png"
+                  alt="Axilor Ventures Logo"
+                  className="h-10 object-contain"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </section>
