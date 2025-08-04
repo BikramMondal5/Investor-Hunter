@@ -32,7 +32,7 @@ export function LandingPageContent() {
       <Header />
 
       {/* Hero Section */}
-      <section className="min-h-[calc(100vh-4rem)] flex items-center w-full px-3 sm:px-4 md:px-6 pt-0 mt-0">
+      <section className="min-h-[calc(100vh-4rem)] flex w-full px-3 sm:px-4 md:px-6 pt-12 mt-[-1px]">
         <div className="container mx-auto w-full max-w-[1400px]">
           <div className="grid lg:grid-cols-2 gap-6 xl:gap-16 items-center">
             <div className="space-y-6">
