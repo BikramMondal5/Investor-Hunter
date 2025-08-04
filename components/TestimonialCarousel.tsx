@@ -26,7 +26,7 @@ const testimonials = [
     name: "Arijit Sarkar",
     country: "Mexico", // Updated from Nigeria to USA as shown in the image
     type: "Entrepreneur",
-    avatar: "/placeholder.svg?h=64&w=64&text=KG",
+    avatar: "Arijit-Sarker.jpeg",
     feedback:
       "As a non-native English speaker, the multilingual support was a game-changer. I pitched in my native language and still got funded!",
   },

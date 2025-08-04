@@ -5,10 +5,19 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Moon, Sun, Menu, X } from "lucide-react"
 import { useTheme } from "next-themes"
+import { UserTypeModal } from "@/components/ui/user-type-modal"
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isUserTypeModalOpen, setIsUserTypeModalOpen] = useState(false)
   const { theme, setTheme } = useTheme()
+
+  const handleGetStartedClick = () => {
+    setIsUserTypeModalOpen(true)
+    if (isMenuOpen) {
+      setIsMenuOpen(false)
+    }
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -47,9 +56,9 @@ export function Header() {
             <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
           </Button>
 
-          <Link href="/submit" className="hidden md:inline-flex">
-            <Button>Get Started</Button>
-          </Link>
+          <Button className="hidden md:inline-flex" onClick={handleGetStartedClick}>
+            Get Started
+          </Button>
 
           {/* Mobile Menu Button */}
           <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)} aria-label="Toggle menu">
@@ -74,12 +83,18 @@ export function Header() {
             <Link href="/investor" className="block text-sm font-medium hover:text-primary transition-colors">
               Sign In
             </Link>
-            <Link href="/submit" className="block pt-2">
-              <Button className="w-full">Get Started</Button>
-            </Link>
+            <Button className="w-full mt-2" onClick={handleGetStartedClick}>
+              Get Started
+            </Button>
           </nav>
         </div>
       )}
+
+      {/* User Type Modal */}
+      <UserTypeModal 
+        isOpen={isUserTypeModalOpen} 
+        onClose={() => setIsUserTypeModalOpen(false)} 
+      />
     </header>
   )
 }
