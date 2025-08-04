@@ -16,7 +16,7 @@ const testimonials = [
   {
     name: "Koushik Ghosh",
     country: "Singapore", // Updated country
-    avatar: "/placeholder.svg?h=64&w=64&text=AS",
+    avatar: "Koushik-Ghosh.jpeg",
     feedback:
       "The community feedback helped me identify blind spots in my business model. Raised $500K seed round within 3 months.",
   },
@@ -30,14 +30,14 @@ const testimonials = [
   {
     name: "Debashish Sarkar",
     country: "Malaysia",
-    avatar: "/placeholder.svg?h=64&w=64&text=PS",
+    avatar: "Debashish-Sarkar.jpeg",
     feedback:
       "The investor matching algorithm introduced me to partners I would never have found on my own. Secured pre-seed funding within a month.",
   },
   {
     name: "John Smith",
     country: "USA",
-    avatar: "/placeholder.svg?h=64&w=64&text=MW",
+    avatar: "Jane-Smith.jpeg",
     feedback:
       "InvestorHunt's platform made fundraising accessible even from a remote location. The global reach is truly impressive.",
   },
