@@ -57,10 +57,12 @@ export function LandingPageContent() {
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
-                <Button variant="outline" size="lg" className="w-full sm:w-auto bg-transparent border-white/20 text-white hover:bg-white/10">
-                  <Play className="mr-2 h-4 w-4" />
-                  Explore Funded Ideas
-                </Button>
+                <Link href="/investor" className="w-full sm:w-auto">
+                  <Button variant="outline" size="lg" className="w-full sm:w-auto bg-transparent border-white/20 text-white hover:bg-white/10">
+                    <Play className="mr-2 h-4 w-4" />
+                    Explore Funded Ideas
+                  </Button>
+                </Link>
               </div>
             </div>
 

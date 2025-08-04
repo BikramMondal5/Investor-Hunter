@@ -102,7 +102,7 @@ export default function TestimonialCarousel() {
 // Testimonial Card Component with styling matching the image
 function TestimonialCard({ testimonial }) {
   return (
-    <Card className="relative group transition-all duration-300 h-full bg-[#121521] border-none rounded-xl overflow-hidden" style={{
+    <Card className="relative group transition-all duration-300 h-full bg-[#121521] border border-black/30 dark:border-white/10 rounded-xl overflow-hidden" style={{
       minHeight: '290px', // Reduced from 320px to 290px
     }}>
       <CardContent className="p-7 flex flex-col h-full"> {/* Reduced padding from p-8 to p-7 */}
