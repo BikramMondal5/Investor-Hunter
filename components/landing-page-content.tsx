@@ -57,11 +57,11 @@ export function LandingPageContent() {
           </div>
 
           <div className="relative">
-            <div className="aspect-[16/9] bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl flex items-center justify-center shadow-lg">
+            <div className="aspect-[16/9] bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl flex items-center justify-center shadow-lg overflow-hidden">
               <img
-                src="/placeholder.svg?h=380&w=690&text=Video"
-                alt="Video player mockup"
-                className="rounded-lg shadow-lg w-full max-h-[400px]"
+                src="/video-pitch-image.png"
+                alt="Entrepreneur recording a pitch video"
+                className="w-full h-full object-cover rounded-lg"
               />
             </div>
           </div>
@@ -209,7 +209,9 @@ export function LandingPageContent() {
                 description: "Direct messaging and meeting scheduling with interested investors.",
               },
             ].map((feature, index) => (
-              <Card key={index} className="group hover:shadow-lg transition-all duration-300">
+              <Card key={index} className="relative group hover:shadow-lg transition-all duration-300 border border-transparent dark:border-purple-900/20" style={{
+                boxShadow: '0 0 0 1px rgba(139,92,246,0.05)',
+              }}>
                 <CardContent className="p-6 space-y-4">
                   <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
                     <feature.icon className="h-6 w-6 text-primary" />
@@ -217,6 +219,8 @@ export function LandingPageContent() {
                   <h3 className="text-lg font-semibold">{feature.title}</h3>
                   <p className="text-muted-foreground text-sm">{feature.description}</p>
                 </CardContent>
+                <div className="absolute inset-0 pointer-events-none border border-purple-600/30 dark:border-purple-500/20 rounded-xl transition-all duration-300 opacity-0 group-hover:opacity-100"></div>
+                <div className="absolute inset-0 pointer-events-none rounded-xl transition-all duration-300 group-hover:shadow-[0_0_20px_rgba(139,92,246,0.25)] dark:group-hover:shadow-[0_0_30px_rgba(139,92,246,0.35)]"></div>
               </Card>
             ))}
           </div>
@@ -257,7 +261,9 @@ export function LandingPageContent() {
                   "The community feedback helped me identify blind spots in my business model. Raised $500K seed round within 3 months.",
               },
             ].map((testimonial, index) => (
-              <Card key={index} className="group hover:shadow-lg transition-all duration-300">
+              <Card key={index} className="relative group hover:shadow-lg transition-all duration-300 border border-transparent dark:border-purple-900/20" style={{
+                boxShadow: '0 0 0 1px rgba(139,92,246,0.05)',
+              }}>
                 <CardContent className="p-6 space-y-4">
                   <div className="flex items-center space-x-4">
                     <img
@@ -277,6 +283,8 @@ export function LandingPageContent() {
                     ))}
                   </div>
                 </CardContent>
+                <div className="absolute inset-0 pointer-events-none border border-purple-600/30 dark:border-purple-500/20 rounded-xl transition-all duration-300 opacity-0 group-hover:opacity-100"></div>
+                <div className="absolute inset-0 pointer-events-none rounded-xl transition-all duration-300 group-hover:shadow-[0_0_20px_rgba(139,92,246,0.25)] dark:group-hover:shadow-[0_0_30px_rgba(139,92,246,0.35)]"></div>
               </Card>
             ))}
           </div>
