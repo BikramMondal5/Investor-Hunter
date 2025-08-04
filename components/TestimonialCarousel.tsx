@@ -25,7 +25,7 @@ const testimonials = [
   {
     name: "Arijit Sarkar",
     country: "Mexico", // Updated from Nigeria to USA as shown in the image
-    type: "Investor",
+    type: "Entrepreneur",
     avatar: "/placeholder.svg?h=64&w=64&text=KG",
     feedback:
       "As a non-native English speaker, the multilingual support was a game-changer. I pitched in my native language and still got funded!",
@@ -33,7 +33,7 @@ const testimonials = [
   {
     name: "Debashish Sarkar",
     country: "Malaysia",
-    type: "Entrepreneur",
+    type: "Investor",
     avatar: "Debashish-Sarkar.jpeg",
     feedback:
       "The investor matching algorithm introduced me to partners I would never have found on my own. Secured pre-seed funding within a month.",
@@ -95,10 +95,10 @@ export default function TestimonialCarousel() {
 function TestimonialCard({ testimonial }) {
   return (
     <Card className="relative group transition-all duration-300 h-full bg-[#121521] border-none rounded-xl overflow-hidden" style={{
-      minHeight: '280px', // Increased from 240px to 280px
+      minHeight: '320px', // Increased from 280px to 320px for more height
     }}>
-      <CardContent className="p-6 flex flex-col h-full">
-        <div className="flex items-center space-x-3 mb-5">
+      <CardContent className="p-8 flex flex-col h-full"> {/* Increased padding from p-6 to p-8 */}
+        <div className="flex items-center space-x-3 mb-6"> {/* Increased margin bottom */}
           <img
             src={testimonial.avatar || "/placeholder.svg"}
             alt={testimonial.name}
@@ -111,8 +111,8 @@ function TestimonialCard({ testimonial }) {
             <p className="text-sm text-gray-400">{testimonial.country}</p>
           </div>
         </div>
-        <p className="text-gray-300 italic text-base flex-grow mb-5">"{testimonial.feedback}"</p>
-        <div className="flex justify-between items-center mt-auto pt-2">
+        <p className="text-gray-300 italic text-base flex-grow mb-6">"{testimonial.feedback}"</p> {/* Increased margin bottom */}
+        <div className="flex justify-between items-center mt-auto pt-3"> {/* Increased top padding */}
           <div className="flex space-x-1">
             {[1, 2, 3, 4, 5].map((star) => (
               <Star key={star} className="h-5 w-5 fill-yellow-400 text-yellow-400" />
