@@ -32,12 +32,12 @@ export function LandingPageContent() {
       <Header />
 
       {/* Hero Section */}
-      <section className="min-h-[calc(100vh-4rem)] flex items-center w-full px-4 sm:px-6 lg:px-8 xl:px-12">
-        <div className="container mx-auto max-w-7xl w-full">
-          <div className="grid lg:grid-cols-2 gap-6 lg:gap-12 items-center">
+      <section className="min-h-[calc(100vh-4rem)] flex items-center w-full px-3 sm:px-4 md:px-6 pt-0 mt-0">
+        <div className="container mx-auto w-full max-w-[1400px]">
+          <div className="grid lg:grid-cols-2 gap-6 xl:gap-16 items-center">
             <div className="space-y-6">
               <div className="space-y-4">
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+                <h1 className="text-4xl md:text-5xl xl:text-6xl font-bold leading-tight">
                   Reimagining Startup{" "}
                   <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                     Funding
