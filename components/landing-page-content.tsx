@@ -32,9 +32,9 @@ export function LandingPageContent() {
       <Header />
 
       {/* Hero Section */}
-      <section className="container mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-10 md:pb-16">
+      <section className="container mx-auto px-6 sm:px-8 lg:px-12 max-w-7xl pt-10 pb-10 md:pb-16">
         <div className="grid lg:grid-cols-2 gap-6 lg:gap-12 items-center">
-          <div className="space-y-5 pl-2">
+          <div className="space-y-5">
             <div className="space-y-3">
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
                 Reimagining Startup{" "}
@@ -76,7 +76,7 @@ export function LandingPageContent() {
       </section>
 
       {/* Trusted Investors Section */}
-      <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 border-t">
+      <section className="container mx-auto px-6 sm:px-8 lg:px-12 max-w-7xl py-12 md:py-16 border-t">
         <div className="text-center space-y-6 md:space-y-8">
           <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
             Trusted by Investors Worldwide
@@ -96,7 +96,7 @@ export function LandingPageContent() {
       </section>
 
       {/* How it Works Section */}
-      <section id="how-it-works" className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">
+      <section id="how-it-works" className="container mx-auto px-6 sm:px-8 lg:px-12 max-w-7xl py-16 md:py-20">
         <div className="text-center space-y-4 mb-12 md:mb-16">
           <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold">How it Works</h2>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
@@ -104,7 +104,7 @@ export function LandingPageContent() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 px-2 sm:px-4">
           {[
             {
               step: "01",
@@ -182,7 +182,7 @@ export function LandingPageContent() {
 
       {/* Key Features Section */}
       <section id="features" className="py-16 md:py-20 bg-muted/30">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="container mx-auto px-6 sm:px-8 lg:px-12 max-w-7xl">
           <div className="text-center space-y-4 mb-12 md:mb-16">
             <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold">Key Features</h2>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
@@ -190,7 +190,7 @@ export function LandingPageContent() {
             </p>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 px-2 sm:px-4">
             {[
               {
                 icon: Brain,
@@ -243,7 +243,7 @@ export function LandingPageContent() {
 
       {/* Testimonial Section */}
       <section className="py-16 md:py-20 bg-gradient-to-br from-blue-600/10 to-purple-600/10">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="container mx-auto px-6 sm:px-8 lg:px-12 max-w-7xl">
           <div className="text-center space-y-4 mb-12 md:mb-16">
             <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold">What Founders Say</h2>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
@@ -259,7 +259,7 @@ export function LandingPageContent() {
 
       {/* Footer */}
       <footer className="border-t bg-muted/30">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
+        <div className="container mx-auto px-6 sm:px-8 lg:px-12 max-w-7xl py-12 md:py-16">
           <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-8">
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">InvestorHunt</h3>
