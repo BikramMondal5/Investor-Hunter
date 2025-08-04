@@ -4,7 +4,10 @@ import { Header } from "@/components/header"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Play, Upload, Brain, MessageSquare, Star, ArrowRight, Globe, Zap, Shield } from "lucide-react"
+import { 
+  Play, Upload, Brain, MessageSquare, Star, ArrowRight, Globe, Zap, Shield, 
+  Film, BarChart3, ClipboardCheck, UserCheck, CheckSquare, Users, Video 
+} from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState, useCallback, useRef } from "react"
 import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel"
@@ -97,29 +100,53 @@ export function LandingPageContent() {
         <div className="text-center space-y-4 mb-12 md:mb-16">
           <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold">How it Works</h2>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-            Three simple steps to get your startup in front of investors
+            The comprehensive journey from pitch to investor meeting
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
           {[
             {
               step: "01",
-              icon: Upload,
-              title: "Upload a short video pitch",
-              description: "Record a 2-minute video explaining your startup idea. No pitch deck required.",
+              icon: Film,
+              title: "Upload & Analyze Pitch",
+              description: "Upload a 3–4 minute video pitch, then run AI analysis before final submission.",
             },
             {
               step: "02",
-              icon: Brain,
-              title: "AI analyzes your idea, community gives feedback",
-              description: "Our AI evaluates your pitch while the community provides valuable insights.",
+              icon: BarChart3,
+              title: "AI Scoring & Feedback",
+              description: "Receive objective feedback and parameter scores (confidence, creativity, clarity) from the AI.",
             },
             {
               step: "03",
-              icon: MessageSquare,
-              title: "Investors reach out if they're interested",
-              description: "Connect directly with investors who are genuinely interested in your startup.",
+              icon: ClipboardCheck,
+              title: "Submission & Final Scorecard",
+              description: "Submit your refined pitch for a final AI-generated scorecard and ranking.",
+            },
+            {
+              step: "04",
+              icon: UserCheck,
+              title: "Entrepreneur Registration & Document Verification",
+              description: "Register and upload business documents, which the InvestorHunt team verifies for authenticity.",
+            },
+            {
+              step: "05",
+              icon: Users,
+              title: "Internal Interview Screening",
+              description: "Our panel meets top-scoring founders online to assess their business clarity, team strength, and coachability.",
+            },
+            {
+              step: "06",
+              icon: CheckSquare,
+              title: "Finalist Selection for Live Investor Meetings",
+              description: "Founders who pass the internal screening qualify for live pitch sessions with real investors.",
+            },
+            {
+              step: "07",
+              icon: Video,
+              title: "Live Investor Pitch & Follow-up",
+              description: "Pitch directly to verified investors in a live meeting, with post-meeting follow-up options for further interest.",
             },
           ].map((item, index) => (
             <Card 
@@ -149,13 +176,13 @@ export function LandingPageContent() {
                 boxShadow: '0 0 0 1px rgba(139,92,246,0.05)',
               }}
             >
-              <CardContent className="p-8 text-center space-y-4">
-                <div className="text-4xl font-bold text-muted-foreground/30 mb-4">{item.step}</div>
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 transition-transform duration-300 group-hover:scale-105 group-data-[active=true]:scale-110 group-data-[active=true]:bg-primary/20">
-                  <item.icon className="h-8 w-8 text-primary transition-all duration-300" />
+              <CardContent className="p-6 text-center space-y-4">
+                <div className="text-3xl font-bold text-muted-foreground/30 mb-2">{item.step}</div>
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3 transition-transform duration-300 group-hover:scale-105 group-data-[active=true]:scale-110 group-data-[active=true]:bg-primary/20">
+                  <item.icon className="h-6 w-6 text-primary transition-all duration-300" />
                 </div>
-                <h3 className="text-xl font-semibold">{item.title}</h3>
-                <p className="text-muted-foreground">{item.description}</p>
+                <h3 className="text-lg font-semibold">{item.title}</h3>
+                <p className="text-sm text-muted-foreground">{item.description}</p>
               </CardContent>
               <div className="absolute inset-0 pointer-events-none border border-purple-600/30 dark:border-purple-500/20 rounded-xl transition-all duration-300 opacity-0 group-hover:opacity-100"></div>
               <div className="absolute inset-0 pointer-events-none rounded-xl transition-all duration-300 group-hover:shadow-[0_0_20px_rgba(139,92,246,0.25)] dark:group-hover:shadow-[0_0_30px_rgba(139,92,246,0.35)] group-data-[active=true]:shadow-[0_0_30px_5px_rgba(139,92,246,0.4)] dark:group-data-[active=true]:shadow-[0_0_40px_5px_rgba(139,92,246,0.5)]"></div>
@@ -164,9 +191,12 @@ export function LandingPageContent() {
         </div>
 
         <div className="text-center mt-12">
-          <Button variant="outline" size="lg">
-            Learn More
-          </Button>
+          <Link href="/submit">
+            <Button size="lg">
+              Start Your Journey
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </Link>
         </div>
       </section>
 

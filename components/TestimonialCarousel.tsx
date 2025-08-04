@@ -8,10 +8,17 @@ import { Star } from "lucide-react"
 const testimonials = [
   {
     name: "Bikram Mondal",
-    country: "Singapore",
+    country: "India",
     avatar: "https://avatars.githubusercontent.com/u/170235967?v=4",
     feedback:
       "InvestorHunt helped me connect with 3 VCs in just 2 weeks. The AI feedback was incredibly valuable for refining my pitch.",
+  },
+  {
+    name: "Koushik Ghosh",
+    country: "Singapore", // Updated country
+    avatar: "/placeholder.svg?h=64&w=64&text=AS",
+    feedback:
+      "The community feedback helped me identify blind spots in my business model. Raised $500K seed round within 3 months.",
   },
   {
     name: "Arijit Sarkar",
@@ -21,22 +28,15 @@ const testimonials = [
       "As a non-native English speaker, the multilingual support was a game-changer. I pitched in my native language and still got funded!",
   },
   {
-    name: "Koushik Ghosh",
-    country: "USA",
-    avatar: "/placeholder.svg?h=64&w=64&text=AS",
-    feedback:
-      "The community feedback helped me identify blind spots in my business model. Raised $500K seed round within 3 months.",
-  },
-  {
     name: "Debashish Sarkar",
-    country: "India",
+    country: "Malaysia",
     avatar: "/placeholder.svg?h=64&w=64&text=PS",
     feedback:
       "The investor matching algorithm introduced me to partners I would never have found on my own. Secured pre-seed funding within a month.",
   },
   {
-    name: "Michelle Wong",
-    country: "Malaysia",
+    name: "John Smith",
+    country: "USA",
     avatar: "/placeholder.svg?h=64&w=64&text=MW",
     feedback:
       "InvestorHunt's platform made fundraising accessible even from a remote location. The global reach is truly impressive.",
