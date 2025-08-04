@@ -475,11 +475,12 @@ export default function Dashboard() {
                   <CardHeader>
                     <CardTitle>Investor Demographics</CardTitle>
                   </CardHeader>
-                  <CardContent className="h-64 flex items-center justify-center bg-muted/30">
-                    <div className="text-center">
-                      <BarChart3 className="h-10 w-10 mx-auto text-muted-foreground" />
-                      <p className="mt-2 text-sm text-muted-foreground">Interactive chart will display here</p>
-                    </div>
+                  <CardContent className="h-64 relative">
+                    <img 
+                      src="/investor_demographics.png" 
+                      alt="Bar chart showing investor demographics: VC Firms 35%, Angel Investors 25%, Corporate Investors 20%, Accelerators 10%, Crowdfunders 10%" 
+                      className="w-full h-full object-contain"
+                    />
                   </CardContent>
                 </Card>
               </div>
