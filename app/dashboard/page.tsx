@@ -135,8 +135,8 @@ export default function Dashboard() {
               <Bell className="h-5 w-5" />
             </Button>
             <Avatar>
-              <AvatarImage src="https://entrepreneurstoday.in/wp-content/uploads/2021/10/entrepreneurship-what-is-the-modern-definition-of-entrepreneur-min.jpeg" />
-              <AvatarFallback>JD</AvatarFallback>
+              <AvatarImage src="https://avatars.githubusercontent.com/u/170235967?v=4" />
+              <AvatarFallback>BM</AvatarFallback>
             </Avatar>
           </div>
         </div>
