@@ -8,6 +8,12 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Switch } from "@/components/ui/switch"
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
   Bell,
   BarChart3,
   MessageSquare,
@@ -23,6 +29,7 @@ import {
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("dashboard")
+  const [videoModalOpen, setVideoModalOpen] = useState(false)
 
   const sidebarItems = [
     { id: "dashboard", label: "Dashboard", icon: BarChart3 },
@@ -290,14 +297,22 @@ export default function Dashboard() {
                 <CardContent className="space-y-3 pt-1 px-4 pb-4">
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
-                      <div className="aspect-[16/8] bg-muted rounded-lg flex items-center justify-center relative group cursor-pointer">
-                        <Play className="h-10 w-10 text-primary group-hover:scale-110 transition-transform" />
+                      <div 
+                        className="aspect-[16/9] bg-muted rounded-lg flex items-center justify-center relative group cursor-pointer overflow-hidden"
+                        onClick={() => setVideoModalOpen(true)}
+                      >
+                        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center">
+                          <div className="h-16 w-16 rounded-full bg-primary/90 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <Play className="h-8 w-8 text-white ml-1" />
+                          </div>
+                        </div>
                         <img
-                          src="/placeholder.svg?height=150&width=360&text=Video+Thumbnail"
+                          src="/video-pitch-image.png"
                           alt="Pitch video thumbnail"
-                          className="absolute inset-0 w-full h-full object-cover rounded-lg opacity-50"
+                          className="absolute inset-0 w-full h-full object-cover rounded-lg"
                         />
                       </div>
+                      <p className="text-xs text-center mt-1 text-muted-foreground">Click to watch your pitch video</p>
                     </div>
 
                     <div className="space-y-3">
@@ -758,6 +773,29 @@ export default function Dashboard() {
           )}
         </main>
       </div>
+
+      {/* Video Modal */}
+      <Dialog open={videoModalOpen} onOpenChange={setVideoModalOpen}>
+        <DialogContent className="max-w-4xl p-0 overflow-hidden">
+          <DialogHeader className="p-4 pb-0">
+            <DialogTitle className="text-xl">Articuno.AI - Pitch Video</DialogTitle>
+          </DialogHeader>
+          <div className="relative pb-[56.25%] mt-2">
+            <video 
+              src="/articuno.mp4" 
+              className="absolute inset-0 w-full h-full object-cover"
+              controls
+              autoPlay
+              playsInline
+            >
+              Your browser does not support the video tag.
+            </video>
+          </div>
+          <div className="p-4 flex justify-end">
+            <Button onClick={() => setVideoModalOpen(false)}>Close</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
