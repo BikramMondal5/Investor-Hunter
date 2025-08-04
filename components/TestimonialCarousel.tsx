@@ -33,10 +33,18 @@ const testimonials = [
   {
     name: "Debashish Sarkar",
     country: "Malaysia",
-    type: "Investor",
+    type: "Entrepreneur",
     avatar: "Debashish-Sarkar.jpeg",
     feedback:
       "The investor matching algorithm introduced me to partners I would never have found on my own. Secured pre-seed funding within a month.",
+  },
+  {
+    name: "Maria Lee",
+    country: "Germany",
+    type: "Investor",
+    avatar: "Maria-Lee.jpg",
+    feedback:
+      "The quality of pitches on this platform is exceptional — I've discovered startups that truly stand out.",
   },
   {
     name: "John Smith",
@@ -44,7 +52,7 @@ const testimonials = [
     type: "Investor",
     avatar: "Jane-Smith.jpeg",
     feedback:
-      "InvestorHunt's platform made fundraising accessible even from a remote location. The global reach is truly impressive.",
+      "This platform bridges the gap between visionaries and investors perfectly — it's efficient, smart, and impactful.",
   },
 ]
 
