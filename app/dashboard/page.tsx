@@ -776,14 +776,14 @@ export default function Dashboard() {
 
       {/* Video Modal */}
       <Dialog open={videoModalOpen} onOpenChange={setVideoModalOpen}>
-        <DialogContent className="max-w-4xl p-0 overflow-hidden">
-          <DialogHeader className="p-4 pb-0">
-            <DialogTitle className="text-xl">Articuno.AI - Pitch Video</DialogTitle>
+        <DialogContent className="max-w-[85vw] md:max-w-[75vw] lg:max-w-[70vw] p-0 overflow-hidden border-2 shadow-xl">
+          <DialogHeader className="p-3 pb-0">
+            <DialogTitle className="text-base">Articuno.AI - Pitch Video by Bikram Mondal</DialogTitle>
           </DialogHeader>
-          <div className="relative pb-[56.25%] mt-2">
+          <div className="relative pb-[42.25%] mt-1">
             <video 
               src="/articuno.mp4" 
-              className="absolute inset-0 w-full h-full object-cover"
+              className="absolute inset-0 w-full h-full object-contain bg-black"
               controls
               autoPlay
               playsInline
@@ -791,8 +791,8 @@ export default function Dashboard() {
               Your browser does not support the video tag.
             </video>
           </div>
-          <div className="p-4 flex justify-end">
-            <Button onClick={() => setVideoModalOpen(false)}>Close</Button>
+          <div className="p-2 flex justify-end">
+            <Button size="sm" onClick={() => setVideoModalOpen(false)}>Close</Button>
           </div>
         </DialogContent>
       </Dialog>
