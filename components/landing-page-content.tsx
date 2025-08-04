@@ -122,6 +122,62 @@ export function LandingPageContent() {
                   className="h-10 object-contain"
                 />
               </div>
+              <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                <img
+                  src="/SIDBI.png"
+                  alt="SIDBI Logo"
+                  className="h-10 object-contain"
+                />
+              </div>
+              <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                <img
+                  src="/unitus ventures.png"
+                  alt="Unitus Ventures Logo"
+                  className="h-10 object-contain"
+                />
+              </div>
+              <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                <img
+                  src="/saif-partners.png"
+                  alt="SAIF Partners Logo"
+                  className="h-10 object-contain"
+                />
+              </div>
+              <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                <img
+                  src="/Next47.png"
+                  alt="Next47 Logo"
+                  className="h-10 object-contain"
+                />
+              </div>
+              <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                <img
+                  src="/kalaari-capital.png"
+                  alt="Kalaari Capital Logo"
+                  className="h-10 object-contain"
+                />
+              </div>
+              <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                <img
+                  src="/Blume-ventures.png"
+                  alt="Blume Ventures Logo"
+                  className="h-10 object-contain"
+                />
+              </div>
+              <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                <img
+                  src="/ankur-capital.png"
+                  alt="Ankur Capital Logo"
+                  className="h-10 object-contain"
+                />
+              </div>
+              <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                <img
+                  src="/Accel.png"
+                  alt="Accel Partners Logo"
+                  className="h-10 object-contain"
+                />
+              </div>
               
               {/* Duplicated set for seamless loop */}
               <div className="h-16 flex-shrink-0 flex items-center justify-center">
@@ -156,6 +212,62 @@ export function LandingPageContent() {
                 <img
                   src="/Axilor-Ventures.png"
                   alt="Axilor Ventures Logo"
+                  className="h-10 object-contain"
+                />
+              </div>
+              <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                <img
+                  src="/SIDBI.png"
+                  alt="SIDBI Logo"
+                  className="h-10 object-contain"
+                />
+              </div>
+              <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                <img
+                  src="/unitus ventures.png"
+                  alt="Unitus Ventures Logo"
+                  className="h-10 object-contain"
+                />
+              </div>
+              <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                <img
+                  src="/saif-partners.png"
+                  alt="SAIF Partners Logo"
+                  className="h-10 object-contain"
+                />
+              </div>
+              <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                <img
+                  src="/Next47.png"
+                  alt="Next47 Logo"
+                  className="h-10 object-contain"
+                />
+              </div>
+              <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                <img
+                  src="/kalaari-capital.png"
+                  alt="Kalaari Capital Logo"
+                  className="h-10 object-contain"
+                />
+              </div>
+              <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                <img
+                  src="/Blume-ventures.png"
+                  alt="Blume Ventures Logo"
+                  className="h-10 object-contain"
+                />
+              </div>
+              <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                <img
+                  src="/ankur-capital.png"
+                  alt="Ankur Capital Logo"
+                  className="h-10 object-contain"
+                />
+              </div>
+              <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                <img
+                  src="/Accel.png"
+                  alt="Accel Partners Logo"
                   className="h-10 object-contain"
                 />
               </div>
