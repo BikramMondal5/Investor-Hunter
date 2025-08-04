@@ -95,10 +95,10 @@ export default function TestimonialCarousel() {
 function TestimonialCard({ testimonial }) {
   return (
     <Card className="relative group transition-all duration-300 h-full bg-[#121521] border-none rounded-xl overflow-hidden" style={{
-      minHeight: '320px', // Increased from 280px to 320px for more height
+      minHeight: '290px', // Reduced from 320px to 290px
     }}>
-      <CardContent className="p-8 flex flex-col h-full"> {/* Increased padding from p-6 to p-8 */}
-        <div className="flex items-center space-x-3 mb-6"> {/* Increased margin bottom */}
+      <CardContent className="p-7 flex flex-col h-full"> {/* Reduced padding from p-8 to p-7 */}
+        <div className="flex items-center space-x-3 mb-5"> {/* Reduced margin bottom from mb-6 to mb-5 */}
           <img
             src={testimonial.avatar || "/placeholder.svg"}
             alt={testimonial.name}
@@ -111,8 +111,8 @@ function TestimonialCard({ testimonial }) {
             <p className="text-sm text-gray-400">{testimonial.country}</p>
           </div>
         </div>
-        <p className="text-gray-300 italic text-base flex-grow mb-6">"{testimonial.feedback}"</p> {/* Increased margin bottom */}
-        <div className="flex justify-between items-center mt-auto pt-3"> {/* Increased top padding */}
+        <p className="text-gray-300 italic text-base flex-grow mb-5">"{testimonial.feedback}"</p> {/* Reduced margin bottom from mb-6 to mb-5 */}
+        <div className="flex justify-between items-center mt-auto pt-2"> {/* Reduced padding top from pt-3 to pt-2 */}
           <div className="flex space-x-1">
             {[1, 2, 3, 4, 5].map((star) => (
               <Star key={star} className="h-5 w-5 fill-yellow-400 text-yellow-400" />
