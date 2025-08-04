@@ -307,7 +307,7 @@ export default function Dashboard() {
                           </div>
                         </div>
                         <img
-                          src="/video-pitch-image.png"
+                          src="articuno-post1.png"
                           alt="Pitch video thumbnail"
                           className="absolute inset-0 w-full h-full object-cover rounded-lg"
                         />
