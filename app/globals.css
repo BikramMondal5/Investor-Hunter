@@ -144,12 +144,12 @@
     transform: translateX(0);
   }
   100% {
-    transform: translateX(calc(-100% / 2));
+    transform: translateX(-100%);
   }
 }
 
 .animate-scroll {
-  animation: scroll 5s linear infinite;
+  animation: scroll 30s linear infinite;
 }
 
 /* Smooth transitions */

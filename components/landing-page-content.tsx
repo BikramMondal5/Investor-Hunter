@@ -84,192 +84,93 @@ export function LandingPageContent() {
             </p>
           </div>
           
-          <div className="relative">
-            {/* First row - original */}
-            <div className="flex items-center space-x-16 md:space-x-24 animate-scroll">
-              <div className="h-16 flex-shrink-0 flex items-center justify-center">
-                <img
-                  src="/LetsVenture.png"
-                  alt="LetsVenture Logo"
-                  className="h-10 object-contain"
-                />
-              </div>
-              <div className="h-16 flex-shrink-0 flex items-center justify-center">
-                <img
-                  src="/MicroVentures.png"
-                  alt="MicroVentures Logo"
-                  className="h-10 object-contain"
-                />
-              </div>
-              <div className="h-16 flex-shrink-0 flex items-center justify-center">
-                <img
-                  src="/IAN.png"
-                  alt="IAN Logo"
-                  className="h-10 object-contain"
-                />
-              </div>
-              <div className="h-16 flex-shrink-0 flex items-center justify-center">
-                <img
-                  src="/Seedrs.png"
-                  alt="Seedrs Logo"
-                  className="h-10 object-contain"
-                />
-              </div>
-              <div className="h-16 flex-shrink-0 flex items-center justify-center">
-                <img
-                  src="/Axilor-Ventures.png"
-                  alt="Axilor Ventures Logo"
-                  className="h-10 object-contain"
-                />
-              </div>
-              <div className="h-16 flex-shrink-0 flex items-center justify-center">
-                <img
-                  src="/SIDBI.png"
-                  alt="SIDBI Logo"
-                  className="h-10 object-contain"
-                />
-              </div>
-              <div className="h-16 flex-shrink-0 flex items-center justify-center">
-                <img
-                  src="/unitus ventures.png"
-                  alt="Unitus Ventures Logo"
-                  className="h-10 object-contain"
-                />
-              </div>
-              <div className="h-16 flex-shrink-0 flex items-center justify-center">
-                <img
-                  src="/saif-partners.png"
-                  alt="SAIF Partners Logo"
-                  className="h-10 object-contain"
-                />
-              </div>
-              <div className="h-16 flex-shrink-0 flex items-center justify-center">
-                <img
-                  src="/Next47.png"
-                  alt="Next47 Logo"
-                  className="h-10 object-contain"
-                />
-              </div>
-              <div className="h-16 flex-shrink-0 flex items-center justify-center">
-                <img
-                  src="/kalaari-capital.png"
-                  alt="Kalaari Capital Logo"
-                  className="h-10 object-contain"
-                />
-              </div>
-              <div className="h-16 flex-shrink-0 flex items-center justify-center">
-                <img
-                  src="/Blume-ventures.png"
-                  alt="Blume Ventures Logo"
-                  className="h-10 object-contain"
-                />
-              </div>
-              <div className="h-16 flex-shrink-0 flex items-center justify-center">
-                <img
-                  src="/ankur-capital.png"
-                  alt="Ankur Capital Logo"
-                  className="h-10 object-contain"
-                />
-              </div>
-              <div className="h-16 flex-shrink-0 flex items-center justify-center">
-                <img
-                  src="/Accel.png"
-                  alt="Accel Partners Logo"
-                  className="h-10 object-contain"
-                />
+          <div className="relative w-full overflow-hidden">
+            {/* Logo wrapper */}
+            <div className="animate-scroll flex w-fit">
+              {/* First set of logos */}
+              <div className="flex items-center gap-16 md:gap-24">
+                <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                  <img src="/LetsVenture.png" alt="LetsVenture Logo" className="h-10 object-contain" />
+                </div>
+                <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                  <img src="/MicroVentures.png" alt="MicroVentures Logo" className="h-10 object-contain" />
+                </div>
+                <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                  <img src="/IAN.png" alt="IAN Logo" className="h-10 object-contain" />
+                </div>
+                <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                  <img src="/Seedrs.png" alt="Seedrs Logo" className="h-10 object-contain" />
+                </div>
+                <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                  <img src="/Axilor-Ventures.png" alt="Axilor Ventures Logo" className="h-10 object-contain" />
+                </div>
+                <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                  <img src="/SIDBI.png" alt="SIDBI Logo" className="h-10 object-contain" />
+                </div>
+                <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                  <img src="/unitus ventures.png" alt="Unitus Ventures Logo" className="h-10 object-contain" />
+                </div>
+                <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                  <img src="/saif-partners.png" alt="SAIF Partners Logo" className="h-10 object-contain" />
+                </div>
+                <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                  <img src="/Next47.png" alt="Next47 Logo" className="h-10 object-contain" />
+                </div>
+                <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                  <img src="/kalaari-capital.png" alt="Kalaari Capital Logo" className="h-10 object-contain" />
+                </div>
+                <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                  <img src="/Blume-ventures.png" alt="Blume Ventures Logo" className="h-10 object-contain" />
+                </div>
+                <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                  <img src="/ankur-capital.png" alt="Ankur Capital Logo" className="h-10 object-contain" />
+                </div>
+                <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                  <img src="/Accel.png" alt="Accel Partners Logo" className="h-10 object-contain" />
+                </div>
               </div>
               
-              {/* Duplicated set for seamless loop */}
-              <div className="h-16 flex-shrink-0 flex items-center justify-center">
-                <img
-                  src="/LetsVenture.png"
-                  alt="LetsVenture Logo"
-                  className="h-10 object-contain"
-                />
-              </div>
-              <div className="h-16 flex-shrink-0 flex items-center justify-center">
-                <img
-                  src="/MicroVentures.png"
-                  alt="MicroVentures Logo"
-                  className="h-10 object-contain"
-                />
-              </div>
-              <div className="h-16 flex-shrink-0 flex items-center justify-center">
-                <img
-                  src="/IAN.png"
-                  alt="IAN Logo"
-                  className="h-10 object-contain"
-                />
-              </div>
-              <div className="h-16 flex-shrink-0 flex items-center justify-center">
-                <img
-                  src="/Seedrs.png"
-                  alt="Seedrs Logo"
-                  className="h-10 object-contain"
-                />
-              </div>
-              <div className="h-16 flex-shrink-0 flex items-center justify-center">
-                <img
-                  src="/Axilor-Ventures.png"
-                  alt="Axilor Ventures Logo"
-                  className="h-10 object-contain"
-                />
-              </div>
-              <div className="h-16 flex-shrink-0 flex items-center justify-center">
-                <img
-                  src="/SIDBI.png"
-                  alt="SIDBI Logo"
-                  className="h-10 object-contain"
-                />
-              </div>
-              <div className="h-16 flex-shrink-0 flex items-center justify-center">
-                <img
-                  src="/unitus ventures.png"
-                  alt="Unitus Ventures Logo"
-                  className="h-10 object-contain"
-                />
-              </div>
-              <div className="h-16 flex-shrink-0 flex items-center justify-center">
-                <img
-                  src="/saif-partners.png"
-                  alt="SAIF Partners Logo"
-                  className="h-10 object-contain"
-                />
-              </div>
-              <div className="h-16 flex-shrink-0 flex items-center justify-center">
-                <img
-                  src="/Next47.png"
-                  alt="Next47 Logo"
-                  className="h-10 object-contain"
-                />
-              </div>
-              <div className="h-16 flex-shrink-0 flex items-center justify-center">
-                <img
-                  src="/kalaari-capital.png"
-                  alt="Kalaari Capital Logo"
-                  className="h-10 object-contain"
-                />
-              </div>
-              <div className="h-16 flex-shrink-0 flex items-center justify-center">
-                <img
-                  src="/Blume-ventures.png"
-                  alt="Blume Ventures Logo"
-                  className="h-10 object-contain"
-                />
-              </div>
-              <div className="h-16 flex-shrink-0 flex items-center justify-center">
-                <img
-                  src="/ankur-capital.png"
-                  alt="Ankur Capital Logo"
-                  className="h-10 object-contain"
-                />
-              </div>
-              <div className="h-16 flex-shrink-0 flex items-center justify-center">
-                <img
-                  src="/Accel.png"
-                  alt="Accel Partners Logo"
-                  className="h-10 object-contain"
-                />
+              {/* Exact duplicate set for seamless loop */}
+              <div className="flex items-center gap-16 md:gap-24">
+                <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                  <img src="/LetsVenture.png" alt="LetsVenture Logo" className="h-10 object-contain" />
+                </div>
+                <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                  <img src="/MicroVentures.png" alt="MicroVentures Logo" className="h-10 object-contain" />
+                </div>
+                <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                  <img src="/IAN.png" alt="IAN Logo" className="h-10 object-contain" />
+                </div>
+                <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                  <img src="/Seedrs.png" alt="Seedrs Logo" className="h-10 object-contain" />
+                </div>
+                <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                  <img src="/Axilor-Ventures.png" alt="Axilor Ventures Logo" className="h-10 object-contain" />
+                </div>
+                <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                  <img src="/SIDBI.png" alt="SIDBI Logo" className="h-10 object-contain" />
+                </div>
+                <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                  <img src="/unitus ventures.png" alt="Unitus Ventures Logo" className="h-10 object-contain" />
+                </div>
+                <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                  <img src="/saif-partners.png" alt="SAIF Partners Logo" className="h-10 object-contain" />
+                </div>
+                <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                  <img src="/Next47.png" alt="Next47 Logo" className="h-10 object-contain" />
+                </div>
+                <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                  <img src="/kalaari-capital.png" alt="Kalaari Capital Logo" className="h-10 object-contain" />
+                </div>
+                <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                  <img src="/Blume-ventures.png" alt="Blume Ventures Logo" className="h-10 object-contain" />
+                </div>
+                <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                  <img src="/ankur-capital.png" alt="Ankur Capital Logo" className="h-10 object-contain" />
+                </div>
+                <div className="h-16 flex-shrink-0 flex items-center justify-center">
+                  <img src="/Accel.png" alt="Accel Partners Logo" className="h-10 object-contain" />
+                </div>
               </div>
             </div>
           </div>
