@@ -6,7 +6,11 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Play, Upload, Brain, MessageSquare, Star, ArrowRight, Globe, Zap, Shield } from "lucide-react"
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback, useRef } from "react"
+import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel"
+import useEmblaCarousel from "embla-carousel-react"
+import Autoplay from "embla-carousel-autoplay"
+import TestimonialCarousel from "@/components/TestimonialCarousel"
 
 export function LandingPageContent() {
   // Use useState and useEffect to ensure client-side rendering
@@ -25,7 +29,7 @@ export function LandingPageContent() {
       <Header />
 
       {/* Hero Section */}
-      <section className="container mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-8 md:pb-16">
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-10 md:pb-16">
         <div className="grid lg:grid-cols-2 gap-6 lg:gap-12 items-center">
           <div className="space-y-5 pl-2">
             <div className="space-y-3">
@@ -57,7 +61,7 @@ export function LandingPageContent() {
           </div>
 
           <div className="relative">
-            <div className="aspect-[16/9] bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl flex items-center justify-center shadow-lg overflow-hidden">
+            <div className="aspect-video bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl shadow-lg overflow-hidden">
               <img
                 src="/video-pitch-image.png"
                 alt="Entrepreneur recording a pitch video"
@@ -237,56 +241,8 @@ export function LandingPageContent() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                name: "Sarah Chen",
-                country: "Singapore",
-                avatar: "/placeholder.svg?h=64&w=64&text=SC",
-                feedback:
-                  "InvestorHunt helped me connect with 3 VCs in just 2 weeks. The AI feedback was incredibly valuable for refining my pitch.",
-              },
-              {
-                name: "Marcus Johnson",
-                country: "Nigeria",
-                avatar: "/placeholder.svg?h=64&w=64&text=MJ",
-                feedback:
-                  "As a non-native English speaker, the multilingual support was a game-changer. I pitched in my native language and still got funded!",
-              },
-              {
-                name: "Elena Rodriguez",
-                country: "Mexico",
-                avatar: "/placeholder.svg?h=64&w=64&text=ER",
-                feedback:
-                  "The community feedback helped me identify blind spots in my business model. Raised $500K seed round within 3 months.",
-              },
-            ].map((testimonial, index) => (
-              <Card key={index} className="relative group hover:shadow-lg transition-all duration-300 border border-transparent dark:border-purple-900/20" style={{
-                boxShadow: '0 0 0 1px rgba(139,92,246,0.05)',
-              }}>
-                <CardContent className="p-6 space-y-4">
-                  <div className="flex items-center space-x-4">
-                    <img
-                      src={testimonial.avatar || "/placeholder.svg"}
-                      alt={testimonial.name}
-                      className="w-12 h-12 rounded-full"
-                    />
-                    <div>
-                      <h4 className="font-semibold">{testimonial.name}</h4>
-                      <p className="text-sm text-muted-foreground">{testimonial.country}</p>
-                    </div>
-                  </div>
-                  <p className="text-muted-foreground italic">"{testimonial.feedback}"</p>
-                  <div className="flex space-x-1">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Star key={star} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                    ))}
-                  </div>
-                </CardContent>
-                <div className="absolute inset-0 pointer-events-none border border-purple-600/30 dark:border-purple-500/20 rounded-xl transition-all duration-300 opacity-0 group-hover:opacity-100"></div>
-                <div className="absolute inset-0 pointer-events-none rounded-xl transition-all duration-300 group-hover:shadow-[0_0_20px_rgba(139,92,246,0.25)] dark:group-hover:shadow-[0_0_30px_rgba(139,92,246,0.35)]"></div>
-              </Card>
-            ))}
+          <div className="relative">
+            <TestimonialCarousel />
           </div>
         </div>
       </section>
