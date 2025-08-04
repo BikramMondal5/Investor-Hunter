@@ -64,8 +64,8 @@ export default function TestimonialCarousel() {
               key={`first-${index}`} 
               className="w-full px-4 flex-shrink-0"
               style={{ 
-                maxWidth: '420px', 
-                minWidth: '360px',
+                maxWidth: '460px', // Increased from 420px to 460px
+                minWidth: '390px', // Increased from 360px to 390px
               }}
             >
               <TestimonialCard testimonial={testimonial} />
@@ -78,8 +78,8 @@ export default function TestimonialCarousel() {
               key={`second-${index}`} 
               className="w-full px-4 flex-shrink-0"
               style={{ 
-                maxWidth: '420px', 
-                minWidth: '360px',
+                maxWidth: '460px', // Increased from 420px to 460px
+                minWidth: '390px', // Increased from 360px to 390px
               }}
             >
               <TestimonialCard testimonial={testimonial} />
