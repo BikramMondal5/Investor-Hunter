@@ -447,7 +447,7 @@ export function ClaraAssistant() {
                 </button>
                 
                 {dropdownOpen && (
-                  <div className="absolute bottom-12 left-0 bg-[#262626] dark:bg-gray-800 rounded-lg shadow-lg border border-[#333] w-36 overflow-hidden z-10">
+                  <div className="absolute bottom-12 left-0 bg-[#262626] dark:bg-gray-800 rounded-lg shadow-lg border border-[#333] w-39 overflow-hidden z-10">
                     <div className="py-1">
                       <button 
                         className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-[#333] hover:bg-gray-700"
@@ -456,7 +456,7 @@ export function ClaraAssistant() {
                           setDropdownOpen(false);
                         }}
                       >
-                        Clara Assistant
+                        💡 Enterprenuers
                       </button>
                       <button 
                         className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-[#333] hover:bg-gray-700"
@@ -465,7 +465,7 @@ export function ClaraAssistant() {
                           setDropdownOpen(false);
                         }}
                       >
-                        Investor Mode
+                        💼 Investor
                       </button>
                     </div>
                   </div>
