@@ -286,19 +286,19 @@ export function ClaraAssistant() {
       {/* Chat toggle button */}
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-5 right-5 w-14 h-14 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white flex items-center justify-center shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 p-0 border-2 border-white/20 z-50"
+        className="fixed bottom-5 right-5 w-16 h-16 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white flex items-center justify-center shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 p-0 border-2 border-white/20 z-50"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
       >
         {isOpen ? (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         ) : (
           <img 
             src="/Clara.png" 
             alt="Clara AI" 
-            className="w-8 h-8 rounded-full object-cover"
+            className="w-11 h-11 rounded-full object-contain"
           />
         )}
       </motion.button>
@@ -306,7 +306,7 @@ export function ClaraAssistant() {
       {/* Chat widget */}
       {isOpen && (
         <motion.div
-          className="fixed bottom-24 right-5 w-80 sm:w-96 rounded-2xl overflow-hidden shadow-2xl border-2 border-purple-600/30 z-50"
+          className="fixed bottom-24 right-5 w-96 sm:w-[420px] rounded-2xl overflow-hidden shadow-2xl border-2 border-purple-600/30 z-50"
           variants={widgetVariants}
           initial="closed"
           animate="open"
@@ -314,18 +314,18 @@ export function ClaraAssistant() {
           transition={{ type: "spring", stiffness: 300, damping: 24 }}
         >
           {/* Header */}
-          <div className="bg-gradient-to-r from-[#7c3aed] to-[#9b5de5] p-4 flex justify-between items-center">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center overflow-hidden">
+          <div className="bg-gradient-to-r from-[#7c3aed] to-[#9b5de5] p-5 flex justify-between items-center">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center overflow-hidden p-1">
                 <img 
                   src="/Clara.png" 
                   alt="Clara AI"
-                  className="w-full h-full object-cover"
+                  className="w-12 h-12 rounded-full"
                 />
               </div>
               <div>
-                <h3 className="text-white font-medium">Clara</h3>
-                <p className="text-purple-100 text-xs opacity-80">AI Startup Assistant</p>
+                <h3 className="text-white font-medium text-lg">Clara</h3>
+                <p className="text-purple-100 text-sm opacity-80">AI Startup Assistant</p>
               </div>
             </div>
             <div className="flex items-center gap-1">
@@ -341,7 +341,7 @@ export function ClaraAssistant() {
           {/* Chat messages */}
           {!minimized && (
             <div 
-              className="bg-[#121212] dark:bg-gray-900 h-96 overflow-y-auto p-4 flex flex-col gap-4 scrollbar-thin scrollbar-thumb-purple-600 scrollbar-track-transparent"
+              className="bg-[#121212] dark:bg-gray-900 h-[420px] overflow-y-auto p-5 flex flex-col gap-4 scrollbar-thin scrollbar-thumb-purple-600 scrollbar-track-transparent"
               style={{ scrollbarWidth: 'thin' }}
             >
               {messages.map((message) => (
@@ -437,7 +437,7 @@ export function ClaraAssistant() {
 
           {/* Input area */}
           {!minimized && (
-            <div className="bg-[#1a1a1a] dark:bg-gray-900 p-3 border-t border-[#333] flex items-center gap-2">
+            <div className="bg-[#1a1a1a] dark:bg-gray-900 p-4 border-t border-[#333] flex items-center gap-3">
               <div className="relative" ref={dropdownRef}>
                 <button 
                   className="text-purple-400 hover:text-purple-300 p-2 rounded-full hover:bg-white/5 transition-colors"
@@ -478,7 +478,7 @@ export function ClaraAssistant() {
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
                 placeholder="Ask me anything..."
-                className="flex-1 bg-[#262626] dark:bg-gray-800 text-gray-200 rounded-full px-4 py-2 focus:outline-none focus:ring-1 focus:ring-purple-500 text-sm placeholder:text-gray-500"
+                className="flex-1 bg-[#262626] dark:bg-gray-800 text-gray-200 rounded-full px-5 py-3 focus:outline-none focus:ring-1 focus:ring-purple-500 text-base placeholder:text-gray-500"
               />
               <button 
                 className="text-purple-400 hover:text-purple-300 p-2 rounded-full hover:bg-white/5 transition-colors" 
@@ -490,10 +490,10 @@ export function ClaraAssistant() {
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={handleSendMessage}
-                className="bg-gradient-to-r from-purple-600 to-[#9b5de5] text-white p-2 rounded-full flex items-center justify-center"
+                className="bg-gradient-to-r from-purple-600 to-[#9b5de5] text-white p-3 rounded-full flex items-center justify-center"
                 disabled={isTyping || !inputMessage.trim()}
               >
-                <FiSend className="w-5 h-5" />
+                <FiSend className="w-6 h-6" />
               </motion.button>
             </div>
           )}
