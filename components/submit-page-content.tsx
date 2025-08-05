@@ -51,8 +51,7 @@ export function SubmitPageContent() {
           clearInterval(interval)
           setIsUploading(false)
           
-          // Open AI feedback modal after upload completes
-          setShowAIFeedback(true)
+          // Removed automatic modal trigger - will only show when Analyze button is clicked
         }
       }, 200)
     }
@@ -170,6 +169,18 @@ export function SubmitPageContent() {
                               <RefreshCw className="h-3 w-3" /> Re-record
                             </Button>
                           </div>
+                          {/* Adding Analyze Button below video preview */}
+                          <div className="mt-2">
+                            <Button
+                              type="button"
+                              onClick={() => setShowAIFeedback(true)}
+                              className="w-full"
+                              variant="outline"
+                            >
+                              <Brain className="mr-2 h-4 w-4" />
+                              Analyze My Pitch
+                            </Button>
+                          </div>
                         </div>
                       ) : (
                         <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center hover:border-muted-foreground/50 transition-colors relative">
@@ -192,6 +203,18 @@ export function SubmitPageContent() {
                           <Progress value={uploadProgress} />
                           <p className="text-xs text-muted-foreground text-center">Uploading... {uploadProgress}%</p>
                         </div>
+                      )}
+                      
+                      {/* Adding Analyze Button directly under file upload area when file is uploaded but not yet analyzed */}
+                      {videoFile && !isUploading && !videoPreviewUrl && (
+                        <Button
+                          type="button"
+                          onClick={() => setShowAIFeedback(true)}
+                          className="w-full mt-2"
+                        >
+                          <Brain className="mr-2 h-4 w-4" />
+                          Analyze My Pitch
+                        </Button>
                       )}
                     </div>
 
