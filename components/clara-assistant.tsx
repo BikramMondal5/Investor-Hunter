@@ -499,15 +499,15 @@ export function ClaraAssistant() {
             </div>
           )}
 
-          {/* Input area */}
+          {/* Input area - Fixed spacing issues */}
           {!minimized && (
-            <div className="bg-[#1a1a1a] dark:bg-gray-900 p-4 border-t border-[#333] flex items-center gap-3">
+            <div className="bg-[#1a1a1a] dark:bg-gray-900 p-3 border-t border-[#333] flex items-center gap-2">
               <div className="relative" ref={dropdownRef}>
                 <button 
-                  className="text-purple-400 hover:text-purple-300 p-2 rounded-full hover:bg-white/5 transition-colors"
+                  className="text-purple-400 hover:text-purple-300 p-1.5 rounded-full hover:bg-white/5 transition-colors"
                   onClick={() => setDropdownOpen(!dropdownOpen)}
                 >
-                  <FaAt className="w-5 h-5" />
+                  <FaAt className="w-4 h-4" />
                 </button>
                 
                 {dropdownOpen && (
@@ -548,22 +548,22 @@ export function ClaraAssistant() {
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
                 placeholder="Ask me anything..."
-                className="flex-1 bg-[#262626] dark:bg-gray-800 text-gray-200 rounded-full px-5 py-3 focus:outline-none focus:ring-1 focus:ring-purple-500 text-base placeholder:text-gray-500"
+                className="flex-1 bg-[#262626] dark:bg-gray-800 text-gray-200 rounded-full px-4 py-2.5 focus:outline-none focus:ring-1 focus:ring-purple-500 text-sm placeholder:text-gray-500"
               />
               <button 
-                className="text-purple-400 hover:text-purple-300 p-2 rounded-full hover:bg-white/5 transition-colors" 
+                className="text-purple-400 hover:text-purple-300 p-1.5 rounded-full hover:bg-white/5 transition-colors" 
                 onClick={handleMicClick}
               >
-                <FiMic className={`w-5 h-5 ${isListening ? "animate-pulse text-purple-300" : ""}`} />
+                <FiMic className={`w-4 h-4 ${isListening ? "animate-pulse text-purple-300" : ""}`} />
               </button>
               <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={handleSendMessage}
-                className="bg-gradient-to-r from-purple-600 to-[#9b5de5] text-white p-3 rounded-full flex items-center justify-center"
+                className="bg-gradient-to-r from-purple-600 to-[#9b5de5] text-white p-2.5 rounded-full flex items-center justify-center"
                 disabled={isTyping || !inputMessage.trim()}
               >
-                <FiSend className="w-6 h-6" />
+                <FiSend className="w-4 h-4" />
               </motion.button>
             </div>
           )}
