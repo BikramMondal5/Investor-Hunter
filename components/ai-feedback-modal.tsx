@@ -32,7 +32,7 @@ export function AIFeedbackModal({ isOpen, onClose, videoFile, onReupload }: AIFe
     { role: "assistant", content: "Hi there! I've analyzed your pitch video. What specific aspect would you like feedback on?" }
   ])
   const [inputMessage, setInputMessage] = useState("")
-  const [score, setScore] = useState(78)
+  const [score, setScore] = useState(8) // Changed from 78 to 8 (out of 10)
 
   // Mock suggestions that would come from an actual AI model
   const [suggestions, setSuggestions] = useState({
@@ -127,7 +127,7 @@ export function AIFeedbackModal({ isOpen, onClose, videoFile, onReupload }: AIFe
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Award className="h-5 w-5 text-amber-500" />
-                    <h3 className="font-semibold">Pitch Score: {score}/100</h3>
+                    <h3 className="font-semibold">Pitch Score: {score}/10</h3>
                   </div>
                   <Button variant="outline" size="sm" onClick={onReupload}>
                     <RefreshCw className="h-4 w-4 mr-1" /> Re-record
