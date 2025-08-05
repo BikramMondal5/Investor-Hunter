@@ -9,6 +9,7 @@ import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize from 'rehype-sanitize';
 import remarkGfm from 'remark-gfm';
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Create a SafeSpeechRecognition type and initialization
 let recognition: any = null;
@@ -39,6 +40,10 @@ Key features of InvestorHunt:
 
 Always be encouraging, helpful, and provide actionable advice. Focus on helping users improve their pitches, understand investor perspectives, and navigate the platform effectively.`;
 
+// Initialize the Gemini API client
+const geminiApiKey = "AIzaSyCAk4mkNVUtb3Fqi1SoU_a4y6r7_sWhxxs";
+const genAI = new GoogleGenerativeAI(geminiApiKey);
+
 // Fallback responses for when the API fails
 const FALLBACK_RESPONSES = [
   "I'd recommend focusing on the problem you're solving in your pitch. Make sure to clearly articulate why your solution is unique and how it addresses a real pain point.",
@@ -51,6 +56,19 @@ const FALLBACK_RESPONSES = [
 // Create personalized welcome messages for different user roles
 const ENTREPRENEUR_WELCOME_MESSAGE = "Hi! I'm Clara, your AI pitch assistant. I can help you structure your pitch, improve your video, or answer questions like 'What should I include?' or 'How do I sound confident?' Just ask!";
 const INVESTOR_WELCOME_MESSAGE = "Hello! I'm Clara, your assistant for exploring high-potential startups. I can help you review pitches, track founder insights, or answer questions about the platform. Let me know what you'd like to do.";
+
+// Create personalized suggested prompts for different user roles
+const ENTREPRENEUR_SUGGESTED_PROMPTS = [
+  "How do I improve my pitch?",
+  "What should I say in my intro video?",
+  "How can I stand out to investors?"
+];
+
+const INVESTOR_SUGGESTED_PROMPTS = [
+  "How can I filter startups by sector?",
+  "What metrics should I look for in pitches?",
+  "How do I track founder interactions?"
+];
 
 export function ClaraAssistant() {
   const [isOpen, setIsOpen] = useState(false);
@@ -117,35 +135,48 @@ export function ClaraAssistant() {
     return FALLBACK_RESPONSES[randomIndex];
   };
 
-  // Simulate AI response - in a production environment, this would call an actual AI API
+  // Real AI response using Gemini API
   const getAIResponse = async (userMessage: string): Promise<string> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const lowerCaseInput = userMessage.toLowerCase();
-        let response = "";
+    try {
+      // Get the model - using the gemini-1.5-flash model
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      
+      // Customize the system prompt based on active mode
+      let systemPrompt = CLARA_AI_PROMPT;
+      if (activeMode === "entrepreneur") {
+        systemPrompt += "\n\nThe user is an entrepreneur using the platform to pitch their startup. Focus on helping them create better pitches, understand investor thinking, and navigate the platform effectively.";
+      } else if (activeMode === "investor") {
+        systemPrompt += "\n\nThe user is an investor using the platform to find promising startups. Focus on helping them evaluate pitches, understand founder strategies, and efficiently use the platform's features to identify opportunities.";
+      }
 
-        if (lowerCaseInput.includes("improve") && lowerCaseInput.includes("pitch")) {
-          response = "To improve your pitch, focus on these key areas:\n\n1️⃣ Clear problem statement - What pain point are you solving?\n2️⃣ Unique value proposition - Why your solution is better\n3️⃣ Market sizing - Show you understand your TAM/SAM/SOM\n4️⃣ Traction metrics - Even small wins matter\n5️⃣ Ask - Be specific about funding needs\n\nWould you like me to explain any of these areas in more detail?";
-        } 
-        else if (lowerCaseInput.includes("intro video") || lowerCaseInput.includes("video")) {
-          response = "For your intro video, keep it under 3 minutes and follow this structure:\n\n• 0:00-0:30: Introduce yourself and team credentials\n• 0:30-1:00: Explain the problem and why it matters\n• 1:00-1:45: Your solution and what makes it unique\n• 1:45-2:15: Business model and traction to date\n• 2:15-3:00: Your ask and how you'll use funding\n\nMake sure to speak clearly and maintain eye contact with the camera!";
-        } 
-        else if (lowerCaseInput.includes("track") || lowerCaseInput.includes("submitted")) {
-          response = "You can track all your submitted pitches and investor interest in the Dashboard section. Go to the main menu and click on 'Dashboard' to see metrics like:\n\n• Pitch views over time\n• Investor engagement stats\n• Feedback on your submissions\n• Follow-up requests\n\nIs there anything specific you'd like to know about tracking your progress?";
-        } 
-        else if (lowerCaseInput.includes("investor") || lowerCaseInput.includes("fund")) {
-          response = "When approaching investors, remember they're looking for:\n\n• Strong, committed founding teams\n• Clear market opportunity and growth potential\n• Sustainable competitive advantage\n• Evidence of traction or validation\n• Reasonable valuation and terms\n\nOn InvestorHunt, you can see which investors have viewed your pitch and expressed interest through the Dashboard.";
-        }
-        else if (lowerCaseInput.includes("help") || lowerCaseInput.includes("what can you")) {
-          response = "I'm here to help you succeed on the InvestorHunt platform! I can assist with:\n\n• Improving your pitch and presentation\n• Understanding what investors look for\n• Navigating the platform features\n• Tracking your submission progress\n• Finding relevant resources\n\nWhat specific area would you like help with today?";
-        }
-        else {
-          response = "Thanks for your question! I can help with pitch preparation, investor strategies, or navigating the InvestorHunt platform. Could you provide more details about what you're looking for help with?";
-        }
+      // Generate content with the model
+      const result = await model.generateContent({
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: systemPrompt }]
+          },
+          {
+            role: "model",
+            parts: [{ text: "I understand my role. I'll help the user according to their needs." }]
+          },
+          {
+            role: "user",
+            parts: [{ text: userMessage }]
+          }
+        ],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 800,
+        },
+      });
 
-        resolve(response);
-      }, 1500); // Simulate network delay
-    });
+      const response = result.response;
+      return response.text();
+    } catch (error) {
+      console.error("Error calling Gemini API:", error);
+      throw error;
+    }
   };
 
   const handleSendMessage = async () => {
@@ -279,11 +310,7 @@ export function ClaraAssistant() {
   };
 
   // Suggested prompts
-  const suggestedPrompts = [
-    "How do I improve my pitch?",
-    "What should I say in my intro video?",
-    "Where can I track my submitted ideas?"
-  ];
+  const suggestedPrompts = activeMode === "entrepreneur" ? ENTREPRENEUR_SUGGESTED_PROMPTS : INVESTOR_SUGGESTED_PROMPTS;
 
   return (
     <>
@@ -377,7 +404,10 @@ export function ClaraAssistant() {
                             p: ({node, ...props}) => <p className="my-1" {...props} />,
                             ul: ({node, ...props}) => <ul className="list-disc pl-4 my-1" {...props} />,
                             ol: ({node, ...props}) => <ol className="list-decimal pl-4 my-1" {...props} />,
-                            li: ({node, ...props}) => <li className="my-0.5" {...props} />,
+                            li: ({node, className, ordered, ...props}) => {
+                              // Filter out boolean props that can't be directly passed to HTML
+                              return <li className="my-0.5" {...props} />;
+                            },
                             a: ({node, ...props}) => <a className="text-blue-400 hover:underline" target="_blank" rel="noopener noreferrer" {...props} />,
                             code: ({node, inline, ...props}) => 
                               inline ? 
