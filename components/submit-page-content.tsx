@@ -12,7 +12,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Switch } from "@/components/ui/switch"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Progress } from "@/components/ui/progress"
-import { Upload, Brain, Shield, CheckCircle } from "lucide-react"
+import { Upload, Brain, Shield, CheckCircle, RefreshCw } from "lucide-react"
+import { AIFeedbackModal } from "@/components/ai-feedback-modal"
 
 export function SubmitPageContent() {
   const [uploadProgress, setUploadProgress] = useState(0)
@@ -20,6 +21,12 @@ export function SubmitPageContent() {
   const [isSubmitted, setIsSubmitted] = useState(false)
   // Use useState and useEffect to ensure client-side rendering
   const [isMounted, setIsMounted] = useState(false)
+
+  // New state for AI feedback modal
+  const [showAIFeedback, setShowAIFeedback] = useState(false)
+  const [videoFile, setVideoFile] = useState<File | null>(null)
+  const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null)
+  const [hasReceivedFeedback, setHasReceivedFeedback] = useState(false)
 
   useEffect(() => {
     setIsMounted(true)
@@ -29,6 +36,12 @@ export function SubmitPageContent() {
     const file = e.target.files?.[0]
     if (file) {
       setIsUploading(true)
+      setVideoFile(file)
+
+      // Create preview URL
+      const url = URL.createObjectURL(file)
+      setVideoPreviewUrl(url)
+      
       // Simulate upload progress
       let progress = 0
       const interval = setInterval(() => {
@@ -37,9 +50,23 @@ export function SubmitPageContent() {
         if (progress >= 100) {
           clearInterval(interval)
           setIsUploading(false)
+          
+          // Open AI feedback modal after upload completes
+          setShowAIFeedback(true)
         }
       }, 200)
     }
+  }
+
+  const handleReupload = () => {
+    setShowAIFeedback(false)
+    setVideoFile(null)
+    setVideoPreviewUrl(null)
+    setHasReceivedFeedback(true)
+    
+    // Reset the file input by clearing the value
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement
+    if (fileInput) fileInput.value = ''
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -112,20 +139,54 @@ export function SubmitPageContent() {
 
                     {/* File Upload */}
                     <div className="space-y-2">
-                      <Label>Pitch Video (Max 3 minutes)</Label>
-                      <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center hover:border-muted-foreground/50 transition-colors relative">
-                        <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                        <div className="space-y-2">
-                          <p className="text-sm font-medium">Drop your video here or click to browse</p>
-                          <p className="text-xs text-muted-foreground">MP4, MOV, AVI up to 100MB</p>
-                        </div>
-                        <input
-                          type="file"
-                          accept="video/*"
-                          onChange={handleFileUpload}
-                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                        />
+                      <div className="flex items-center justify-between">
+                        <Label>Pitch Video (Max 3 minutes)</Label>
+                        {hasReceivedFeedback && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => setShowAIFeedback(true)}
+                            className="text-xs flex items-center gap-1"
+                          >
+                            <Brain className="h-3 w-3" /> View AI feedback
+                          </Button>
+                        )}
                       </div>
+                      
+                      {videoPreviewUrl ? (
+                        <div className="border rounded-lg overflow-hidden">
+                          <div className="relative">
+                            <video 
+                              src={videoPreviewUrl} 
+                              controls 
+                              className="w-full h-auto max-h-[300px]"
+                            />
+                            <Button 
+                              variant="secondary" 
+                              size="sm"
+                              onClick={handleReupload} 
+                              className="absolute top-2 right-2 flex items-center gap-1 bg-background/80 backdrop-blur-sm"
+                            >
+                              <RefreshCw className="h-3 w-3" /> Re-record
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center hover:border-muted-foreground/50 transition-colors relative">
+                          <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                          <div className="space-y-2">
+                            <p className="text-sm font-medium">Drop your video here or click to browse</p>
+                            <p className="text-xs text-muted-foreground">MP4, MOV, AVI up to 100MB</p>
+                          </div>
+                          <input
+                            type="file"
+                            accept="video/*"
+                            onChange={handleFileUpload}
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                          />
+                        </div>
+                      )}
+                      
                       {isUploading && (
                         <div className="space-y-2">
                           <Progress value={uploadProgress} />
@@ -198,7 +259,12 @@ export function SubmitPageContent() {
                       </Label>
                     </div>
 
-                    <Button type="submit" size="lg" className="w-full">
+                    <Button 
+                      type="submit" 
+                      size="lg" 
+                      className="w-full"
+                      disabled={!videoFile}
+                    >
                       <Brain className="mr-2 h-4 w-4" />
                       Analyze & Submit Pitch
                     </Button>
@@ -251,6 +317,14 @@ export function SubmitPageContent() {
           </div>
         </div>
       </div>
+      
+      {/* AI Feedback Modal */}
+      <AIFeedbackModal 
+        isOpen={showAIFeedback} 
+        onClose={() => setShowAIFeedback(false)}
+        videoFile={videoFile}
+        onReupload={handleReupload}
+      />
     </div>
   )
 }
