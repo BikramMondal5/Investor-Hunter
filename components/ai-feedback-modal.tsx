@@ -99,7 +99,7 @@ export function AIFeedbackModal({ isOpen, onClose, videoFile, onReupload }: AIFe
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[700px] max-h-[85vh] flex flex-col overflow-hidden">
+      <DialogContent className="sm:max-w-[700px] max-h-[85vh] flex flex-col overflow-hidden" style={{ minHeight: "600px" }}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Brain className="h-5 w-5 text-primary" />
@@ -115,7 +115,7 @@ export function AIFeedbackModal({ isOpen, onClose, videoFile, onReupload }: AIFe
             <Progress value={65} className="w-[250px]" />
           </div>
         ) : (
-          <Tabs defaultValue="summary" value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
+          <Tabs defaultValue="summary" value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden h-[500px]">
             <TabsList className="grid grid-cols-3">
               <TabsTrigger value="summary">Summary</TabsTrigger>
               <TabsTrigger value="ask-ai">Ask AI</TabsTrigger>
