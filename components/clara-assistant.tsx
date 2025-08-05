@@ -48,6 +48,10 @@ const FALLBACK_RESPONSES = [
   "Remember to highlight any traction or validation you've already achieved. Early customers, partnerships, or industry recognition can significantly strengthen your pitch."
 ];
 
+// Create personalized welcome messages for different user roles
+const ENTREPRENEUR_WELCOME_MESSAGE = "Hi! I'm Clara, your AI pitch assistant. I can help you structure your pitch, improve your video, or answer questions like 'What should I include?' or 'How do I sound confident?' Just ask!";
+const INVESTOR_WELCOME_MESSAGE = "Hello! I'm Clara, your assistant for exploring high-potential startups. I can help you review pitches, track founder insights, or answer questions about the platform. Let me know what you'd like to do.";
+
 export function ClaraAssistant() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
@@ -62,7 +66,7 @@ export function ClaraAssistant() {
   const [isListening, setIsListening] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [activeMode, setActiveMode] = useState("AI Mode"); // Default to AI Mode
+  const [activeMode, setActiveMode] = useState("entrepreneur"); // Default to entrepreneur mode
 
   // Auto scroll to bottom of chat
   useEffect(() => {
@@ -450,19 +454,25 @@ export function ClaraAssistant() {
                   <div className="absolute bottom-12 left-0 bg-[#262626] dark:bg-gray-800 rounded-lg shadow-lg border border-[#333] w-39 overflow-hidden z-10">
                     <div className="py-1">
                       <button 
-                        className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-[#333] hover:bg-gray-700"
+                        className={`w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-[#333] hover:bg-gray-700 ${activeMode === "entrepreneur" ? "bg-purple-900/30" : ""}`}
                         onClick={() => {
-                          setActiveMode("AI Mode");
+                          setActiveMode("entrepreneur");
                           setDropdownOpen(false);
+                          setMessages([
+                            { id: 1, text: ENTREPRENEUR_WELCOME_MESSAGE, sender: "bot", timestamp: new Date() }
+                          ]);
                         }}
                       >
-                        💡 Enterprenuers
+                        💡 Entrepreneurs
                       </button>
                       <button 
-                        className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-[#333] hover:bg-gray-700"
+                        className={`w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-[#333] hover:bg-gray-700 ${activeMode === "investor" ? "bg-purple-900/30" : ""}`}
                         onClick={() => {
-                          setActiveMode("Agent Mode");
+                          setActiveMode("investor");
                           setDropdownOpen(false);
+                          setMessages([
+                            { id: 1, text: INVESTOR_WELCOME_MESSAGE, sender: "bot", timestamp: new Date() }
+                          ]);
                         }}
                       >
                         💼 Investor
