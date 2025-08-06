@@ -1,4 +1,4 @@
-# 💼💡 Investor-Hunt - "Where Ideas Meet Investors” 
+# 💼💡 InvestorHunt - "Where Ideas Meet Investors” 
 
 ![Investor-Hunter Platform](./public/investor-hunt.png)
 
