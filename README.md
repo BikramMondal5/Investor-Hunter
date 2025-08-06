@@ -72,4 +72,4 @@
 Feel free to fork this repository, raise issues, or submit pull requests to add features or improve the design.
 
 ## 📜 License
-This project is licensed under the `MIT License`.
+This project is licensed under the `Apache-2.0 license`.
