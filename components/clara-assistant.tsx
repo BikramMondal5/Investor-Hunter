@@ -76,7 +76,7 @@ If unsure, suggest reviewing the pitch video or contacting the founder directly.
 Always maintain privacy and neutrality. Your purpose is to help investors make informed, confident, and independent decisions on the platform.`;
 
 // Initialize the Gemini API client - get API key from environment variable
-const geminiApiKey = process.env.GEMINI_API_KEY;
+const geminiApiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || "";
 const genAI = new GoogleGenerativeAI(geminiApiKey);
 
 // Fallback responses for when the API fails
