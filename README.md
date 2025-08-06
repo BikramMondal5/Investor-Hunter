@@ -1,4 +1,4 @@
-# 💼💡 Investor-Hunter
+# 💼💡 Investor-Hunt - "Where Ideas Meet Investors” 
 
 ![Investor-Hunter Platform](./public/investor-hunt.png)
 
@@ -28,7 +28,7 @@
 
 1. 📂 Clone the repository
    ```bash
-   git clone https://github.com/yourusername/Investor-Hunter.git
+   git clone https://github.com/BikramMondal5/Investor-Hunter.git
    ```
 2. 🚀 Navigate to the directory
    ```bash
