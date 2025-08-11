@@ -72,7 +72,7 @@ export function SubmitPageContent() {
     e.preventDefault()
     setIsSubmitted(true)
     setTimeout(() => {
-      window.location.href = "/dashboard"
+      window.location.href = "/entrepreneur-registration"
     }, 2000)
   }
 
@@ -88,7 +88,7 @@ export function SubmitPageContent() {
           <CardContent className="p-8 space-y-4">
             <CheckCircle className="h-16 w-16 text-green-500 mx-auto" />
             <h2 className="text-2xl font-bold">Pitch Submitted!</h2>
-            <p className="text-muted-foreground">Your pitch is being analyzed. Redirecting to dashboard...</p>
+            <p className="text-muted-foreground">Your pitch is being processed. Redirecting you to document verification...</p>
           </CardContent>
         </Card>
       </div>
@@ -103,6 +103,9 @@ export function SubmitPageContent() {
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="text-center space-y-4 mb-12">
+            <div className="flex justify-center mb-2">
+              <div className="bg-amber-500 text-black font-medium px-2 py-0.5 rounded-md text-sm">Step 1 of 2</div>
+            </div>
             <h1 className="text-3xl md:text-4xl font-bold">Submit Your Startup Pitch</h1>
             <p className="text-lg md:text-xl text-muted-foreground">
               All it takes is a 3-minute video. No pitch decks. No referrals.
