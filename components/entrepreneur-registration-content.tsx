@@ -134,7 +134,13 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ document, onUpload }) =
   const [uploading, setUploading] = React.useState(false)
   const [progress, setProgress] = React.useState(0)
   const [uploadStatus, setUploadStatus] = React.useState<UploadStatus>(null) 
+  const [isMounted, setIsMounted] = React.useState(false)
   const fileInputRef = React.useRef<HTMLInputElement>(null)
+  
+  // Only run on client
+  React.useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return
@@ -209,6 +215,26 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ document, onUpload }) =
       default:
         return null
     }
+  }
+
+  // Prevent hydration errors by not rendering interactive elements during SSR
+  if (!isMounted) {
+    return (
+      <Card className="border border-gray-800 bg-gray-950">
+        <CardHeader className="pb-4">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <document.icon className="h-5 w-5 text-amber-500" />
+              <CardTitle className="text-lg">{document.title}</CardTitle>
+            </div>
+          </div>
+          <CardDescription className="text-gray-400">{document.description}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-40 w-full bg-gray-900/50 rounded-lg animate-pulse"></div>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
@@ -318,9 +344,16 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ document, onUpload }) =
 type FormData = z.infer<typeof formSchema>;
 
 export function EntrepreneurRegistrationContent() {
+  // Add client-side only rendering state
+  const [isMounted, setIsMounted] = React.useState(false)
   const [submitting, setSubmitting] = React.useState(false)
   const [showConfirmation, setShowConfirmation] = React.useState(false)
   const [formData, setFormData] = React.useState<FormData | null>(null)
+  
+  // Only render on client side
+  React.useEffect(() => {
+    setIsMounted(true)
+  }, [])
   
   // Define form
   const form = useForm<FormData>({
@@ -351,6 +384,21 @@ export function EntrepreneurRegistrationContent() {
       // Show success toast or redirect
       window.location.href = "/dashboard" // After document verification, entrepreneurs go to their dashboard
     }, 2000)
+  }
+
+  // Don't render anything during server-side rendering
+  if (!isMounted) {
+    return (
+      <div className="container py-10 min-h-screen">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="bg-amber-500 text-black font-medium px-2 py-0.5 rounded-md text-sm">Step 2 of 2</div>
+        </div>
+        <h1 className="text-3xl font-bold tracking-tight">Entrepreneur Registration & Document Verification</h1>
+        <p className="text-gray-400 max-w-3xl mt-2">
+          Loading registration form...
+        </p>
+      </div>
+    );
   }
 
   return (
