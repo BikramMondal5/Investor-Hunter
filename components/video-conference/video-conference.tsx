@@ -259,18 +259,18 @@ export default function VideoConference({
     setPinnedParticipant(pinnedParticipant === id ? null : id);
   };
   
-  // Enhanced grid layout with fixed proportions to prevent layout shifts
+  // Enhanced grid layout with larger containers for better visibility
   const getGridTemplateAreas = () => {
     const count = participants.length;
     
     if (pinnedParticipant) {
       return {
         gridTemplateAreas: '"pinned pinned" "other1 other2"',
-        gridTemplateRows: '3fr 1fr', 
+        gridTemplateRows: '3.5fr 1fr', // Increased ratio for pinned view
         gridTemplateColumns: '1fr 1fr',
-        // Fixed aspect ratios and minimum sizes to prevent layout shifts
+        // Fixed aspect ratios and increased sizes for better visibility
         aspectRatio: '16/9',
-        minHeight: '400px',
+        minHeight: '500px', // Increased from 400px
       };
     }
     
@@ -279,9 +279,11 @@ export default function VideoConference({
         gridTemplateAreas: '"single"',
         gridTemplateRows: '1fr',
         gridTemplateColumns: '1fr',
-        // Single video takes full space with consistent aspect ratio
+        // Single video takes full space with enhanced size
         aspectRatio: '16/9',
-        minHeight: '400px',
+        minHeight: '500px', // Increased from 400px
+        maxWidth: '80%', // Ensure it doesn't get too wide on large screens
+        margin: '0 auto', // Center it
       };
     }
     
@@ -290,9 +292,10 @@ export default function VideoConference({
         gridTemplateAreas: '"first second"',
         gridTemplateRows: '1fr',
         gridTemplateColumns: '1fr 1fr',
-        // Side-by-side layout with fixed proportions
-        aspectRatio: '2/1',
-        minHeight: '400px',
+        // Side-by-side layout with improved proportions
+        aspectRatio: '16/9', // Changed from 2/1 for better video display
+        minHeight: '500px', // Increased from 400px
+        gap: '16px', // Increased gap between videos
       };
     }
     
@@ -301,9 +304,10 @@ export default function VideoConference({
       gridTemplateAreas: '"first second" "third fourth"',
       gridTemplateRows: '1fr 1fr',
       gridTemplateColumns: '1fr 1fr',
-      // Square-ish layout for 4 participants
-      aspectRatio: '4/3',
-      minHeight: '400px',
+      // Improved layout for 4 participants
+      aspectRatio: '16/9', // Changed from 4/3 for better widescreen video display
+      minHeight: '500px', // Increased from 400px
+      gap: '12px', // Increased gap between videos
     };
   };
   
@@ -326,15 +330,16 @@ export default function VideoConference({
       )}
       
       <div className="flex flex-1 relative overflow-hidden">
-        {/* Main video grid - with fixed dimensions and aspect ratio for stability */}
+        {/* Main video grid - with increased dimensions for better visibility */}
         <div 
-          className="flex-1 grid gap-2 p-2 max-w-[calc(100vw-2rem)] mx-auto" 
+          className="flex-1 grid gap-3 p-3 max-w-[calc(100vw-1.5rem)] mx-auto" 
           style={{
             ...getGridTemplateAreas(),
             // These styles ensure the grid maintains consistent proportions
-            // regardless of camera state changes
+            // with increased size for better visibility
             height: "100%", 
-            maxHeight: "calc(100vh - 150px)", // Leave space for header and controls
+            maxHeight: "calc(100vh - 130px)", // Increased height by reducing space for header/controls
+            minHeight: "500px", // Increased minimum height (was 400px)
           }}
         >
           {participants.map((participant, index) => (
