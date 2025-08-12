@@ -1,16 +1,18 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Moon, Sun, Menu, X } from "lucide-react"
 import { useTheme } from "next-themes"
 import { UserTypeModal } from "@/components/ui/user-type-modal"
+import { usePathname } from "next/navigation"
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isUserTypeModalOpen, setIsUserTypeModalOpen] = useState(false)
   const { theme, setTheme } = useTheme()
+  const pathname = usePathname()
 
   const handleGetStartedClick = () => {
     setIsUserTypeModalOpen(true)
@@ -33,10 +35,16 @@ export function Header() {
           <Link href="/" className="text-sm font-medium hover:text-primary transition-colors">
             Home
           </Link>
-          <Link href="#how-it-works" className="text-sm font-medium hover:text-primary transition-colors">
+          <Link 
+            href={pathname === "/" ? "#how-it-works" : "/#how-it-works"} 
+            className="text-sm font-medium hover:text-primary transition-colors"
+          >
             How it Works
           </Link>
-          <Link href="#features" className="text-sm font-medium hover:text-primary transition-colors">
+          <Link 
+            href={pathname === "/" ? "#features" : "/#features"} 
+            className="text-sm font-medium hover:text-primary transition-colors"
+          >
             Features
           </Link>
           <Link href="/investor" className="text-sm font-medium hover:text-primary transition-colors">
@@ -74,10 +82,16 @@ export function Header() {
             <Link href="/" className="block text-sm font-medium hover:text-primary transition-colors">
               Home
             </Link>
-            <Link href="#how-it-works" className="block text-sm font-medium hover:text-primary transition-colors">
+            <Link 
+              href={pathname === "/" ? "#how-it-works" : "/#how-it-works"} 
+              className="block text-sm font-medium hover:text-primary transition-colors"
+            >
               How it Works
             </Link>
-            <Link href="#features" className="block text-sm font-medium hover:text-primary transition-colors">
+            <Link 
+              href={pathname === "/" ? "#features" : "/#features"} 
+              className="block text-sm font-medium hover:text-primary transition-colors"
+            >
               Features
             </Link>
             <Link href="/investor" className="block text-sm font-medium hover:text-primary transition-colors">
