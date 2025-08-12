@@ -153,6 +153,7 @@ export default function VideoConference({
         isSpeaking: false,
         isScreenSharing: isScreenSharing,
         stream: cameraStream, // Use the actual camera stream for the local participant
+        avatarUrl: '/placeholder-user.jpg',
       },
       {
         id: 'participant1',
@@ -160,7 +161,8 @@ export default function VideoConference({
         role: 'Entrepreneur',
         isMuted: false,
         isVideoOff: true,
-        isSpeaking: true,
+        isSpeaking: false,
+        avatarUrl: '/Arijit-Sarker.jpeg',
       },
       {
         id: 'participant2',
@@ -169,6 +171,7 @@ export default function VideoConference({
         isMuted: true,
         isVideoOff: true,
         isSpeaking: false,
+        avatarUrl: '/Debashish-Sarkar.jpeg',
       },
       {
         id: 'participant3',
@@ -177,6 +180,7 @@ export default function VideoConference({
         isMuted: false,
         isVideoOff: true,
         isSpeaking: false,
+        avatarUrl: 'https://avatars.githubusercontent.com/u/170235967?v=4',
       },
       {
         id: 'participant4',
@@ -185,6 +189,7 @@ export default function VideoConference({
         isMuted: false,
         isVideoOff: true,
         isSpeaking: false,
+        avatarUrl: '/Koushik-Ghosh.jpeg',
       },
     ];
     

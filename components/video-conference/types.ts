@@ -3,7 +3,7 @@
 export interface Participant {
   id: string;
   name: string;
-  role: 'Host' | 'Entrepreneur' | 'Investor' | 'Guest';
+  role: 'Host' | 'Entrepreneur' | 'Investor' | 'Guest' | 'Developer' | 'Designer';
   isMuted: boolean;
   isVideoOff: boolean;
   isSpeaking?: boolean;

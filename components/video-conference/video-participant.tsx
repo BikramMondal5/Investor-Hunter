@@ -85,22 +85,46 @@ export default function VideoParticipant({
           {/* Placeholder when video is off */}
           {participant.isVideoOff && (
             <div className="flex flex-col items-center justify-center h-full w-full bg-gradient-to-br from-[#1E1E1E] to-[#111111] z-20">
-              <Avatar className="h-28 w-28 bg-gradient-to-br from-[#4F46E5] to-[#9333EA] text-white text-3xl shadow-lg">
-                {participant.name.split(' ').map(n => n[0]).join('').toUpperCase()}
-              </Avatar>
-              <div className="text-[#EAEAEA] mt-4 font-medium text-lg">{participant.name}</div>
+              {participant.avatarUrl ? (
+                <div className="h-28 w-28 rounded-full overflow-hidden shadow-lg">
+                  <img 
+                    src={participant.avatarUrl} 
+                    alt={participant.name} 
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              ) : (
+                <Avatar className="h-28 w-28 bg-gradient-to-br from-[#4F46E5] to-[#9333EA] text-white text-3xl shadow-lg">
+                  {participant.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                </Avatar>
+              )}
+              <div className="text-center w-full">
+                <div className="text-[#EAEAEA] mt-4 font-medium text-lg">{participant.name}</div>
+                <div className="text-[#A1A1A1] text-sm mt-1">{participant.role}</div>
+              </div>
             </div>
           )}
         </div>
       </div>
       
-      {/* Participant info overlay */}
-      <div className="absolute bottom-0 left-0 p-3 text-[#EAEAEA] flex items-center gap-1 text-sm">
-        <span className="font-medium">{participant.name}</span>
-        <span className="text-xs bg-[#1A1A1A]/70 px-2 py-0.5 rounded-full text-[#A1A1A1]">
-          {participant.role}
-        </span>
-      </div>
+      {/* Participant info overlay - only shown when video is on */}
+      {!participant.isVideoOff && (
+        <div className="absolute bottom-0 left-0 right-0 p-3 text-[#EAEAEA] bg-gradient-to-t from-black/60 to-transparent flex items-center justify-center gap-2 text-sm">
+          {participant.avatarUrl && (
+            <div className="h-6 w-6 rounded-full overflow-hidden mr-1">
+              <img 
+                src={participant.avatarUrl} 
+                alt={participant.name} 
+                className="h-full w-full object-cover"
+              />
+            </div>
+          )}
+          <span className="font-medium">{participant.name}</span>
+          <span className="text-xs bg-[#1A1A1A]/70 px-2 py-0.5 rounded-full text-[#A1A1A1]">
+            {participant.role}
+          </span>
+        </div>
+      )}
       
       {/* Status icons */}
       <div className="absolute top-3 right-3 flex items-center gap-2">
