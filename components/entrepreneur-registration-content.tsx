@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { Shield, Upload, Eye, RefreshCw, FileCheck, AlertCircle, Clock, CheckCircle, XCircle } from "lucide-react"
+import { Header } from "@/components/header"
 import type { ChangeEvent, DragEvent } from "react"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
@@ -402,11 +403,13 @@ export function EntrepreneurRegistrationContent() {
   }
 
   return (
-    <div className="min-h-screen py-10">
-      <div className="max-w-[1200px] mx-auto px-6">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="bg-amber-500 text-black font-medium px-2 py-0.5 rounded-md text-sm">Step 2 of 2</div>
-        </div>
+    <>
+      <Header />
+      <div className="min-h-screen py-10">
+        <div className="max-w-[1200px] mx-auto px-6">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="bg-amber-500 text-black font-medium px-2 py-0.5 rounded-md text-sm">Step 2 of 2</div>
+          </div>
         <h1 className="text-3xl font-bold tracking-tight mb-3">Entrepreneur Registration & Document Verification</h1>
         <p className="text-gray-400 mt-2 mb-8">
           Now that you've submitted your pitch video, complete your registration by uploading required business documents for verification. 
@@ -662,5 +665,6 @@ export function EntrepreneurRegistrationContent() {
       </Dialog>
       </div>
     </div>
+    </>
   )
 }
