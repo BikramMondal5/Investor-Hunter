@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Switch } from "@/components/ui/switch"
+import { useRouter } from "next/navigation"
 import {
   Dialog,
   DialogContent,
@@ -28,7 +29,15 @@ import {
   Users,
 } from "lucide-react"
 
+interface SidebarItem {
+  id: string;
+  label: string;
+  icon: React.ElementType;
+  link?: string;
+}
+
 export default function Dashboard() {
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState("dashboard")
   const [videoModalOpen, setVideoModalOpen] = useState(false)
   const [feedbackLikes, setFeedbackLikes] = useState<{ [key: number]: number }>({})
@@ -69,6 +78,8 @@ export default function Dashboard() {
     { id: "pitch", label: "My Pitch", icon: Play },
     { id: "analytics", label: "Feedback & Analytics", icon: TrendingUp },
     { id: "messages", label: "Investor Messages", icon: MessageSquare },
+    { id: "interview", label: "Internal Interview", icon: MessageCircle, link: "/internal-interview" },
+    { id: "investor-meeting", label: "Investor Meeting", icon: Users, link: "/investor-meeting" },
     { id: "settings", label: "Settings", icon: Settings },
   ]
 
@@ -151,7 +162,13 @@ export default function Dashboard() {
                 key={item.id}
                 variant={activeTab === item.id ? "default" : "ghost"}
                 className="w-full justify-start"
-                onClick={() => setActiveTab(item.id)}
+                onClick={() => {
+                  if (item.link) {
+                    router.push(item.link);
+                  } else {
+                    setActiveTab(item.id);
+                  }
+                }}
               >
                 <item.icon className="mr-2 h-4 w-4" />
                 {item.label}
