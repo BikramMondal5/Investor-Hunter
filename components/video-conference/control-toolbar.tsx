@@ -63,6 +63,9 @@ export default function ControlToolbar({
   onVirtualBackgroundChange,
 }: ControlToolbarProps) {
   const [showSettings, setShowSettings] = useState(false);
+  const [keyboardShortcutsEnabled, setKeyboardShortcutsEnabled] = useState(true);
+  const [showSelfView, setShowSelfView] = useState(false);
+  const [highContrastMode, setHighContrastMode] = useState(false);
 
   return (
     <>
@@ -232,15 +235,30 @@ export default function ControlToolbar({
               <h3 className="text-sm font-medium">General Settings</h3>
               <div className="flex flex-col gap-2">
                 <label className="flex items-center space-x-2">
-                  <input type="checkbox" className="rounded bg-[#0D0D0D] border-[#2A2A2A]" />
+                  <input 
+                    type="checkbox" 
+                    className="rounded bg-[#0D0D0D] border-[#2A2A2A]" 
+                    checked={showSelfView}
+                    onChange={(e) => setShowSelfView(e.target.checked)}
+                  />
                   <span className="text-sm">Show self view</span>
                 </label>
                 <label className="flex items-center space-x-2">
-                  <input type="checkbox" className="rounded bg-[#0D0D0D] border-[#2A2A2A]" checked />
+                  <input 
+                    type="checkbox" 
+                    className="rounded bg-[#0D0D0D] border-[#2A2A2A]" 
+                    checked={keyboardShortcutsEnabled}
+                    onChange={(e) => setKeyboardShortcutsEnabled(e.target.checked)}
+                  />
                   <span className="text-sm">Enable keyboard shortcuts</span>
                 </label>
                 <label className="flex items-center space-x-2">
-                  <input type="checkbox" className="rounded bg-[#0D0D0D] border-[#2A2A2A]" />
+                  <input 
+                    type="checkbox" 
+                    className="rounded bg-[#0D0D0D] border-[#2A2A2A]" 
+                    checked={highContrastMode}
+                    onChange={(e) => setHighContrastMode(e.target.checked)}
+                  />
                   <span className="text-sm">High contrast mode</span>
                 </label>
               </div>

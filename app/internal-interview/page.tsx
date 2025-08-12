@@ -1,40 +1,34 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import VideoConference from "@/components/video-conference/video-conference";
 import { Button } from "@/components/ui/button";
-import { Camera, UserPlus, Users } from "lucide-react";
 
 export default function InterviewScreeningPage() {
   const router = useRouter();
-  const [isInMeeting, setIsInMeeting] = useState(false);
   const [meetingCode, setMeetingCode] = useState("IH-MEETING");
+  // We don't need these refs anymore as we're not handling video on this page
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   
   // Generate meeting code on client-side only to prevent hydration mismatch
   useEffect(() => {
     setMeetingCode("IH-" + Math.random().toString(36).substring(2, 8).toUpperCase());
   }, []);
 
+  // Cleanup any media streams when component unmounts
+  useEffect(() => {
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, []);
+
   const startMeeting = () => {
-    setIsInMeeting(true);
+    // Instead of showing the meeting in the same page, navigate to the meeting route
+    router.push(`/internal-interview/meeting?code=${meetingCode}`);
   };
-
-  const endMeeting = () => {
-    // In a real app, you would clean up WebRTC connections here
-    router.push("/dashboard");
-  };
-
-  if (isInMeeting) {
-    return (
-      <VideoConference
-        meetingTitle="InvestorHunt Internal Interview"
-        meetingCode={meetingCode}
-        isRecording={true}
-        onLeave={endMeeting}
-      />
-    );
-  }
 
   return (
     <div className="min-h-screen bg-[#0D0D0D] flex flex-col">
@@ -69,7 +63,7 @@ export default function InterviewScreeningPage() {
               </ul>
             </div>
             
-            <div className="pt-4">
+            <div className="pt-4">              
               <Button 
                 onClick={startMeeting} 
                 className="w-full py-6 text-lg font-medium bg-gradient-to-r from-[#4F46E5] to-[#9333EA] hover:from-[#4338CA] hover:to-[#7E22CE] text-white"
