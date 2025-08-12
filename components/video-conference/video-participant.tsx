@@ -27,8 +27,8 @@ export default function VideoParticipant({
   const [isHovering, setIsHovering] = useState(false);
 
   // Handle video errors
-  const handleVideoError = () => {
-    console.error("Video playback error for participant:", participant.id);
+  const handleVideoError = (e: any) => {
+    console.error("Video playback error for participant:", participant.id, e);
   };
 
   // Set up video stream
@@ -36,8 +36,18 @@ export default function VideoParticipant({
     if (!videoRef.current) return;
     
     if (!participant.isVideoOff && participant.stream) {
-      videoRef.current.srcObject = participant.stream;
-      console.log(`Set camera stream for ${participant.name}`);
+      try {
+        videoRef.current.srcObject = participant.stream;
+        
+        // Make sure the video starts playing
+        videoRef.current.play().catch(e => {
+          console.error(`Error playing video for ${participant.name}:`, e);
+        });
+        
+        console.log(`Set camera stream for ${participant.name}`);
+      } catch (err) {
+        console.error(`Error setting stream for ${participant.name}:`, err);
+      }
     } else if (participant.isVideoOff && videoRef.current.srcObject) {
       videoRef.current.srcObject = null;
     }
@@ -63,12 +73,13 @@ export default function VideoParticipant({
             ref={videoRef}
             autoPlay 
             playsInline
-            muted={participant.isMuted}
+            muted={participant.id === 'self' || participant.isMuted}
             onError={handleVideoError}
             className={cn(
               "object-cover absolute inset-0 w-full h-full z-10 transition-opacity duration-300",
               participant.isVideoOff ? "opacity-0" : "opacity-100 animate-fade-in"
             )}
+            style={{ display: participant.isVideoOff ? 'none' : 'block' }}
           />
           
           {/* Placeholder when video is off */}

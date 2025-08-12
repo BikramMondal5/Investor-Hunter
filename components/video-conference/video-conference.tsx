@@ -140,6 +140,8 @@ export default function VideoConference({
   
   // Update participants data with camera stream
   useEffect(() => {
+    console.log("Camera stream changed:", cameraStream?.id);
+    
     // Simulated participants data
     const mockParticipants: Participant[] = [
       {
@@ -169,6 +171,13 @@ export default function VideoConference({
         isSpeaking: false,
       },
     ];
+    
+    // Debug log for the local participant to confirm stream is attached
+    if (cameraStream) {
+      const videoTracks = cameraStream.getVideoTracks();
+      console.log("Setting participant with video tracks:", videoTracks.length, 
+        videoTracks.map(t => `${t.label} (${t.readyState})`).join(", "));
+    }
     
     setParticipants(mockParticipants);
     
@@ -202,18 +211,25 @@ export default function VideoConference({
     const wasVideoOff = isVideoOff;
     
     if (wasVideoOff) {
-      // First update the UI state to show we're turning the camera on
-      setIsVideoOff(false);
-      
-      // Then attempt to start the camera using our hook
-      const stream = await startCamera();
-      
-      // If we couldn't get a stream, revert the UI state
-      if (!stream) {
-        setIsVideoOff(true);
-        console.log("Camera toggle failed - reverting to camera off state");
-      } else {
-        console.log("Camera toggled on successfully");
+      try {
+        // First attempt to start the camera using our hook
+        const stream = await startCamera();
+        
+        // If we couldn't get a stream, don't update the UI state
+        if (!stream) {
+          console.log("Camera toggle failed - camera remains off");
+          return;
+        }
+        
+        // Update the UI state after we successfully got the stream
+        setIsVideoOff(false);
+        console.log("Camera toggled on successfully", stream.id);
+        
+        // Debug: Log video tracks to verify they exist
+        const videoTracks = stream.getVideoTracks();
+        console.log("Video tracks:", videoTracks.length, videoTracks[0]?.label);
+      } catch (error) {
+        console.error("Error toggling camera:", error);
       }
     } else {
       // For turning camera off, stop camera first then update UI
