@@ -226,58 +226,6 @@ export default function VideoConference({
         isRecording={isRecording} 
       />
       
-      {/* Quick access device controls - matching the red box from the screenshot */}
-      <div className="absolute top-16 left-1/2 transform -translate-x-1/2 z-10">
-        <div className="bg-black bg-opacity-70 rounded-lg py-2 px-4 flex items-center gap-4">
-          {/* Camera icon */}
-          <button 
-            className={cn(
-              "w-10 h-10 flex items-center justify-center text-white", 
-              isVideoOff ? "opacity-50" : "opacity-100"
-            )}
-            onClick={toggleVideo}
-            aria-label="Toggle camera"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="2" y="6" width="16" height="12" rx="2" ry="2"></rect>
-              <path d="M22 8l-4 4 4 4V8z"></path>
-            </svg>
-          </button>
-          
-          {/* Add participant icon - This would typically open an invite dialog */}
-          <button 
-            className="w-10 h-10 flex items-center justify-center text-white opacity-80 hover:opacity-100"
-            onClick={() => {
-              // Copy meeting link to clipboard
-              navigator.clipboard.writeText(window.location.href);
-              alert("Meeting link copied to clipboard! Share this link to invite others.");
-            }}
-            aria-label="Add participant"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-              <circle cx="8.5" cy="7" r="4"></circle>
-              <line x1="20" y1="8" x2="20" y2="14"></line>
-              <line x1="17" y1="11" x2="23" y2="11"></line>
-            </svg>
-          </button>
-          
-          {/* Participants icon */}
-          <button 
-            className="w-10 h-10 flex items-center justify-center text-white opacity-80 hover:opacity-100"
-            onClick={toggleParticipantsPanel}
-            aria-label="Manage participants"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-              <circle cx="9" cy="7" r="4"></circle>
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-            </svg>
-          </button>
-        </div>
-      </div>
-      
       <div className="flex flex-1 relative">
         {/* Main video grid */}
         <div 
