@@ -350,6 +350,7 @@ export function ClaraAssistant() {
         className="fixed bottom-5 right-5 w-16 h-16 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white flex items-center justify-center shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 p-0 border-2 border-white/20 z-50"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
+        suppressHydrationWarning
       >
         {isOpen ? (
           <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -562,6 +563,7 @@ export function ClaraAssistant() {
                 onClick={handleSendMessage}
                 className="bg-gradient-to-r from-purple-600 to-[#9b5de5] text-white p-2.5 rounded-full flex items-center justify-center"
                 disabled={isTyping || !inputMessage.trim()}
+                suppressHydrationWarning
               >
                 <FiSend className="w-4 h-4" />
               </motion.button>
