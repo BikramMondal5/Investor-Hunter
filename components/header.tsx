@@ -6,11 +6,13 @@ import { Button } from "@/components/ui/button"
 import { Moon, Sun, Menu, X } from "lucide-react"
 import { useTheme } from "next-themes"
 import { UserTypeModal } from "@/components/ui/user-type-modal"
+import { AuthModal } from "@/components/ui/auth-modal"
 import { usePathname } from "next/navigation"
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isUserTypeModalOpen, setIsUserTypeModalOpen] = useState(false)
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const { theme, setTheme } = useTheme()
   const pathname = usePathname()
 
@@ -47,9 +49,12 @@ export function Header() {
           >
             Features
           </Link>
-          <Link href="/investor" className="text-sm font-medium hover:text-primary transition-colors">
+          <button 
+            onClick={() => setIsAuthModalOpen(true)}
+            className="text-sm font-medium hover:text-primary transition-colors"
+          >
             Sign In
-          </Link>
+          </button>
         </nav>
 
         <div className="flex items-center space-x-4">
@@ -94,9 +99,15 @@ export function Header() {
             >
               Features
             </Link>
-            <Link href="/investor" className="block text-sm font-medium hover:text-primary transition-colors">
+            <button
+              onClick={() => {
+                setIsAuthModalOpen(true);
+                setIsMenuOpen(false);
+              }}
+              className="block text-sm font-medium hover:text-primary transition-colors text-left w-full"
+            >
               Sign In
-            </Link>
+            </button>
             <Button className="w-full mt-2" onClick={handleGetStartedClick}>
               Get Started
             </Button>
@@ -108,6 +119,12 @@ export function Header() {
       <UserTypeModal 
         isOpen={isUserTypeModalOpen} 
         onClose={() => setIsUserTypeModalOpen(false)} 
+      />
+      
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
       />
     </header>
   )
