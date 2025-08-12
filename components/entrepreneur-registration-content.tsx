@@ -238,21 +238,21 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ document, onUpload }) =
   }
 
   return (
-    <Card className="border border-gray-800 bg-gray-950">
-      <CardHeader className="pb-4">
+    <Card className="border border-gray-800 bg-gray-950 h-full flex flex-col">
+      <CardHeader className="pb-3">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <document.icon className="h-5 w-5 text-amber-500" />
+            <document.icon className="h-5 w-5 text-amber-500 flex-shrink-0" />
             <CardTitle className="text-lg">{document.title}</CardTitle>
             {uploadStatus && getStatusIcon()}
           </div>
         </div>
-        <CardDescription className="text-gray-400">{document.description}</CardDescription>
+        <CardDescription className="text-gray-400 mt-2">{document.description}</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-1 flex">
         {files.length === 0 ? (
           <div
-            className="border-2 border-dashed border-gray-700 rounded-lg p-8 text-center cursor-pointer hover:border-amber-500 transition-colors"
+            className="border-2 border-dashed border-gray-700 rounded-lg p-6 text-center cursor-pointer hover:border-amber-500 transition-colors flex flex-col items-center justify-center w-full"
             onDragOver={handleDragOver}
             onDrop={handleDrop}
             onClick={handleBrowse}
@@ -263,7 +263,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ document, onUpload }) =
             <Button 
               variant="secondary" 
               size="sm" 
-              className="mt-2"
+              className="mt-3"
               onClick={(e) => {
                 e.stopPropagation()
                 handleBrowse()
@@ -282,19 +282,19 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ document, onUpload }) =
             <p className="text-gray-500 text-xs mt-4">Max 10MB, PDF/JPG/PNG</p>
           </div>
         ) : (
-          <div>
-            <div className="space-y-2">
+          <div className="w-full flex flex-col h-full">
+            <div className="space-y-3 w-full flex-1">
               {files.map((file, index) => (
-                <div key={index} className="flex justify-between items-center p-2 bg-gray-900 rounded-md">
+                <div key={index} className="flex justify-between items-center p-3 bg-gray-900 rounded-md">
                   <div className="flex items-center gap-2 text-sm overflow-hidden">
                     <FileCheck className="h-4 w-4 flex-shrink-0 text-amber-500" />
                     <span className="truncate">{file.name}</span>
                   </div>
-                  <div className="flex gap-1">
+                  <div className="flex gap-2">
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-7 w-7">
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
                             <Eye className="h-4 w-4" />
                           </Button>
                         </TooltipTrigger>
@@ -402,44 +402,45 @@ export function EntrepreneurRegistrationContent() {
   }
 
   return (
-    <div className="container py-10 min-h-screen">
-      <div className="flex items-center gap-2 mb-2">
-        <div className="bg-amber-500 text-black font-medium px-2 py-0.5 rounded-md text-sm">Step 2 of 2</div>
-      </div>
-      <h1 className="text-3xl font-bold tracking-tight">Entrepreneur Registration & Document Verification</h1>
-      <p className="text-gray-400 max-w-3xl mt-2">
-        Now that you've submitted your pitch video, complete your registration by uploading required business documents for verification. 
-        This ensures authenticity and builds investor trust.
-      </p>
-      
-      <Alert className="mt-6 max-w-3xl bg-gray-900 border-gray-800">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Important Information</AlertTitle>
-        <AlertDescription>
-          <ul className="list-disc list-inside space-y-1 mt-2 text-sm">
-            <li>Documents are encrypted & stored securely.</li>
-            <li>Verification may take up to 48 hours.</li>
-            <li>All uploads must be in PDF, JPG, or PNG format.</li>
-          </ul>
-        </AlertDescription>
-      </Alert>
+    <div className="min-h-screen py-10">
+      <div className="max-w-[1200px] mx-auto px-6">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="bg-amber-500 text-black font-medium px-2 py-0.5 rounded-md text-sm">Step 2 of 2</div>
+        </div>
+        <h1 className="text-3xl font-bold tracking-tight mb-3">Entrepreneur Registration & Document Verification</h1>
+        <p className="text-gray-400 mt-2 mb-8">
+          Now that you've submitted your pitch video, complete your registration by uploading required business documents for verification. 
+          This ensures authenticity and builds investor trust.
+        </p>
+        
+        <Alert className="mt-6 mb-8 bg-gray-900 border-gray-800 rounded-lg shadow-sm">
+          <AlertCircle className="h-5 w-5" />
+          <AlertTitle className="text-lg">Important Information</AlertTitle>
+          <AlertDescription>
+            <ul className="list-disc list-inside space-y-2 mt-3 text-sm">
+              <li>Documents are encrypted & stored securely.</li>
+              <li>Verification may take up to 48 hours.</li>
+              <li>All uploads must be in PDF, JPG, or PNG format.</li>
+            </ul>
+          </AlertDescription>
+        </Alert>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 mt-8">
-          <div className="space-y-6">
-            <h2 className="text-xl font-semibold tracking-tight">1. Registration Information</h2>
+          <div className="space-y-8">
+            <h2 className="text-2xl font-semibold tracking-tight mb-6">1. Registration Information</h2>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6">
               <FormField
                 control={form.control}
                 name="fullName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Full Name</FormLabel>
+                    <FormLabel className="text-base font-medium mb-2 block">Full Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="John Doe" {...field} className="bg-gray-950 border-gray-800" />
+                      <Input placeholder="John Doe" {...field} className="bg-gray-950 border-gray-800 h-11" />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="mt-1.5" />
                   </FormItem>
                 )}
               />
@@ -449,11 +450,11 @@ export function EntrepreneurRegistrationContent() {
                 name="businessName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Business Name</FormLabel>
+                    <FormLabel className="text-base font-medium mb-2 block">Business Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Acme Inc." {...field} className="bg-gray-950 border-gray-800" />
+                      <Input placeholder="Acme Inc." {...field} className="bg-gray-950 border-gray-800 h-11" />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="mt-1.5" />
                   </FormItem>
                 )}
               />
@@ -463,11 +464,11 @@ export function EntrepreneurRegistrationContent() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email Address</FormLabel>
+                    <FormLabel className="text-base font-medium mb-2 block">Email Address</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="john@example.com" {...field} className="bg-gray-950 border-gray-800" />
+                      <Input type="email" placeholder="john@example.com" {...field} className="bg-gray-950 border-gray-800 h-11" />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="mt-1.5" />
                   </FormItem>
                 )}
               />
@@ -477,11 +478,11 @@ export function EntrepreneurRegistrationContent() {
                 name="contactNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Contact Number</FormLabel>
+                    <FormLabel className="text-base font-medium mb-2 block">Contact Number</FormLabel>
                     <FormControl>
-                      <Input placeholder="+1 (555) 123-4567" {...field} className="bg-gray-950 border-gray-800" />
+                      <Input placeholder="+1 (555) 123-4567" {...field} className="bg-gray-950 border-gray-800 h-11" />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="mt-1.5" />
                   </FormItem>
                 )}
               />
@@ -490,26 +491,26 @@ export function EntrepreneurRegistrationContent() {
                 control={form.control}
                 name="businessRegistrationNumber"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Business Registration Number</FormLabel>
+                  <FormItem className="lg:col-span-2">
+                    <FormLabel className="text-base font-medium mb-2 block">Business Registration Number</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. LLC-123456" {...field} className="bg-gray-950 border-gray-800" />
+                      <Input placeholder="e.g. LLC-123456" {...field} className="bg-gray-950 border-gray-800 h-11" />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="mt-1.5" />
                   </FormItem>
                 )}
               />
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 lg:col-span-2">
                 <FormField
                   control={form.control}
                   name="industryType"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Industry Type</FormLabel>
+                      <FormLabel className="text-base font-medium mb-2 block">Industry Type</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
-                          <SelectTrigger className="bg-gray-950 border-gray-800">
+                          <SelectTrigger className="bg-gray-950 border-gray-800 h-11">
                             <SelectValue placeholder="Select industry" />
                           </SelectTrigger>
                         </FormControl>
@@ -521,7 +522,7 @@ export function EntrepreneurRegistrationContent() {
                           ))}
                         </SelectContent>
                       </Select>
-                      <FormMessage />
+                      <FormMessage className="mt-1.5" />
                     </FormItem>
                   )}
                 />
@@ -531,10 +532,10 @@ export function EntrepreneurRegistrationContent() {
                   name="country"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Country</FormLabel>
+                      <FormLabel className="text-base font-medium mb-2 block">Country</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
-                          <SelectTrigger className="bg-gray-950 border-gray-800">
+                          <SelectTrigger className="bg-gray-950 border-gray-800 h-11">
                             <SelectValue placeholder="Select country" />
                           </SelectTrigger>
                         </FormControl>
@@ -546,7 +547,7 @@ export function EntrepreneurRegistrationContent() {
                           ))}
                         </SelectContent>
                       </Select>
-                      <FormMessage />
+                      <FormMessage className="mt-1.5" />
                     </FormItem>
                   )}
                 />
@@ -554,15 +555,15 @@ export function EntrepreneurRegistrationContent() {
             </div>
           </div>
 
-          <Separator className="bg-gray-800" />
+          <Separator className="bg-gray-800 my-10" />
           
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-xl font-semibold tracking-tight">2. Required Documents</h2>
-              <p className="text-gray-400 text-sm mt-1">Please upload the following required documents for verification</p>
+          <div className="space-y-8">
+            <div className="mb-6">
+              <h2 className="text-2xl font-semibold tracking-tight mb-2">2. Required Documents</h2>
+              <p className="text-gray-400 text-sm mt-2">Please upload the following required documents for verification</p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-8">
               {requiredDocuments.map((doc) => (
                 <DocumentUpload 
                   key={doc.id} 
@@ -573,15 +574,15 @@ export function EntrepreneurRegistrationContent() {
             </div>
           </div>
           
-          <Separator className="bg-gray-800" />
+          <Separator className="bg-gray-800 my-10" />
           
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-xl font-semibold tracking-tight">3. Optional Documents</h2>
-              <p className="text-gray-400 text-sm mt-1">These documents are not required but can strengthen your business profile</p>
+          <div className="space-y-8">
+            <div className="mb-6">
+              <h2 className="text-2xl font-semibold tracking-tight mb-2">3. Optional Documents</h2>
+              <p className="text-gray-400 text-sm mt-2">These documents are not required but can strengthen your business profile</p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-8">
               {optionalDocuments.map((doc) => (
                 <DocumentUpload 
                   key={doc.id} 
@@ -592,17 +593,17 @@ export function EntrepreneurRegistrationContent() {
             </div>
           </div>
           
-          <div className="bg-gray-900 border border-gray-800 rounded-lg p-4 flex items-start gap-3 mt-8">
-            <Shield className="h-5 w-5 text-amber-500 mt-0.5 flex-shrink-0" />
-            <div className="text-sm">
-              <p className="text-gray-300">Your documents are encrypted during upload and storage. We comply with GDPR and other relevant data protection laws.</p>
+          <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 flex items-start gap-4 mt-10 max-w-3xl mx-auto">
+            <Shield className="h-6 w-6 text-amber-500 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-gray-300 text-base">Your documents are encrypted during upload and storage. We comply with GDPR and other relevant data protection laws.</p>
             </div>
           </div>
 
-          <div className="flex justify-center mt-8">
+          <div className="flex justify-center mt-10 pt-4">
             <Button 
               type="submit" 
-              className="px-8 py-6 bg-amber-500 hover:bg-amber-600 text-black font-medium text-lg"
+              className="px-10 py-6 bg-amber-500 hover:bg-amber-600 text-black font-medium text-lg"
             >
               Submit for Verification
             </Button>
@@ -659,6 +660,7 @@ export function EntrepreneurRegistrationContent() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   )
 }
