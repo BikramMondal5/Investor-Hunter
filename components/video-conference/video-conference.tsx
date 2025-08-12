@@ -9,6 +9,9 @@ import ParticipantsPanel from "./participants-panel";
 import ChatPanel from "./chat-panel";
 import DeviceControlBar from "./device-control-bar";
 import { Participant, Message } from "./types";
+import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useCameraAccess } from "@/hooks/use-camera-access";
 
 interface VideoConferenceProps {
   meetingTitle: string;
@@ -25,6 +28,8 @@ export default function VideoConference({
   onLeave,
   className,
 }: VideoConferenceProps) {
+  const { toast } = useToast();
+  
   // State for tracking participants
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [activeSpeaker, setActiveSpeaker] = useState<string | null>(null);
@@ -36,7 +41,7 @@ export default function VideoConference({
   const [messages, setMessages] = useState<Message[]>([]);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
-  const [isVideoOff, setIsVideoOff] = useState(false);
+  const [isVideoOff, setIsVideoOff] = useState(true); // Start with video off
   const [elapsedTime, setElapsedTime] = useState(0);
   const [showControls, setShowControls] = useState(true);
   const [virtualBackground, setVirtualBackground] = useState<'none' | 'blur' | 'background'>('none');
@@ -45,6 +50,25 @@ export default function VideoConference({
   const containerRef = useRef<HTMLDivElement>(null);
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Use our custom camera hook for better camera handling
+  const { 
+    stream: cameraStream, 
+    error: cameraError, 
+    isLoading: cameraLoading,
+    startCamera,
+    stopCamera
+  } = useCameraAccess({
+    onError: (error) => {
+      toast({
+        title: "Camera Error",
+        description: error.message || "Failed to access camera",
+        variant: "destructive",
+      });
+    },
+    idealWidth: 1280,
+    idealHeight: 720
+  });
   
   // Auto-hide controls after inactivity
   useEffect(() => {
@@ -85,8 +109,36 @@ export default function VideoConference({
     return () => clearInterval(timer);
   }, []);
   
-  // Mock data for demonstration purposes
-  // In a real implementation, this would be replaced with WebRTC connections
+  // Enhanced visibility handling - camera hook handles cleanup
+  useEffect(() => {
+    // Setup listener for page visibility changes to manage camera resources
+    const handleVisibilityChange = () => {
+      if (document.hidden && !isVideoOff && cameraStream) {
+        // When tab becomes hidden and camera is on, pause video tracks to save resources
+        console.log("Page hidden, pausing camera to conserve resources");
+        cameraStream.getVideoTracks().forEach((track: MediaStreamTrack) => {
+          track.enabled = false;
+        });
+      } else if (!document.hidden && !isVideoOff && cameraStream) {
+        // When tab becomes visible again and camera should be on, re-enable tracks
+        console.log("Page visible, resuming camera");
+        cameraStream.getVideoTracks().forEach((track: MediaStreamTrack) => {
+          track.enabled = true;
+        });
+      }
+    };
+    
+    // Add visibility change listener
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Cleanup function runs when component unmounts
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      // Camera cleanup is handled by our hook
+    };
+  }, [isVideoOff, cameraStream]);
+  
+  // Update participants data with camera stream
   useEffect(() => {
     // Simulated participants data
     const mockParticipants: Participant[] = [
@@ -98,6 +150,7 @@ export default function VideoConference({
         isVideoOff: isVideoOff,
         isSpeaking: false,
         isScreenSharing: isScreenSharing,
+        stream: cameraStream, // Use the actual camera stream for the local participant
       },
       {
         id: 'participant1',
@@ -130,7 +183,7 @@ export default function VideoConference({
     }, 3000);
     
     return () => clearInterval(speakingInterval);
-  }, [isMuted, isVideoOff, isScreenSharing]);
+  }, [isMuted, isVideoOff, isScreenSharing, cameraStream]);
   
   // Format time for display (MM:SS)
   const formatTime = (seconds: number) => {
@@ -139,9 +192,37 @@ export default function VideoConference({
     return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
   
+  // Camera functionality is now handled by the useCameraAccess hook
+  
   // Toggle functions for controls
   const toggleMute = () => setIsMuted(prev => !prev);
-  const toggleVideo = () => setIsVideoOff(prev => !prev);
+  
+  const toggleVideo = async () => {
+    // Set a loading state to prevent multiple clicks during transition
+    const wasVideoOff = isVideoOff;
+    
+    if (wasVideoOff) {
+      // First update the UI state to show we're turning the camera on
+      setIsVideoOff(false);
+      
+      // Then attempt to start the camera using our hook
+      const stream = await startCamera();
+      
+      // If we couldn't get a stream, revert the UI state
+      if (!stream) {
+        setIsVideoOff(true);
+        console.log("Camera toggle failed - reverting to camera off state");
+      } else {
+        console.log("Camera toggled on successfully");
+      }
+    } else {
+      // For turning camera off, stop camera first then update UI
+      stopCamera();
+      setIsVideoOff(true);
+      console.log("Camera toggled off successfully");
+    }
+  };
+  
   const toggleScreenShare = () => setIsScreenSharing(prev => !prev);
   const toggleParticipantsPanel = () => {
     setShowParticipants(prev => !prev);
@@ -178,15 +259,18 @@ export default function VideoConference({
     setPinnedParticipant(pinnedParticipant === id ? null : id);
   };
   
-  // Determine grid layout based on participant count and pinned state
+  // Enhanced grid layout with fixed proportions to prevent layout shifts
   const getGridTemplateAreas = () => {
     const count = participants.length;
     
     if (pinnedParticipant) {
       return {
         gridTemplateAreas: '"pinned pinned" "other1 other2"',
-        gridTemplateRows: '3fr 1fr',
+        gridTemplateRows: '3fr 1fr', 
         gridTemplateColumns: '1fr 1fr',
+        // Fixed aspect ratios and minimum sizes to prevent layout shifts
+        aspectRatio: '16/9',
+        minHeight: '400px',
       };
     }
     
@@ -195,6 +279,9 @@ export default function VideoConference({
         gridTemplateAreas: '"single"',
         gridTemplateRows: '1fr',
         gridTemplateColumns: '1fr',
+        // Single video takes full space with consistent aspect ratio
+        aspectRatio: '16/9',
+        minHeight: '400px',
       };
     }
     
@@ -203,14 +290,20 @@ export default function VideoConference({
         gridTemplateAreas: '"first second"',
         gridTemplateRows: '1fr',
         gridTemplateColumns: '1fr 1fr',
+        // Side-by-side layout with fixed proportions
+        aspectRatio: '2/1',
+        minHeight: '400px',
       };
     }
     
-    // 3 or more participants
+    // 3 or more participants in a 2x2 grid
     return {
       gridTemplateAreas: '"first second" "third fourth"',
       gridTemplateRows: '1fr 1fr',
       gridTemplateColumns: '1fr 1fr',
+      // Square-ish layout for 4 participants
+      aspectRatio: '4/3',
+      minHeight: '400px',
     };
   };
   
@@ -226,11 +319,23 @@ export default function VideoConference({
         isRecording={isRecording} 
       />
       
-      <div className="flex flex-1 relative">
-        {/* Main video grid */}
+      {cameraError && (
+        <Alert variant="destructive" className="absolute top-16 right-4 w-auto z-50 bg-[#1A1A1A] border-red-500">
+          <AlertDescription>{cameraError}</AlertDescription>
+        </Alert>
+      )}
+      
+      <div className="flex flex-1 relative overflow-hidden">
+        {/* Main video grid - with fixed dimensions and aspect ratio for stability */}
         <div 
-          className="flex-1 grid gap-2 p-2" 
-          style={getGridTemplateAreas()}
+          className="flex-1 grid gap-2 p-2 max-w-[calc(100vw-2rem)] mx-auto" 
+          style={{
+            ...getGridTemplateAreas(),
+            // These styles ensure the grid maintains consistent proportions
+            // regardless of camera state changes
+            height: "100%", 
+            maxHeight: "calc(100vh - 150px)", // Leave space for header and controls
+          }}
         >
           {participants.map((participant, index) => (
             <VideoParticipant

@@ -9,6 +9,7 @@ export interface Participant {
   isSpeaking?: boolean;
   isScreenSharing?: boolean;
   avatarUrl?: string;
+  stream?: MediaStream | null;
 }
 
 export interface Message {
