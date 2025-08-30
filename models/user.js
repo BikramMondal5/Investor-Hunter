@@ -1,9 +1,10 @@
+// models/user.js
 import mongoose from 'mongoose';
 
 const userSchema = new mongoose.Schema({
   googleId: {
     type: String,
-    required: true,
+    sparse: true,
     unique: true
   },
   email: {
@@ -18,6 +19,18 @@ const userSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  firstName: {
+    type: String,
+    trim: true
+  },
+  lastName: {
+    type: String,
+    trim: true
+  },
+  password: {
+    type: String,
+    required: function() { return this.provider === 'local'; }
+  },
   avatar: {
     type: String,
     default: null
@@ -26,7 +39,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
     enum: ['google', 'local'],
-    default: 'google'
+    default: 'local'
   },
   isActive: {
     type: Boolean,
@@ -48,20 +61,21 @@ const userSchema = new mongoose.Schema({
     }
   }
 }, {
-  timestamps: true, // Adds createdAt and updatedAt fields
+  timestamps: true,
   toJSON: {
     transform: function(doc, ret) {
       delete ret.__v;
+      delete ret.password;
       return ret;
     }
   }
 });
 
-// Index for faster queries
+// Indexes
 userSchema.index({ googleId: 1 });
 userSchema.index({ email: 1 });
 
-// Pre-save middleware to update lastLogin
+// Pre-save middleware
 userSchema.pre('save', function(next) {
   if (this.isNew) {
     this.lastLogin = new Date();
@@ -69,18 +83,17 @@ userSchema.pre('save', function(next) {
   next();
 });
 
-// Instance method to update last login
+// Instance methods
 userSchema.methods.updateLastLogin = function() {
   this.lastLogin = new Date();
   return this.save();
 };
 
-// Static method to find user by Google ID
+// Static methods
 userSchema.statics.findByGoogleId = function(googleId) {
   return this.findOne({ googleId });
 };
 
-// Static method to find user by email
 userSchema.statics.findByEmail = function(email) {
   return this.findOne({ email: email.toLowerCase() });
 };
