@@ -63,12 +63,10 @@ export async function GET(request: NextRequest) {
         avatar: googleUser.picture,
         provider: 'google',
         isActive: true,
-        lastLogin: new Date()
       });
       await user.save();
     } else {
       // Update existing user
-      user.lastLogin = new Date();
       if (!user.googleId) user.googleId = googleUser.id;
       if (!user.avatar) user.avatar = googleUser.picture;
       await user.save();

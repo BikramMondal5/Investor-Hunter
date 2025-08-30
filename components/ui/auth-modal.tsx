@@ -40,41 +40,56 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [signUpConfirmPassword, setSignUpConfirmPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
 
-  const handleSignIn = (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
-    // This would be replaced with actual authentication logic
-    console.log("Sign in with:", signInEmail)
-    router.push("/dashboard")
-    onClose()
+    setError(null)
+    setIsLoading(true)
+    
+    try {
+      const response = await fetch("/api/auth/signin", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: signInEmail,
+          password: signInPassword
+        }),
+      })
+      
+      const data = await response.json()
+      
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Sign in failed")
+      }
+      
+      toast({
+        title: "Sign In Successful",
+        description: "Welcome back!",
+        variant: "default",
+      })
+      
+      // Reset form and redirect
+      setSignInEmail("")
+      setSignInPassword("")
+      router.push("/dashboard")
+      onClose()
+      
+    } catch (error) {
+      console.error("Sign in error:", error)
+      const errorMessage = error instanceof Error ? error.message : "Sign in failed"
+      setError(errorMessage)
+      toast({
+        title: "Sign In Failed",
+        description: errorMessage,
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
   const handleGoogleLogin = () => {
     window.location.href = "/api/auth/google"
-  }
-
-  // Helper function to attempt registration with different payload formats
-  const attemptRegistration = async (payload: any) => {
-    console.log("Attempting registration with payload:", payload)
-    
-    const response = await fetch("https://api.freeapi.app/api/v1/users/register", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    })
-    
-    const data = await response.json()
-    console.log("API response:", data)
-    
-    if (!response.ok) {
-      throw new Error(data.message || data.error || "Failed to register")
-    }
-    
-    if (!data.success) {
-      throw new Error(data.message || data.error || "Registration failed")
-    }
-    
-    return data
   }
   
   const handleSignUp = async (e: React.FormEvent) => {
@@ -110,78 +125,27 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     setIsLoading(true)
     
     try {
-      // Format name into firstName and lastName
       const nameParts = signUpName.trim().split(" ")
       const firstName = nameParts[0]
-      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(" ") : ""
+      const lastName = nameParts.slice(1).join(" ")
       
-      // Try multiple payload formats to handle potential API requirements
-      let data;
-      let success = false;
-      let errorMessage = "";
-      
-      // Format 1: Standard format with username
-      try {
-        data = await attemptRegistration({
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
           firstName,
           lastName,
           email: signUpEmail,
-          password: signUpPassword,
-          username: signUpEmail
-        });
-        success = true;
-      } catch (error) {
-        console.log("First attempt failed:", error);
-        errorMessage = error instanceof Error ? error.message : "Registration failed";
-      }
+          password: signUpPassword
+        }),
+      })
       
-      // Format 2: With gender field if first attempt failed
-      if (!success) {
-        try {
-          data = await attemptRegistration({
-            firstName,
-            lastName,
-            email: signUpEmail,
-            password: signUpPassword,
-            username: signUpEmail,
-            gender: "RATHER_NOT_SAY"
-          });
-          success = true;
-        } catch (error) {
-          console.log("Second attempt failed:", error);
-          errorMessage = error instanceof Error ? error.message : "Registration failed";
-        }
-      }
+      const data = await response.json()
       
-      // Format 3: With all possible fields if previous attempts failed
-      if (!success) {
-        try {
-          data = await attemptRegistration({
-            firstName,
-            lastName,
-            email: signUpEmail,
-            password: signUpPassword,
-            username: signUpEmail,
-            gender: "RATHER_NOT_SAY",
-            profileImage: "",
-            address: {
-              street: "",
-              city: "",
-              state: "",
-              zipCode: "",
-              country: ""
-            }
-          });
-          success = true;
-        } catch (error) {
-          console.log("Third attempt failed:", error);
-          errorMessage = error instanceof Error ? error.message : "Registration failed";
-        }
-      }
-      
-      // If all attempts failed, throw an error
-      if (!success) {
-        throw new Error(errorMessage || "Failed to register after multiple attempts");
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Registration failed")
       }
       
       toast({
@@ -199,25 +163,11 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
       
       // Switch to sign in tab and pre-fill email
       setActiveTab("signin")
-      setSignInEmail(signUpEmail) // Pre-fill the email in the sign-in form
+      setSignInEmail(signUpEmail)
       
     } catch (error) {
       console.error("Registration error:", error)
-      
-      // More detailed error handling
-      let errorMessage = "An error occurred during registration"
-      
-      if (error instanceof Error) {
-        errorMessage = error.message
-      }
-      
-      // Handle specific API error messages
-      if (errorMessage.includes("Received data is not valid")) {
-        errorMessage = "Please check your registration details and try again. Make sure all required fields are filled correctly."
-      } else if (errorMessage.includes("duplicate key")) {
-        errorMessage = "This email is already registered. Please use a different email or try signing in."
-      }
-      
+      const errorMessage = error instanceof Error ? error.message : "Registration failed"
       setError(errorMessage)
       toast({
         title: "Registration Failed",
@@ -308,8 +258,24 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                   </div>
                 </div>
 
-                <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium">
-                  Sign In <ArrowRight className="ml-2 h-4 w-4" />
+                <Button 
+                  type="submit" 
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Signing In...
+                    </>
+                  ) : (
+                    <>
+                      Sign In <ArrowRight className="ml-2 h-4 w-4" />
+                    </>
+                  )}
                 </Button>
               </div>
             </form>
