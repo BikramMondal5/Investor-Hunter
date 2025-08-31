@@ -23,23 +23,25 @@ interface AuthModalProps {
 }
 
 export function AuthModal({ isOpen, onClose }: AuthModalProps) {
-    const router = useRouter()
-    const { toast } = useToast()
-    const [showPassword, setShowPassword] = useState(false)
-    const [activeTab, setActiveTab] = useState("signin")
-    const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
+  const { toast } = useToast()
+  const [showPassword, setShowPassword] = useState(false)
+  const [activeTab, setActiveTab] = useState("signin")
+  const [isLoading, setIsLoading] = useState(false)
 
-    // Form state for sign in
-    const [signInEmail, setSignInEmail] = useState("")
-    const [signInPassword, setSignInPassword] = useState("")
-    const [signInError, setSignInError] = useState<string | null>(null)
+  // Form state for sign in
+  const [signInEmail, setSignInEmail] = useState("")
+  const [signInPassword, setSignInPassword] = useState("")
+  // ⭐ NEW: Separate error state for Sign In
+  const [signInError, setSignInError] = useState<string | null>(null)
 
-    // Form state for sign up
-    const [signUpName, setSignUpName] = useState("")
-    const [signUpEmail, setSignUpEmail] = useState("")
-    const [signUpPassword, setSignUpPassword] = useState("")
-    const [signUpConfirmPassword, setSignUpConfirmPassword] = useState("")
-    const [signUpError, setSignUpError] = useState<string | null>(null)
+  // Form state for sign up
+  const [signUpName, setSignUpName] = useState("")
+  const [signUpEmail, setSignUpEmail] = useState("")
+  const [signUpPassword, setSignUpPassword] = useState("")
+  const [signUpConfirmPassword, setSignUpConfirmPassword] = useState("")
+  // ⭐ NEW: Separate error state for Sign Up
+  const [signUpError, setSignUpError] = useState<string | null>(null)
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -197,13 +199,12 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
           </DialogDescription>
         </DialogHeader>
 
-          <Tabs
-            key={isOpen ? "open" : "closed"}
-            defaultValue="signin"
-            value={activeTab}
-            onValueChange={setActiveTab}
-            className="mt-4"
-          >
+        <Tabs
+          defaultValue="signin"
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="mt-4"
+        >
           <TabsList className="grid w-full grid-cols-2 mb-6">
             <TabsTrigger value="signin">Sign In</TabsTrigger>
             <TabsTrigger value="signup">Sign Up</TabsTrigger>
@@ -279,7 +280,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     </>
                   ) : (
                     <>
-                      Sign In <ArrowRight className="ml-4 h-4 w-4" />
+                      Sign In <ArrowRight className="ml-2 h-4 w-4" />
                     </>
                   )}
                 </Button>
