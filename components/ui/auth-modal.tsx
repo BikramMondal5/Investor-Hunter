@@ -23,28 +23,30 @@ interface AuthModalProps {
 }
 
 export function AuthModal({ isOpen, onClose }: AuthModalProps) {
-  const router = useRouter()
-  const { toast } = useToast()
-  const [showPassword, setShowPassword] = useState(false)
-  const [activeTab, setActiveTab] = useState("signin")
-  const [isLoading, setIsLoading] = useState(false)
-  
-  // Form state for sign in
-  const [signInEmail, setSignInEmail] = useState("")
-  const [signInPassword, setSignInPassword] = useState("")
-  
-  // Form state for sign up
-  const [signUpName, setSignUpName] = useState("")
-  const [signUpEmail, setSignUpEmail] = useState("")
-  const [signUpPassword, setSignUpPassword] = useState("")
-  const [signUpConfirmPassword, setSignUpConfirmPassword] = useState("")
-  const [error, setError] = useState<string | null>(null)
+    const router = useRouter()
+    const { toast } = useToast()
+    const [showPassword, setShowPassword] = useState(false)
+    const [activeTab, setActiveTab] = useState("signin")
+    const [isLoading, setIsLoading] = useState(false)
+
+    // Form state for sign in
+    const [signInEmail, setSignInEmail] = useState("")
+    const [signInPassword, setSignInPassword] = useState("")
+    const [signInError, setSignInError] = useState<string | null>(null)
+
+    // Form state for sign up
+    const [signUpName, setSignUpName] = useState("")
+    const [signUpEmail, setSignUpEmail] = useState("")
+    const [signUpPassword, setSignUpPassword] = useState("")
+    const [signUpConfirmPassword, setSignUpConfirmPassword] = useState("")
+    const [signUpError, setSignUpError] = useState<string | null>(null)
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError(null)
+    // ⭐ NEW: Use signInError state
+    setSignInError(null)
     setIsLoading(true)
-    
+
     try {
       const response = await fetch("/api/auth/signin", {
         method: "POST",
@@ -56,29 +58,30 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
           password: signInPassword
         }),
       })
-      
+
       const data = await response.json()
-      
+
       if (!response.ok || !data.success) {
         throw new Error(data.message || "Sign in failed")
       }
-      
+
       toast({
         title: "Sign In Successful",
         description: "Welcome back!",
         variant: "default",
       })
-      
+
       // Reset form and redirect
       setSignInEmail("")
       setSignInPassword("")
       router.push("/dashboard")
       onClose()
-      
+
     } catch (error) {
       console.error("Sign in error:", error)
       const errorMessage = error instanceof Error ? error.message : "Sign in failed"
-      setError(errorMessage)
+      // ⭐ NEW: Set signInError state
+      setSignInError(errorMessage)
       toast({
         title: "Sign In Failed",
         description: errorMessage,
@@ -88,47 +91,49 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
       setIsLoading(false)
     }
   }
+
   const handleGoogleLogin = () => {
     window.location.href = "/api/auth/google"
   }
-  
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError(null)
-    
+    // ⭐ NEW: Use signUpError state
+    setSignUpError(null)
+
     // Enhanced validation
     if (!signUpName.trim()) {
-      setError("Please enter your full name")
+      setSignUpError("Please enter your full name")
       return
     }
-    
+
     if (!signUpEmail.trim() || !signUpEmail.includes('@') || !signUpEmail.includes('.')) {
-      setError("Please enter a valid email address")
+      setSignUpError("Please enter a valid email address")
       return
     }
-    
+
     if (signUpPassword !== signUpConfirmPassword) {
-      setError("Passwords do not match")
+      setSignUpError("Passwords do not match")
       return
     }
-    
+
     if (signUpPassword.length < 6) {
-      setError("Password must be at least 6 characters long")
+      setSignUpError("Password must be at least 6 characters long")
       return
     }
-    
+
     if (signUpName.trim().split(" ").length < 2) {
-      setError("Please provide your first and last name")
+      setSignUpError("Please provide your first and last name")
       return
     }
-    
+
     setIsLoading(true)
-    
+
     try {
       const nameParts = signUpName.trim().split(" ")
       const firstName = nameParts[0]
       const lastName = nameParts.slice(1).join(" ")
-      
+
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: {
@@ -141,34 +146,35 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
           password: signUpPassword
         }),
       })
-      
+
       const data = await response.json()
-      
+
       if (!response.ok || !data.success) {
         throw new Error(data.message || "Registration failed")
       }
-      
+
       toast({
         title: "Registration Successful",
         description: "Your account has been created successfully. You can now sign in.",
         variant: "default",
         className: "bg-green-800 border-green-700 text-white",
       })
-      
+
       // Reset form
       setSignUpName("")
       setSignUpEmail("")
       setSignUpPassword("")
       setSignUpConfirmPassword("")
-      
+
       // Switch to sign in tab and pre-fill email
       setActiveTab("signin")
       setSignInEmail(signUpEmail)
-      
+
     } catch (error) {
       console.error("Registration error:", error)
       const errorMessage = error instanceof Error ? error.message : "Registration failed"
-      setError(errorMessage)
+      // ⭐ NEW: Set signUpError state
+      setSignUpError(errorMessage)
       toast({
         title: "Registration Failed",
         description: errorMessage,
@@ -190,53 +196,53 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
             Join our community of entrepreneurs and investors
           </DialogDescription>
         </DialogHeader>
-        
-        <Tabs 
-          defaultValue="signin" 
-          value={activeTab}
-          onValueChange={setActiveTab}
-          className="mt-4"
-        >
+
+          <Tabs
+            key={isOpen ? "open" : "closed"}
+            defaultValue="signin"
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="mt-4"
+          >
           <TabsList className="grid w-full grid-cols-2 mb-6">
             <TabsTrigger value="signin">Sign In</TabsTrigger>
             <TabsTrigger value="signup">Sign Up</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="signin">
             <form onSubmit={handleSignIn}>
               <div className="space-y-4">
+                {/* ⭐ NEW: Conditionally render the sign-in error */}
+                {signInError && (
+                  <div className="bg-red-900/30 border border-red-800 text-red-400 p-3 rounded-md text-sm">
+                    {signInError}
+                  </div>
+                )}
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-2.5 h-5 w-5 text-gray-500" />
-                    <Input 
-                      id="email" 
-                      type="email" 
-                      placeholder="name@example.com" 
-                      className="pl-10 bg-gray-950 border-gray-800" 
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="name@example.com"
+                      className="pl-10 bg-gray-950 border-gray-800"
                       value={signInEmail}
                       onChange={(e) => setSignInEmail(e.target.value)}
                       required
                     />
                   </div>
                 </div>
-                
+
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="password">Password</Label>
-                    <Button 
-                      variant="link" 
-                      className="px-0 font-normal text-xs text-blue-500"
-                      type="button"
-                    >
-                      Forgot password?
-                    </Button>
                   </div>
                   <div className="relative">
                     <Lock className="absolute left-3 top-2.5 h-5 w-5 text-gray-500" />
-                    <Input 
-                      id="password" 
-                      type={showPassword ? "text" : "password"} 
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
                       className="pl-10 bg-gray-950 border-gray-800"
                       value={signInPassword}
                       onChange={(e) => setSignInPassword(e.target.value)}
@@ -258,8 +264,8 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                   </div>
                 </div>
 
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium"
                   disabled={isLoading}
                 >
@@ -273,13 +279,13 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     </>
                   ) : (
                     <>
-                      Sign In <ArrowRight className="ml-2 h-4 w-4" />
+                      Sign In <ArrowRight className="ml-4 h-4 w-4" />
                     </>
                   )}
                 </Button>
               </div>
             </form>
-            
+
             <div className="mt-6">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
@@ -291,10 +297,10 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                   </span>
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-1 place-items-center mt-6">
                 <Button onClick={handleGoogleLogin}
-                  variant="outline" 
+                  variant="outline"
                   className="border-gray-700 w-64 justify-center"
                 >
                   <svg className="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
@@ -308,24 +314,24 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
               </div>
             </div>
           </TabsContent>
-          
+
           <TabsContent value="signup">
             <form onSubmit={handleSignUp}>
               <div className="space-y-4">
-                {error && (
+                {/* ⭐ NEW: Conditionally render the sign-up error */}
+                {signUpError && (
                   <div className="bg-red-900/30 border border-red-800 text-red-400 p-3 rounded-md text-sm">
-                    {error}
+                    {signUpError}
                   </div>
                 )}
-                
                 <div className="space-y-2">
                   <Label htmlFor="name">Full Name</Label>
                   <div className="relative">
                     <User className="absolute left-3 top-2.5 h-5 w-5 text-gray-500" />
-                    <Input 
-                      id="name" 
-                      placeholder="John Doe" 
-                      className="pl-10 bg-gray-950 border-gray-800" 
+                    <Input
+                      id="name"
+                      placeholder="John Doe"
+                      className="pl-10 bg-gray-950 border-gray-800"
                       value={signUpName}
                       onChange={(e) => setSignUpName(e.target.value)}
                       required
@@ -339,11 +345,11 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                   <Label htmlFor="signup-email">Email</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-2.5 h-5 w-5 text-gray-500" />
-                    <Input 
-                      id="signup-email" 
-                      type="email" 
-                      placeholder="name@example.com" 
-                      className="pl-10 bg-gray-950 border-gray-800" 
+                    <Input
+                      id="signup-email"
+                      type="email"
+                      placeholder="name@example.com"
+                      className="pl-10 bg-gray-950 border-gray-800"
                       value={signUpEmail}
                       onChange={(e) => setSignUpEmail(e.target.value)}
                       required
@@ -351,14 +357,14 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     />
                   </div>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="signup-password">Password</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-2.5 h-5 w-5 text-gray-500" />
-                    <Input 
-                      id="signup-password" 
-                      type={showPassword ? "text" : "password"} 
+                    <Input
+                      id="signup-password"
+                      type={showPassword ? "text" : "password"}
                       className={`pl-10 bg-gray-950 ${signUpPassword && signUpPassword.length < 6 ? "border-red-700" : "border-gray-800"}`}
                       value={signUpPassword}
                       onChange={(e) => setSignUpPassword(e.target.value)}
@@ -390,9 +396,9 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                   <Label htmlFor="confirm-password">Confirm Password</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-2.5 h-5 w-5 text-gray-500" />
-                    <Input 
-                      id="confirm-password" 
-                      type={showPassword ? "text" : "password"} 
+                    <Input
+                      id="confirm-password"
+                      type={showPassword ? "text" : "password"}
                       className="pl-10 bg-gray-950 border-gray-800"
                       value={signUpConfirmPassword}
                       onChange={(e) => setSignUpConfirmPassword(e.target.value)}
@@ -402,8 +408,8 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                   </div>
                 </div>
 
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium"
                   disabled={isLoading}
                 >
