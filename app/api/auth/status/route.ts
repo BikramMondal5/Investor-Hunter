@@ -11,14 +11,15 @@ export async function GET() {
     }
 
     const userData = JSON.parse(userSession.value);
-    
+   
     return NextResponse.json({
       authenticated: true,
       user: {
         id: userData.userId,
         name: userData.name,
         email: userData.email,
-        avatar: userData.avatar
+        avatar: userData.avatar,
+        role: userData.role // Add this line
       }
     });
   } catch (error) {

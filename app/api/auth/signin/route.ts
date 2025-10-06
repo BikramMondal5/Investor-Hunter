@@ -59,7 +59,8 @@ export async function POST(request: NextRequest) {
       userId: user._id.toString(),
       email: user.email,
       name: user.name,
-      avatar: user.avatar
+      avatar: user.avatar,
+      role: user.role
     };
     
     const response = NextResponse.json(
@@ -70,7 +71,8 @@ export async function POST(request: NextRequest) {
           id: user._id,
           email: user.email,
           name: user.name,
-          avatar: user.avatar
+          avatar: user.avatar,
+          role: user.role
         }
       },
       { status: 200 }
