@@ -1,5 +1,5 @@
 "use client"
-
+import { AuthModal } from "@/components/ui/auth-modal"
 import { Header } from "@/components/header"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -10,23 +10,67 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState, useCallback, useRef } from "react"
+import { useToast } from "@/components/ui/use-toast"
 import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel"
 import useEmblaCarousel from "embla-carousel-react"
 import Autoplay from "embla-carousel-autoplay"
 import TestimonialCarousel from "@/components/TestimonialCarousel"
-
 export function LandingPageContent() {
+  const { toast } = useToast()
   // Use useState and useEffect to ensure client-side rendering
   const [isMounted, setIsMounted] = useState(false)
+  const [authModalOpen, setAuthModalOpen] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
 
+  const [authError, setAuthError] = useState<string | null>(null);
+
+  // Set isMounted to true on client-side
   useEffect(() => {
     setIsMounted(true)
-  }, [])
+  }, []);
+
+  // Separate useEffect for handling OAuth errors
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const error = urlParams.get('error');
+    
+    if (error === 'user_not_found') {
+      setAuthError('user_not_found');
+      setAuthModalOpen(true);
+      // Delay toast to ensure it appears after modal
+      setTimeout(() => {
+        toast({
+          title: "Account Not Found",
+          description: "No account exists with this Google account. Please sign up first.",
+          variant: "destructive",
+        });
+      }, 100);
+      window.history.replaceState({}, '', '/');
+    } else if (error === 'oauth_failed') {
+      setAuthError('oauth_failed');
+      setAuthModalOpen(true);
+      setTimeout(() => {
+        toast({
+          title: "Authentication Failed",
+          description: "Unable to sign in with Google. Please try again.",
+          variant: "destructive",
+        });
+      }, 100);
+      window.history.replaceState({}, '', '/');
+    }
+  }, [toast])
 
   if (!isMounted) {
     return null // Return null on server-side rendering
   }
-
+  const handleSubmitPitch = (e: React.MouseEvent) => {
+    e.preventDefault()
+    if (isAuthenticated) {
+      window.location.href = '/submit'
+    } else {
+      setAuthModalOpen(true)
+    }
+  }
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -52,7 +96,7 @@ export function LandingPageContent() {
 
               <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
                 <Link href="/submit" className="w-full sm:w-auto">
-                  <Button size="lg" className="w-full sm:w-auto">
+                  <Button size="lg" className="w-full sm:w-auto" onClick={handleSubmitPitch}>
                     Submit Your Pitch
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
@@ -259,7 +303,7 @@ export function LandingPageContent() {
 
           <div className="text-center mt-12">
             <Link href="/submit">
-              <Button size="lg">
+              <Button size="lg" onClick={handleSubmitPitch}>
                 Start Your Journey
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
@@ -402,6 +446,16 @@ export function LandingPageContent() {
           </div>
         </div>
       </footer>
+
+      {/* Auth Modal */}
+      <AuthModal 
+        isOpen={authModalOpen} 
+        onClose={() => {
+          setAuthModalOpen(false);
+          setAuthError(null); // Clear error on close
+        }}
+        initialError={authError} // Pass the error
+      />
     </div>
   )
 }

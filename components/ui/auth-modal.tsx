@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import {
   Dialog,
@@ -20,9 +20,10 @@ import { Separator } from "@/components/ui/separator"
 interface AuthModalProps {
   isOpen: boolean
   onClose: () => void
+  initialError?: string | null
 }
 
-export function AuthModal({ isOpen, onClose }: AuthModalProps) {
+export function AuthModal({ isOpen, onClose, initialError }: AuthModalProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [showPassword, setShowPassword] = useState(false)
@@ -43,11 +44,17 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [signUpConfirmPassword, setSignUpConfirmPassword] = useState("")
   // ⭐ NEW: Separate error state for Sign Up
   const [signUpError, setSignUpError] = useState<string | null>(null)
+  useEffect(() => {
+    // Handle initial error from props - keep user on signin tab
+    if (initialError === 'user_not_found') {
+      setSignInError("user_not_found"); // Set a special flag
+    } else if (initialError === 'oauth_failed') {
+      setSignInError("Unable to sign in with Google. Please try again.");
+    }
+  }, [initialError]);
 
   const handleGoogleSignUp = () => {
-    // Store the selected role in sessionStorage before redirecting to Google
-    sessionStorage.setItem('pendingUserRole', signUpRole);
-    window.location.href = "/api/auth/google";
+    window.location.href = `/api/auth/google?role=${signUpRole}`;
   };
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -104,6 +111,8 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   }
 
   const handleGoogleLogin = () => {
+    // Clear any existing sign-in errors before redirecting
+    setSignInError(null)
     window.location.href = "/api/auth/google"
   }
 
@@ -215,11 +224,40 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
             Join our community of entrepreneurs and investors
           </DialogDescription>
         </DialogHeader>
+        {/* Show error message separately above tabs */}
+        {signInError === "user_not_found" && (
+          <div className="bg-red-900/30 border border-red-800 text-red-400 p-4 rounded-md text-sm space-y-3 mt-4">
+            <p className="font-medium">No account exists with this Google account.</p>
+            <p className="text-red-300/90">Please sign up first to continue.</p>
+            <Button
+              type="button"
+              onClick={() => {
+                setActiveTab("signup");
+                setSignInError(null);
+              }}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium"
+              size="sm"
+            >
+              OK
+            </Button>
+          </div>
+        )}
+
+        {signInError && signInError !== "user_not_found" && (
+          <div className="bg-red-900/30 border border-red-800 text-red-400 p-3 rounded-md text-sm mt-4">
+            {signInError}
+          </div>
+        )}
 
         <Tabs
           defaultValue="signin"
           value={activeTab}
-          onValueChange={setActiveTab}
+          onValueChange={(value) => {
+            setActiveTab(value);
+            // Clear errors when switching tabs
+            setSignInError(null);
+            setSignUpError(null);
+          }}
           className="mt-4"
         >
           <TabsList className="grid w-full grid-cols-2 mb-6">
@@ -230,12 +268,6 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
           <TabsContent value="signin">
             <form onSubmit={handleSignIn}>
               <div className="space-y-4">
-                {/* ⭐ NEW: Conditionally render the sign-in error */}
-                {signInError && (
-                  <div className="bg-red-900/30 border border-red-800 text-red-400 p-3 rounded-md text-sm">
-                    {signInError}
-                  </div>
-                )}
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
                   <div className="relative">

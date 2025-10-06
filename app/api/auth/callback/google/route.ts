@@ -54,14 +54,22 @@ export async function GET(request: NextRequest) {
         { email: googleUser.email }
       ]
     });
-   
-    let isNewUser = false;
+
     let userRole = 'entrepreneur'; // default role
+    let isNewUser = false;
+
+    // ⭐ NEW: Check if this is a sign-in attempt (no state/role parameter)
+    const isSignUpFlow = state !== null && state !== undefined && state !== '';
 
     if (!user) {
-      // New user - use the role from state parameter
-      isNewUser = true;
+      // ⭐ NEW: If user doesn't exist and this is a sign-in flow, reject
+      if (!isSignUpFlow) {
+        return NextResponse.redirect(new URL('/?error=user_not_found', request.url));
+      }
+
+      // New user - only allow in sign-up flow
       userRole = state || 'entrepreneur';
+      isNewUser = true;
       
       // Parse name into first and last name
       const nameParts = googleUser.name.split(' ');
@@ -81,7 +89,7 @@ export async function GET(request: NextRequest) {
       });
       await user.save();
     } else {
-      // Existing user
+      // Existing user - use their existing role
       userRole = user.role;
       
       // Update Google ID and avatar if missing
@@ -106,7 +114,8 @@ export async function GET(request: NextRequest) {
    
     // Redirect based on role
     const redirectPath = userRole === 'investor' ? '/investor' : '/dashboard';
-    const response = NextResponse.redirect(new URL(redirectPath, request.nextUrl.origin));
+    const successParam = isNewUser ? 'registered' : 'signin';
+    const response = NextResponse.redirect(new URL(`${redirectPath}?${successParam}=true`, request.nextUrl.origin));
    
     // Set session cookie
     response.cookies.set('user_session', JSON.stringify(sessionData), {
