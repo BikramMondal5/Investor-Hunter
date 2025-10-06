@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -30,11 +30,20 @@ import {
 } from "@/components/ui/dialog"
 
 export default function InvestorPortal() {
+  const [isMounted, setIsMounted] = useState(false)
   const [activeTab, setActiveTab] = useState("discover")
   const [viewMode, setViewMode] = useState("grid")
   const [aiScoreRange, setAiScoreRange] = useState([7])
   const [videoModalOpen, setVideoModalOpen] = useState(false)
   const [currentStartup, setCurrentStartup] = useState<any>(null)
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
+  if (!isMounted) {
+    return null
+  }
 
   const startups = [
     {

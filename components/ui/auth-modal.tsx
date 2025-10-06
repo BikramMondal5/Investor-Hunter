@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import {
   Dialog,
@@ -20,9 +20,10 @@ import { Separator } from "@/components/ui/separator"
 interface AuthModalProps {
   isOpen: boolean
   onClose: () => void
+  initialError?: string | null
 }
 
-export function AuthModal({ isOpen, onClose }: AuthModalProps) {
+export function AuthModal({ isOpen, onClose, initialError }: AuthModalProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [showPassword, setShowPassword] = useState(false)
@@ -36,12 +37,25 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [signInError, setSignInError] = useState<string | null>(null)
 
   // Form state for sign up
+  const [signUpRole, setSignUpRole] = useState<"entrepreneur" | "investor">("entrepreneur")
   const [signUpName, setSignUpName] = useState("")
   const [signUpEmail, setSignUpEmail] = useState("")
   const [signUpPassword, setSignUpPassword] = useState("")
   const [signUpConfirmPassword, setSignUpConfirmPassword] = useState("")
   // ⭐ NEW: Separate error state for Sign Up
   const [signUpError, setSignUpError] = useState<string | null>(null)
+  useEffect(() => {
+    // Handle initial error from props - keep user on signin tab
+    if (initialError === 'user_not_found') {
+      setSignInError("user_not_found"); // Set a special flag
+    } else if (initialError === 'oauth_failed') {
+      setSignInError("Unable to sign in with Google. Please try again.");
+    }
+  }, [initialError]);
+
+  const handleGoogleSignUp = () => {
+    window.location.href = `/api/auth/google?role=${signUpRole}`;
+  };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -72,12 +86,14 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
         description: "Welcome back!",
         variant: "default",
       })
-
-      // Reset form and redirect
-      setSignInEmail("")
-      setSignInPassword("")
-      router.push("/dashboard")
-      onClose()
+       // Reset form
+        setSignInEmail("")
+        setSignInPassword("")
+        
+        // Redirect based on user role
+        const redirectPath = data.user.role === "investor" ? "/investor" : "/dashboard"
+        router.push(redirectPath)
+        onClose()
 
     } catch (error) {
       console.error("Sign in error:", error)
@@ -95,6 +111,8 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   }
 
   const handleGoogleLogin = () => {
+    // Clear any existing sign-in errors before redirecting
+    setSignInError(null)
     window.location.href = "/api/auth/google"
   }
 
@@ -145,32 +163,40 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
           firstName,
           lastName,
           email: signUpEmail,
-          password: signUpPassword
+          password: signUpPassword,
+          role: signUpRole
         }),
       })
 
       const data = await response.json()
 
-      if (!response.ok || !data.success) {
-        throw new Error(data.message || "Registration failed")
-      }
+     if (!response.ok || !data.success) {
+      throw new Error(data.message || "Registration failed")
+    }
 
-      toast({
-        title: "Registration Successful",
-        description: "Your account has been created successfully. You can now sign in.",
-        variant: "default",
-        className: "bg-green-800 border-green-700 text-white",
-      })
+    // Show success toast
+    toast({
+      title: "Registration Successful",
+      description: "Welcome! Your account has been created.",
+      variant: "default",
+      className: "bg-green-800 border-green-700 text-white",
+    })
 
-      // Reset form
-      setSignUpName("")
-      setSignUpEmail("")
-      setSignUpPassword("")
-      setSignUpConfirmPassword("")
+    // Reset form
+    setSignUpName("")
+    setSignUpEmail("")
+    setSignUpPassword("")
+    setSignUpConfirmPassword("")
 
-      // Switch to sign in tab and pre-fill email
-      setActiveTab("signin")
-      setSignInEmail(signUpEmail)
+    // Close modal first
+    onClose()
+
+    // Small delay before redirect to ensure modal closes smoothly
+    setTimeout(() => {
+      const redirectPath = data.user.role === "investor" ? "/investor" : "/dashboard"
+      router.push(redirectPath)
+      router.refresh() // Force a refresh to update session state
+    }, 100)
 
     } catch (error) {
       console.error("Registration error:", error)
@@ -189,7 +215,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md bg-background border-gray-800">
+      <DialogContent className="sm:max-w-md bg-background border-gray-800 max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-center text-2xl font-bold tracking-tight">
             Welcome to InvestorHunt
@@ -198,11 +224,40 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
             Join our community of entrepreneurs and investors
           </DialogDescription>
         </DialogHeader>
+        {/* Show error message separately above tabs */}
+        {signInError === "user_not_found" && (
+          <div className="bg-red-900/30 border border-red-800 text-red-400 p-4 rounded-md text-sm space-y-3 mt-4">
+            <p className="font-medium">No account exists with this Google account.</p>
+            <p className="text-red-300/90">Please sign up first to continue.</p>
+            <Button
+              type="button"
+              onClick={() => {
+                setActiveTab("signup");
+                setSignInError(null);
+              }}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium"
+              size="sm"
+            >
+              OK
+            </Button>
+          </div>
+        )}
+
+        {signInError && signInError !== "user_not_found" && (
+          <div className="bg-red-900/30 border border-red-800 text-red-400 p-3 rounded-md text-sm mt-4">
+            {signInError}
+          </div>
+        )}
 
         <Tabs
           defaultValue="signin"
           value={activeTab}
-          onValueChange={setActiveTab}
+          onValueChange={(value) => {
+            setActiveTab(value);
+            // Clear errors when switching tabs
+            setSignInError(null);
+            setSignUpError(null);
+          }}
           className="mt-4"
         >
           <TabsList className="grid w-full grid-cols-2 mb-6">
@@ -213,12 +268,6 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
           <TabsContent value="signin">
             <form onSubmit={handleSignIn}>
               <div className="space-y-4">
-                {/* ⭐ NEW: Conditionally render the sign-in error */}
-                {signInError && (
-                  <div className="bg-red-900/30 border border-red-800 text-red-400 p-3 rounded-md text-sm">
-                    {signInError}
-                  </div>
-                )}
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
                   <div className="relative">
@@ -325,6 +374,43 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     {signUpError}
                   </div>
                 )}
+                <div className="space-y-3">
+                  <Label>I am a</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setSignUpRole("entrepreneur")}
+                      disabled={isLoading}
+                      className={`p-4 rounded-lg border-2 transition-all ${
+                        signUpRole === "entrepreneur"
+                          ? "border-blue-600 bg-blue-600/10"
+                          : "border-gray-800 hover:border-gray-700"
+                      }`}
+                    >
+                      <div className="text-center">
+                        <div className="text-2xl mb-2">🚀</div>
+                        <div className="font-semibold">Entrepreneur</div>
+                        <div className="text-xs text-gray-400 mt-1">Seeking investment</div>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSignUpRole("investor")}
+                      disabled={isLoading}
+                      className={`p-4 rounded-lg border-2 transition-all ${
+                        signUpRole === "investor"
+                          ? "border-blue-600 bg-blue-600/10"
+                          : "border-gray-800 hover:border-gray-700"
+                      }`}
+                    >
+                      <div className="text-center">
+                        <div className="text-2xl mb-2">💼</div>
+                        <div className="font-semibold">Investor</div>
+                        <div className="text-xs text-gray-400 mt-1">Looking to invest</div>
+                      </div>
+                    </button>
+                  </div>
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="name">Full Name</Label>
                   <div className="relative">
@@ -428,6 +514,35 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     </>
                   )}
                 </Button>
+                <div className="mt-6">
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <Separator className="w-full bg-gray-800" />
+                    </div>
+                    <div className="relative flex justify-center text-xs">
+                      <span className="bg-background px-2 text-gray-400">
+                        Or continue with
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 place-items-center mt-6">
+                    <Button 
+                      onClick={handleGoogleSignUp}
+                      type="button"
+                      variant="outline"
+                      className="border-gray-700 w-64 justify-center"
+                    >
+                      <svg className="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+                        <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path>
+                        <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path>
+                        <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path>
+                        <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path>
+                      </svg>
+                      Google
+                    </Button>
+                  </div>
+                </div>
 
                 <p className="text-xs text-gray-400 text-center mt-4">
                   By signing up, you agree to our <a href="#" className="text-blue-500 hover:underline">Terms of Service</a> and <a href="#" className="text-blue-500 hover:underline">Privacy Policy</a>

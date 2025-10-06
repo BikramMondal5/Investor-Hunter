@@ -5,7 +5,8 @@ const userSchema = new mongoose.Schema({
   googleId: {
     type: String,
     sparse: true,
-    unique: true
+    unique: true,
+    default: null
   },
   email: {
     type: String,
@@ -13,6 +14,12 @@ const userSchema = new mongoose.Schema({
     unique: true,
     lowercase: true,
     trim: true
+  },
+  role: {
+    type: String,
+    required: true,
+    enum: ['entrepreneur', 'investor'],
+    default: 'entrepreneur'
   },
   name: {
     type: String,
@@ -70,10 +77,6 @@ const userSchema = new mongoose.Schema({
     }
   }
 });
-
-// Indexes
-userSchema.index({ googleId: 1 });
-userSchema.index({ email: 1 });
 
 // Pre-save middleware
 userSchema.pre('save', function(next) {

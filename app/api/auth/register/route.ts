@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
   try {
     await connectDB();
     
-    const { firstName, lastName, email, password } = await request.json();
+    const { firstName, lastName, email, password, role } = await request.json(); // Add role here
     
     // Validation
     if (!firstName || !lastName || !email || !password) {
@@ -44,31 +44,53 @@ export async function POST(request: NextRequest) {
     const saltRounds = 12;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
     
-    // Create user
+    // Create user with role
     const user = new User({
       firstName,
       lastName,
       name: `${firstName} ${lastName}`,
       email,
       password: hashedPassword,
+      role: role || 'entrepreneur', // Add role with default fallback
       provider: 'local',
       isActive: true
     });
     
     await user.save();
-    
-    return NextResponse.json(
-      { 
-        success: true, 
+
+    // Create session data
+    const sessionData = {
+      userId: user._id.toString(),
+      email: user.email,
+      name: user.name,
+      avatar: user.avatar,
+      role: user.role 
+    };
+
+    const response = NextResponse.json(
+      {
+        success: true,
         message: "User registered successfully",
         user: {
           id: user._id,
           email: user.email,
-          name: user.name
+          name: user.name,
+          role: user.role
         }
       },
       { status: 201 }
     );
+
+    // Set session cookie
+    response.cookies.set('user_session', JSON.stringify(sessionData), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: '/'
+    });
+
+    return response;
     
   } catch (error) {
     console.error('Registration error:', error);
