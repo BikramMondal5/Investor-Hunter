@@ -43,6 +43,7 @@ export default function Dashboard() {
   const [feedbackLikes, setFeedbackLikes] = useState<{ [key: number]: number }>({})
   const [replyingTo, setReplyingTo] = useState<number | null>(null)
   const [replyText, setReplyText] = useState("")
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
   const [communityFeedback, setCommunityFeedback] = useState([
     {
       id: 1,
@@ -175,7 +176,11 @@ export default function Dashboard() {
               </Button>
             ))}
             <div className="pt-6 mt-4 border-t">
-              <Button variant="ghost" className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/10">
+              <Button 
+                variant="ghost" 
+                className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/10"
+                onClick={() => setLogoutDialogOpen(true)}
+              >
                 <LogOut className="mr-3 h-4 w-4" />
                 Logout
               </Button>
@@ -370,7 +375,11 @@ export default function Dashboard() {
                   <MessageSquare className="h-5 w-5" />
                   <span>Messages</span>
                 </Button>
-                <Button variant="outline" className="flex flex-col h-24 items-center justify-center space-y-2 bg-green-50 hover:bg-green-100 text-green-700 border-green-200 dark:bg-green-900/20 dark:hover:bg-green-900/30 dark:text-green-500 dark:border-green-900/30">
+                <Button 
+                  onClick={() => router.push('/submit')} 
+                  variant="outline" 
+                  className="flex flex-col h-24 items-center justify-center space-y-2 bg-green-50 hover:bg-green-100 text-green-700 border-green-200 dark:bg-green-900/20 dark:hover:bg-green-900/30 dark:text-green-500 dark:border-green-900/30"
+                >
                   <Users className="h-5 w-5" />
                   <span>Submit New Idea</span>
                 </Button>
@@ -594,7 +603,10 @@ export default function Dashboard() {
                   <TrendingUp className="mr-2 h-4 w-4" />
                   Improve Pitch
                 </Button>
-                <Button className="flex-1">
+                <Button 
+                  className="flex-1"
+                  onClick={() => router.push('/submit')}
+                >
                   <Users className="mr-2 h-4 w-4" />
                   Submit New Idea
                 </Button>
@@ -932,6 +944,34 @@ export default function Dashboard() {
           </div>
           <div className="p-2 flex justify-end">
             <Button size="sm" onClick={() => setVideoModalOpen(false)}>Close</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+      {/* Logout Confirmation Dialog */}
+      <Dialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirm Logout</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-muted-foreground">Are you sure you want to logout? Any unsaved changes will be lost.</p>
+          </div>
+          <div className="flex space-x-2 justify-end">
+            <Button 
+              variant="outline" 
+              onClick={() => setLogoutDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive"
+              onClick={async () => {
+                await fetch('/api/logout', { method: 'POST' })
+                router.push('/')
+              }}
+            >
+              Logout
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
