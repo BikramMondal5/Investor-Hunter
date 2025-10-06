@@ -36,6 +36,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [signInError, setSignInError] = useState<string | null>(null)
 
   // Form state for sign up
+  const [signUpRole, setSignUpRole] = useState<"entrepreneur" | "investor">("entrepreneur")
   const [signUpName, setSignUpName] = useState("")
   const [signUpEmail, setSignUpEmail] = useState("")
   const [signUpPassword, setSignUpPassword] = useState("")
@@ -145,7 +146,8 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
           firstName,
           lastName,
           email: signUpEmail,
-          password: signUpPassword
+          password: signUpPassword,
+          role: signUpRole
         }),
       })
 
@@ -325,6 +327,43 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     {signUpError}
                   </div>
                 )}
+                <div className="space-y-3">
+                  <Label>I am a</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setSignUpRole("entrepreneur")}
+                      disabled={isLoading}
+                      className={`p-4 rounded-lg border-2 transition-all ${
+                        signUpRole === "entrepreneur"
+                          ? "border-blue-600 bg-blue-600/10"
+                          : "border-gray-800 hover:border-gray-700"
+                      }`}
+                    >
+                      <div className="text-center">
+                        <div className="text-2xl mb-2">🚀</div>
+                        <div className="font-semibold">Entrepreneur</div>
+                        <div className="text-xs text-gray-400 mt-1">Seeking investment</div>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSignUpRole("investor")}
+                      disabled={isLoading}
+                      className={`p-4 rounded-lg border-2 transition-all ${
+                        signUpRole === "investor"
+                          ? "border-blue-600 bg-blue-600/10"
+                          : "border-gray-800 hover:border-gray-700"
+                      }`}
+                    >
+                      <div className="text-center">
+                        <div className="text-2xl mb-2">💼</div>
+                        <div className="font-semibold">Investor</div>
+                        <div className="text-xs text-gray-400 mt-1">Looking to invest</div>
+                      </div>
+                    </button>
+                  </div>
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="name">Full Name</Label>
                   <div className="relative">

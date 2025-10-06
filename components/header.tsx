@@ -5,19 +5,17 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Moon, Sun, Menu, X } from "lucide-react"
 import { useTheme } from "next-themes"
-import { UserTypeModal } from "@/components/ui/user-type-modal"
 import { AuthModal } from "@/components/ui/auth-modal"
 import { usePathname } from "next/navigation"
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [isUserTypeModalOpen, setIsUserTypeModalOpen] = useState(false)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const { theme, setTheme } = useTheme()
   const pathname = usePathname()
 
   const handleGetStartedClick = () => {
-    setIsUserTypeModalOpen(true)
+    setIsAuthModalOpen(true)
     if (isMenuOpen) {
       setIsMenuOpen(false)
     }
@@ -49,12 +47,6 @@ export function Header() {
           >
             Features
           </Link>
-          <button 
-            onClick={() => setIsAuthModalOpen(true)}
-            className="text-sm font-medium hover:text-primary transition-colors"
-          >
-            Sign In
-          </button>
         </nav>
 
         <div className="flex items-center space-x-4">
@@ -99,15 +91,7 @@ export function Header() {
             >
               Features
             </Link>
-            <button
-              onClick={() => {
-                setIsAuthModalOpen(true);
-                setIsMenuOpen(false);
-              }}
-              className="block text-sm font-medium hover:text-primary transition-colors text-left w-full"
-            >
-              Sign In
-            </button>
+
             <Button className="w-full mt-2" onClick={handleGetStartedClick}>
               Get Started
             </Button>
@@ -115,12 +99,6 @@ export function Header() {
         </div>
       )}
 
-      {/* User Type Modal */}
-      <UserTypeModal 
-        isOpen={isUserTypeModalOpen} 
-        onClose={() => setIsUserTypeModalOpen(false)} 
-      />
-      
       {/* Auth Modal */}
       <AuthModal
         isOpen={isAuthModalOpen}
