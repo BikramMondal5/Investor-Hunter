@@ -14,8 +14,18 @@ import { useToast } from "@/components/ui/use-toast"
 import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel"
 import useEmblaCarousel from "embla-carousel-react"
 import Autoplay from "embla-carousel-autoplay"
+import { useSearchParams } from 'next/navigation'
 import TestimonialCarousel from "@/components/TestimonialCarousel"
 export function LandingPageContent() {
+  const searchParams = useSearchParams()
+  const [showAuthModal, setShowAuthModal] = useState(false)
+  
+  useEffect(() => {
+    // Check if user was redirected from a protected route
+    if (searchParams.get('redirected') === 'true') {
+      setShowAuthModal(true)
+    }
+  }, [searchParams])
   const { toast } = useToast()
   // Use useState and useEffect to ensure client-side rendering
   const [isMounted, setIsMounted] = useState(false)

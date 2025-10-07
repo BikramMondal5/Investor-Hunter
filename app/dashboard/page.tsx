@@ -966,8 +966,32 @@ export default function Dashboard() {
             <Button 
               variant="destructive"
               onClick={async () => {
-                await fetch('/api/logout', { method: 'POST' })
-                router.push('/')
+                setLogoutDialogOpen(false);
+                
+                try {
+                  // Call logout API with cache control
+                  await fetch('/api/logout', { 
+                    method: 'POST',
+                    headers: {
+                      'Cache-Control': 'no-cache, no-store, must-revalidate',
+                      'Pragma': 'no-cache',
+                      'Expires': '0'
+                    }
+                  });
+                  
+                  // Clear any client-side storage
+                  if (typeof window !== 'undefined') {
+                    sessionStorage.clear();
+                    localStorage.clear();
+                  }
+                  
+                  // Force a hard redirect with cache busting
+                  window.location.href = '/?t=' + Date.now();
+                } catch (error) {
+                  console.error('Logout error:', error);
+                  // Force redirect anyway with cache busting
+                  window.location.href = '/?t=' + Date.now();
+                }
               }}
             >
               Logout
