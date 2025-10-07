@@ -7,20 +7,40 @@ export function middleware(request: NextRequest) {
   
   // Protected routes that require authentication
   const protectedRoutes = ['/dashboard', '/investor', '/submit', '/internal-interview', '/investor-meeting']
+  const adminRoutes = ['/admin']
   const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
+  const isAdminRoute = adminRoutes.some(route => pathname.startsWith(route))
   
   // Routes accessible to both roles
   const sharedRoutes = ['/investor-meeting']
   const isSharedRoute = sharedRoutes.some(route => pathname.startsWith(route))
   
+  // Admin routes - require admin role
+  if (isAdminRoute) {
+    if (!session) {
+      return NextResponse.redirect(new URL('/?redirected=true', request.url))
+    }
+    
+    try {
+      const userData = JSON.parse(session)
+      if (userData.role !== 'admin') {
+        return NextResponse.redirect(new URL('/', request.url))
+      }
+      
+      const response = NextResponse.next()
+      response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
+      return response
+    } catch (error) {
+      return NextResponse.redirect(new URL('/', request.url))
+    }
+  }
+  
   // If trying to access protected routes without authentication
   if (!session && isProtectedRoute) {
-    // Redirect to home page (which will show the auth modal)
     const url = new URL('/', request.url)
     url.searchParams.set('redirected', 'true')
     const response = NextResponse.redirect(url)
     
-    // Add cache control headers to prevent caching
     response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
     response.headers.set('Pragma', 'no-cache')
     response.headers.set('Expires', '0')
@@ -31,14 +51,12 @@ export function middleware(request: NextRequest) {
   // If authenticated, check role-based access
   if (session && isProtectedRoute) {
     try {
-      // Parse the session to get user role
       const userData = JSON.parse(session)
       const userRole = userData.role
       
       // Skip role check for shared routes
       if (isSharedRoute) {
         const response = NextResponse.next()
-        // Prevent caching of authenticated pages
         response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
         return response
       }
@@ -57,13 +75,11 @@ export function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/investor', request.url))
       }
       
-      // Add cache control to authenticated pages
       const response = NextResponse.next()
       response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
       return response
       
     } catch (error) {
-      // If session parsing fails, clear the invalid session and redirect to home
       const response = NextResponse.redirect(new URL('/', request.url))
       response.cookies.set('user_session', '', {
         httpOnly: true,
@@ -84,6 +100,7 @@ export const config = {
     '/dashboard/:path*', 
     '/investor/:path*',
     '/submit/:path*',
-    '/internal-interview/:path*'
+    '/internal-interview/:path*',
+    '/admin/:path*'
   ]
 }

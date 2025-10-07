@@ -12,27 +12,40 @@ async function connectDB() {
 export async function GET(request: NextRequest) {
   try {
     const sessionCookie = request.cookies.get('user_session')?.value;
-    
+   
     if (!sessionCookie) {
       return NextResponse.json({ user: null }, { status: 401 });
     }
-    
+   
     const sessionData = JSON.parse(sessionCookie);
-    
+   
+    // Handle admin session (no database user)
+    if (sessionData.role === 'admin' && sessionData.userId === 'admin') {
+      return NextResponse.json({
+        user: {
+          id: 'admin',
+          email: 'admin@investorhunt.com',
+          name: 'Admin',
+          role: 'admin',
+          avatar: null,
+        },
+        profile: null
+      }, { status: 200 });
+    }
+   
     await connectDB();
-    
-    // Fetch full user data
+   
+    // Fetch full user data for regular users
     const user = await User.findById(sessionData.userId).select('-password');
-    
+   
     if (!user) {
       return NextResponse.json({ user: null }, { status: 401 });
     }
-    
+   
     // Fetch or create user profile
     let profile = await UserProfile.findOne({ userId: user._id });
-    
+   
     if (!profile) {
-      // Create profile from user data
       const nameParts = user.name ? user.name.split(' ') : ['', ''];
       profile = await UserProfile.create({
         userId: user._id,
@@ -43,7 +56,7 @@ export async function GET(request: NextRequest) {
         profilePhoto: user.avatar || null
       });
     }
-    
+   
     return NextResponse.json({
       user: {
         id: user._id.toString(),
@@ -61,10 +74,9 @@ export async function GET(request: NextRequest) {
         notifications: profile.notifications
       }
     }, { status: 200 });
-    
+   
   } catch (error) {
     console.error('Session fetch error:', error);
     return NextResponse.json({ user: null }, { status: 500 });
   }
 }
-

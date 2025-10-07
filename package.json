@@ -60,6 +60,7 @@
     "next": "15.2.4",
     "next-auth": "^4.24.11",
     "next-themes": "latest",
+    "nodemailer": "^6.10.1",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "react": "^18.3.1",

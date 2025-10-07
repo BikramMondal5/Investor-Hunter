@@ -7,74 +7,35 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Badge } from '@/components/ui/badge'
 import { Eye, CheckCircle, XCircle } from 'lucide-react'
 import { Textarea } from '@/components/ui/textarea'
-// Assuming this import path is correct for your session hook:
-import { useAppSession } from '@/hooks/use-app-session' 
 
 export default function AdminVerificationPage() {
-  // --- Session State ---
-  const { session, isLoading: sessionLoading } = useAppSession();
-  const adminId = session?.user?.id; // <-- FIXED: Safely extract the adminId
-  const isAdmin = session?.user?.role === 'admin';
-
-  // --- Local Component State ---
-  const [requests, setRequests] = useState<any[]>([])
-  const [dataLoading, setDataLoading] = useState(true) // Renamed for clarity
+  const [requests, setRequests] = useState([])
+  const [loading, setLoading] = useState(true)
   const [selectedRequest, setSelectedRequest] = useState<any>(null)
   const [showRejectDialog, setShowRejectDialog] = useState(false)
   const [rejectionReason, setRejectionReason] = useState('')
 
-  // --- Data Fetching Effect ---
   useEffect(() => {
-    // Only attempt to fetch data after the session has finished loading
-    if (!sessionLoading) {
-        if (adminId && isAdmin) {
-            fetchRequests(adminId);
-        } else {
-            // If session loaded but user is not authorized, stop the loading spinner
-            setDataLoading(false);
-        }
-    }
-  }, [sessionLoading, adminId, isAdmin]) // Dependency array now correctly tracks session state
+    fetchRequests()
+  }, [])
 
-  const fetchRequests = async (adminId: string) => {
-    setDataLoading(true); // Start data loading
-    try {
-      const res = await fetch('/api/admin/verification-requests')
-      
-      if (!res.ok) {
-        // Log non-200 responses for better debugging
-        console.error(`Failed to fetch requests: ${res.status} ${res.statusText}`);
-        throw new Error('API request failed');
-      }
-
-      const data = await res.json()
-      setRequests(data.requests || [])
-    } catch(error) {
-        console.error('Error fetching verification requests:', error);
-        setRequests([]); // Clear requests on failure
-    } finally {
-      setDataLoading(false) // Stop data loading
-    }
+  const fetchRequests = async () => {
+    const res = await fetch('/api/admin/verification-requests')
+    const data = await res.json()
+    setRequests(data.requests || [])
+    setLoading(false)
   }
 
-  // --- Action Handlers ---
-
   const handleApprove = async (id: string) => {
-    if (!adminId) {
-        alert('Authentication Error: Admin ID is missing. Please log in.');
-        return;
-    }
     if (!confirm('Are you sure you want to approve this verification request?')) return
     
     const res = await fetch(`/api/verification-requests/${id}/approve`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminId: adminId }) // <-- FIXED: Using the actual adminId
     })
-    
     if (res.ok) {
       alert('Request approved successfully!')
-      fetchRequests(adminId) // Re-fetch data
+      fetchRequests()
       setSelectedRequest(null)
     } else {
       alert('Failed to approve request')
@@ -82,10 +43,6 @@ export default function AdminVerificationPage() {
   }
 
   const handleReject = async (id: string) => {
-    if (!adminId) {
-        alert('Authentication Error: Admin ID is missing. Please log in.');
-        return;
-    }
     if (!rejectionReason.trim()) {
       alert('Please provide a rejection reason')
       return
@@ -95,14 +52,13 @@ export default function AdminVerificationPage() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
-        adminId: adminId, // <-- FIXED: Using the actual adminId
         rejectionReason 
       })
     })
     
     if (res.ok) {
       alert('Request rejected successfully!')
-      fetchRequests(adminId) // Re-fetch data
+      fetchRequests()
       setSelectedRequest(null)
       setShowRejectDialog(false)
       setRejectionReason('')
@@ -111,27 +67,11 @@ export default function AdminVerificationPage() {
     }
   }
 
-  // --- Conditional Rendering ---
-
-  if (sessionLoading) return (
-    <div className="container py-8">
-      <div className="text-center">Loading authentication session...</div>
-    </div>
-  )
-
-  if (!isAdmin) return (
-    <div className="container py-8">
-      <div className="text-center text-red-500 font-bold">ACCESS DENIED: You must be an administrator to view this page.</div>
-    </div>
-  )
-
-  if (dataLoading) return (
+  if (loading) return (
     <div className="container py-8">
       <div className="text-center">Loading verification requests...</div>
     </div>
   )
-
-  // --- Main Render ---
 
   return (
     <div className="container py-8 max-w-7xl">

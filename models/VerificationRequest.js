@@ -46,8 +46,8 @@ const verificationRequestSchema = new mongoose.Schema({
   },
   reviewedAt: Date,
   reviewedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Admin'
+    type: mongoose.Schema.Types.Mixed,
+    default: null
   },
   userProfileId: {
     type: mongoose.Schema.Types.ObjectId,

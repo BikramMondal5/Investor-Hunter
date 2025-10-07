@@ -29,6 +29,9 @@ export function AuthModal({ isOpen, onClose, initialError }: AuthModalProps) {
   const [showPassword, setShowPassword] = useState(false)
   const [activeTab, setActiveTab] = useState("signin")
   const [isLoading, setIsLoading] = useState(false)
+  const [showAdminPrompt, setShowAdminPrompt] = useState(false)
+  const [adminPasskey, setAdminPasskey] = useState("")
+  const [adminLoading, setAdminLoading] = useState(false)
 
   // Form state for sign in
   const [signInEmail, setSignInEmail] = useState("")
@@ -212,7 +215,64 @@ export function AuthModal({ isOpen, onClose, initialError }: AuthModalProps) {
       setIsLoading(false)
     }
   }
+  const handleAdminAccess = async () => {
+    if (!adminPasskey.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter the admin passkey",
+        variant: "destructive",
+      })
+      return
+    }
 
+    setAdminLoading(true)
+
+    try {
+      const res = await fetch('/api/auth/admin-access', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ passkey: adminPasskey })
+      })
+
+      const data = await res.json()
+
+      if (res.ok && data.success) {
+        toast({
+          title: "Admin Access Granted",
+          description: "Redirecting to admin panel...",
+          variant: "default",
+          className: "bg-green-800 border-green-700 text-white",
+        })
+        
+        setAdminPasskey("")
+        setShowAdminPrompt(false)
+        onClose()
+        
+        setTimeout(() => {
+          router.push('/admin/verification-requests')
+          router.refresh()
+        }, 500)
+      } else {
+        // Show the specific error message from the API
+        toast({
+          title: "Access Denied",
+          description: data.message || "Invalid admin passkey",
+          variant: "destructive",
+        })
+        // Clear the passkey field on error
+        setAdminPasskey("")
+      }
+    } catch (error) {
+      console.error('Admin access error:', error)
+      toast({
+        title: "Error",
+        description: "Failed to verify admin access. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setAdminLoading(false)
+    }
+  }
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md bg-background border-gray-800 max-h-[90vh] overflow-y-auto">
@@ -551,6 +611,80 @@ export function AuthModal({ isOpen, onClose, initialError }: AuthModalProps) {
             </form>
           </TabsContent>
         </Tabs>
+        <div className="mt-6 pt-6 border-t border-gray-800">
+        {!showAdminPrompt ? (
+          <button
+            type="button"
+            onClick={() => setShowAdminPrompt(true)}
+            className="w-full text-sm text-gray-500 hover:text-gray-300 transition-colors"
+          >
+            Are you an admin?
+          </button>
+        ) : (
+          <div className="space-y-3">
+            <div className="text-center">
+              <p className="text-sm font-medium text-gray-300 mb-3">Admin Access</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="admin-passkey" className="text-xs text-gray-400">
+                Enter Admin Passkey
+              </Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
+                <Input
+                  id="admin-passkey"
+                  type="password"
+                  placeholder="Enter passkey"
+                  className="pl-10 bg-gray-950 border-gray-800 text-sm"
+                  value={adminPasskey}
+                  onChange={(e) => setAdminPasskey(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      handleAdminAccess()
+                    }
+                  }}
+                  disabled={adminLoading}
+                />
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="flex-1 text-xs"
+                onClick={() => {
+                  setShowAdminPrompt(false)
+                  setAdminPasskey("")
+                }}
+                disabled={adminLoading}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-xs"
+                onClick={handleAdminAccess}
+                disabled={adminLoading || !adminPasskey.trim()}
+              >
+                {adminLoading ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Verifying...
+                  </>
+                ) : (
+                  "Access Admin"
+                )}
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
       </DialogContent>
     </Dialog>
   )
