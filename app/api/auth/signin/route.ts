@@ -1,8 +1,8 @@
-// app/api/auth/signin/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import User from '@/models/user';
+import UserProfile from '@/models/userProfile';
 
 async function connectDB() {
   if (!mongoose.connections[0].readyState) {
@@ -16,7 +16,6 @@ export async function POST(request: NextRequest) {
     
     const { email, password } = await request.json();
     
-    // Validation
     if (!email || !password) {
       return NextResponse.json(
         { success: false, message: "Email and password are required" },
@@ -24,7 +23,6 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Find user
     const user = await User.findOne({ email });
     if (!user) {
       return NextResponse.json(
@@ -33,7 +31,6 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Check if user registered with Google
     if (user.provider === 'google' && !user.password) {
       return NextResponse.json(
         { success: false, message: "Please sign in with Google" },
@@ -41,7 +38,6 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Verify password
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
       return NextResponse.json(
@@ -50,16 +46,28 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Update last login
     user.lastLogin = new Date();
     await user.save();
     
-    // Create session data
+    // Fetch or create profile
+    let profile = await UserProfile.findOne({ userId: user._id });
+    if (!profile) {
+      const nameParts = user.name ? user.name.split(' ') : ['', ''];
+      profile = await UserProfile.create({
+        userId: user._id,
+        firstName: user.firstName || nameParts[0] || '',
+        lastName: user.lastName || nameParts[1] || '',
+        email: user.email,
+        company: '',
+        profilePhoto: user.avatar || null
+      });
+    }
+    
     const sessionData = {
       userId: user._id.toString(),
       email: user.email,
       name: user.name,
-      avatar: user.avatar,
+      avatar: profile.profilePhoto || user.avatar,
       role: user.role
     };
     
@@ -71,19 +79,18 @@ export async function POST(request: NextRequest) {
           id: user._id,
           email: user.email,
           name: user.name,
-          avatar: user.avatar,
+          avatar: profile.profilePhoto || user.avatar,
           role: user.role
         }
       },
       { status: 200 }
     );
     
-    // Set session cookie
     response.cookies.set('user_session', JSON.stringify(sessionData), {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      maxAge: 60 * 60 * 24 * 7,
       path: '/'
     });
     

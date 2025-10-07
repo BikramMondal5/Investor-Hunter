@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, ChangeEvent, FormEvent, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
@@ -8,11 +8,13 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Switch } from "@/components/ui/switch"
 import { useRouter } from "next/navigation"
+import { useAppSession } from "@/hooks/use-app-session"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription, // Import DialogDescription
 } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import {
@@ -27,7 +29,22 @@ import {
   MessageCircle,
   TrendingUp,
   Users,
+  User,
+  CheckCircle, // Import CheckCircle
 } from "lucide-react"
+
+interface Profile {
+  firstName: string;
+  lastName: string;
+  email: string;
+  company: string;
+  profilePhoto?: string;
+  notifications: {
+    investorInterest: boolean;
+    messages: boolean;
+    communityFeedback: boolean;
+  };
+}
 
 interface SidebarItem {
   id: string;
@@ -44,6 +61,7 @@ export default function Dashboard() {
   const [replyingTo, setReplyingTo] = useState<number | null>(null)
   const [replyText, setReplyText] = useState("")
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
+  const [updateSuccessDialogOpen, setUpdateSuccessDialogOpen] = useState(false) // State for success dialog
   const [communityFeedback, setCommunityFeedback] = useState([
     {
       id: 1,
@@ -73,8 +91,12 @@ export default function Dashboard() {
       replies: [],
     },
   ])
-
-  const sidebarItems = [
+  const { session, isLoading: isSessionLoading } = useAppSession()
+  const [profile, setProfile] = useState<Profile | null>(null)
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true)
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false)
+  const sidebarItems: SidebarItem[] = [
     { id: "dashboard", label: "Dashboard", icon: BarChart3 },
     { id: "pitch", label: "My Pitch", icon: Play },
     { id: "analytics", label: "Feedback & Analytics", icon: TrendingUp },
@@ -83,6 +105,31 @@ export default function Dashboard() {
     { id: "investor-meeting", label: "Investor Meeting", icon: Users, link: "/investor-meeting" },
     { id: "settings", label: "Settings", icon: Settings },
   ]
+  const [editedProfile, setEditedProfile] = useState<Profile | null>(null)
+
+  // Update the useEffect where you fetch profile
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await fetch('/api/profile')
+        if (res.ok) {
+          const data = await res.json()
+          setProfile(data.profile)
+          setEditedProfile(data.profile) // Initialize edited profile
+        }
+      } catch (error) {
+        console.error('Failed to fetch profile:', error)
+      } finally {
+        setIsLoadingProfile(false)
+      }
+    }
+
+    if (session?.user) {
+      fetchProfile()
+    } else if (!isSessionLoading) {
+      router.push('/');
+    }
+  }, [session, isSessionLoading, router])
 
   const handleLike = (feedbackId: number) => {
     setCommunityFeedback(prev => 
@@ -130,6 +177,155 @@ export default function Dashboard() {
     setReplyingTo(null)
     setReplyText("")
   }
+  useEffect(() => {
+  const fetchProfile = async () => {
+    try {
+      const res = await fetch('/api/profile')
+      if (res.ok) {
+        const data = await res.json()
+        setProfile(data.profile)
+      }
+    } catch (error) {
+      console.error('Failed to fetch profile:', error)
+    } finally {
+      setIsLoadingProfile(false)
+    }
+  }
+
+  if (session?.user) {
+    fetchProfile()
+  } else if (!isSessionLoading) {
+    router.push('/');
+  }
+}, [session, isSessionLoading, router])
+
+  // Add function to handle photo upload
+  const handlePhotoUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsUploadingPhoto(true)
+    
+    try {
+      const formData = new FormData()
+      formData.append('photo', file)
+
+      const res = await fetch('/api/upload-photo', {
+        method: 'POST',
+        body: formData
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        if (data.profile) {
+          setProfile(prev => prev ? { ...prev, profilePhoto: data.profile.profilePhoto } : data.profile)
+          setEditedProfile(prev => prev ? { ...prev, profilePhoto: data.profile.profilePhoto } : data.profile)
+        }
+      } else {
+        console.error('Failed to upload photo:', await res.text())
+        alert('Failed to upload photo')
+      }
+    } catch (error) {
+      console.error('Failed to upload photo:', error)
+      alert('Failed to upload photo')
+    } finally {
+      setIsUploadingPhoto(false)
+      e.target.value = ''
+    }
+  }
+
+  const handlePhotoRemove = async () => {
+    setIsUploadingPhoto(true)
+    
+    try {
+      const res = await fetch('/api/remove-photo', {
+        method: 'POST',
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        // Set profilePhoto to null/undefined instead of keeping the old value
+        setProfile(prev => prev ? { ...prev, profilePhoto: undefined } : null)
+        setEditedProfile(prev => prev ? { ...prev, profilePhoto: undefined } : null)
+      } else {
+        console.error('Failed to remove photo:', await res.text())
+        alert('Failed to remove photo')
+      }
+    } catch (error) {
+      console.error('Failed to remove photo:', error)
+      alert('Failed to remove photo')
+    } finally {
+      setIsUploadingPhoto(false)
+    }
+  }
+
+  // Add function to handle profile updates
+  const handleProfileUpdate = async (e: FormEvent) => {
+    e.preventDefault()
+    if (!editedProfile) return
+    
+    try {
+      const res = await fetch('/api/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: editedProfile.firstName,
+          lastName: editedProfile.lastName,
+          email: editedProfile.email,
+          company: editedProfile.company
+        })
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        setProfile(data.profile) // Update the actual profile only on save
+        setEditedProfile(data.profile)
+        setUpdateSuccessDialogOpen(true) // Open the success dialog
+      } else {
+        // You might want to handle errors with a toast or another dialog
+        alert('Failed to update profile')
+      }
+    } catch (error) {
+      console.error('Failed to update profile:', error)
+      alert('Failed to update profile')
+    }
+  }
+  // Add function to handle notification settings
+  const handleNotificationChange = async (key: keyof Profile['notifications'], value: boolean) => {
+    if (!profile) return
+    try {
+      const updatedNotifications = {
+        ...profile.notifications,
+        [key]: value
+      }
+
+      const res = await fetch('/api/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...profile,
+          notifications: updatedNotifications
+        })
+      })
+
+      if (res.ok) {
+        setProfile(prev => ({
+          ...prev,
+          notifications: updatedNotifications
+        }))
+      }
+    } catch (error) {
+      console.error('Failed to update notifications:', error)
+    }
+  }
+
+  if (isSessionLoading || isLoadingProfile) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-lg font-semibold">Loading Dashboard...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -143,12 +339,21 @@ export default function Dashboard() {
           </div>
 
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="icon">
-              <Bell className="h-5 w-5" />
-            </Button>
-            <Avatar>
-              <AvatarImage src="https://avatars.githubusercontent.com/u/170235967?v=4" />
-              <AvatarFallback>BM</AvatarFallback>
+            {profile && (
+              <span className="text-sm font-medium hidden md:inline-block">
+                {profile.firstName} {profile.lastName}
+              </span>
+            )}
+            <Avatar key={profile?.profilePhoto || 'fallback-header'}>
+              {profile?.profilePhoto ? (
+                <AvatarImage 
+                  src={profile.profilePhoto} 
+                />
+              ) : (
+                <AvatarFallback className="bg-muted">
+                  <User className="h-5 w-5 text-muted-foreground" />
+                </AvatarFallback>
+              )}
             </Avatar>
           </div>
         </div>
@@ -614,6 +819,233 @@ export default function Dashboard() {
             </div>
           )}
 
+          {/* Pitch Tab */}
+          {activeTab === "pitch" && (
+            <div className="space-y-4 max-w-5xl mx-auto">
+              <div className="mb-3 mt-0">
+                <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Your Submitted Pitch</h1>
+                <p className="text-muted-foreground">Track your pitch performance and investor interest</p>
+              </div>
+
+              {/* Pitch Overview Card */}
+              <Card className="shadow-sm">
+                <CardHeader className="pb-1 pt-3 px-4">
+                  <CardTitle>Articuno.AI - Your personalized Weather Intelligence</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 pt-1 px-4 pb-4">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <div 
+                        className="aspect-[16/9] bg-muted rounded-lg flex items-center justify-center relative group cursor-pointer overflow-hidden"
+                        onClick={() => setVideoModalOpen(true)}
+                      >
+                        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center">
+                          <div className="h-16 w-16 rounded-full bg-primary/90 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <Play className="h-8 w-8 text-white ml-1" />
+                          </div>
+                        </div>
+                        <img
+                          src="articuno-post1.png"
+                          alt="Pitch video thumbnail"
+                          className="absolute inset-0 w-full h-full object-cover rounded-lg"
+                        />
+                      </div>
+                      <p className="text-xs text-center mt-1 text-muted-foreground">Click to watch your pitch video</p>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div>
+                        <h3 className="font-semibold">AI Evaluation Summary</h3>
+                        <div className="space-y-2 mt-1">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm">Clarity</span>
+                            <div className="flex items-center space-x-2">
+                              <Progress value={89} className="w-20" />
+                              <span className="text-sm font-medium">8.9/10</span>
+                            </div>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm">Uniqueness</span>
+                            <div className="flex items-center space-x-2">
+                              <Progress value={91} className="w-20" />
+                              <span className="text-sm font-medium">9.1/10</span>
+                            </div>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm">Market Fit</span>
+                            <div className="flex items-center space-x-2">
+                              <Progress value={85} className="w-20" />
+                              <span className="text-sm font-medium">8.5/10</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <Button className="w-full">View Full Report</Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Community Feedback */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <MessageCircle className="h-5 w-5" />
+                    <span>Community Feedback</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {communityFeedback.map((feedback) => (
+                    <div key={feedback.id} className="flex flex-col space-y-2">
+                      <div className="flex space-x-3 p-4 rounded-lg bg-muted/30">
+                        <Avatar className="h-8 w-8">
+                          <AvatarFallback className="text-xs">{feedback.avatar}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium text-sm">{feedback.user}</span>
+                            <Badge variant={feedback.type === "positive" ? "default" : "secondary"} className="text-xs">
+                              {feedback.type}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">{feedback.comment}</p>
+                          <div className="flex items-center space-x-2">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-6 px-2"
+                              onClick={() => handleLike(feedback.id)}
+                            >
+                              <ThumbsUp className={`h-3 w-3 mr-1`} />
+                              {feedback.likes}
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-6 px-2"
+                              onClick={() => handleReply(feedback.id)}
+                            >
+                              <MessageCircle className="h-3 w-3 mr-1" />
+                              Reply
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Replies section */}
+                      {feedback.replies && feedback.replies.length > 0 && (
+                        <div className="pl-11">
+                          {feedback.replies.map((reply) => (
+                            <div key={reply.id} className="flex items-start space-x-3 p-3 rounded-lg bg-muted/20 mb-2">
+                              <Avatar className="h-7 w-7">
+                                <AvatarFallback className="text-xs">{reply.avatar}</AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-medium text-sm">{reply.user}</span>
+                                  <span className="text-xs text-muted-foreground">{reply.timestamp}</span>
+                                </div>
+                                <p className="text-sm text-muted-foreground mt-1">{reply.comment}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Reply form */}
+                      {replyingTo === feedback.id && (
+                        <div className="pl-11 pt-1">
+                          <Textarea 
+                            value={replyText}
+                            onChange={(e) => setReplyText(e.target.value)}
+                            placeholder="Write your reply..."
+                            className="resize-none min-h-[80px]"
+                          />
+                          <div className="flex space-x-2 mt-2">
+                            <Button 
+                              onClick={submitReply} 
+                              className="flex-1"
+                              disabled={!replyText.trim()}
+                            >
+                              Post Reply
+                            </Button>
+                            <Button 
+                              onClick={cancelReply} 
+                              variant="outline" 
+                              className="flex-1"
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              {/* Investor Views */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Eye className="h-5 w-5" />
+                    <span>Investor Interest</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="text-center p-6 bg-muted/30 rounded-lg">
+                      <div className="text-3xl font-bold text-primary">47</div>
+                      <p className="text-sm text-muted-foreground">Total Views</p>
+                    </div>
+                    <div className="text-center p-6 bg-muted/30 rounded-lg">
+                      <div className="text-3xl font-bold text-green-600">8</div>
+                      <p className="text-sm text-muted-foreground">Interested Investors</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 space-y-3">
+                    <h4 className="font-semibold">Recent Investor Activity</h4>
+                    {[
+                      { name: "Sequoia Capital", interest: "High", status: "Pending" },
+                      { name: "Andreessen Horowitz", interest: "Moderate", status: "Viewed" },
+                      { name: "Accel Partners", interest: "High", status: "Message Sent" },
+                    ].map((investor, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div>
+                          <p className="font-medium">{investor.name}</p>
+                          <p className="text-sm text-muted-foreground">Interest: {investor.interest}</p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Badge variant={investor.status === "Message Sent" ? "default" : "secondary"}>
+                            {investor.status}
+                          </Badge>
+                          {investor.status === "Message Sent" && <Button size="sm">Reply</Button>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Call to Action */}
+              <div className="flex space-x-4">
+                <Button variant="outline" className="flex-1 bg-transparent">
+                  <TrendingUp className="mr-2 h-4 w-4" />
+                  Improve Pitch
+                </Button>
+                <Button 
+                  className="flex-1"
+                  onClick={() => router.push('/submit')}
+                >
+                  <Users className="mr-2 h-4 w-4" />
+                  Submit New Idea
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Analytics Tab */}
           {activeTab === "analytics" && (
             <div className="space-y-4 max-w-5xl mx-auto">
@@ -814,114 +1246,160 @@ export default function Dashboard() {
                 <p className="text-muted-foreground">Manage your account preferences</p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="col-span-1">
-                  <Card className="shadow-sm">
-                    <CardHeader>
-                      <CardTitle>Profile</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="flex flex-col items-center space-y-3">
-                        <Avatar className="h-20 w-20">
-                          <AvatarImage src="https://avatars.githubusercontent.com/u/170235967?v=4" />
-                          <AvatarFallback>JD</AvatarFallback>
-                        </Avatar>
-                        <Button variant="outline" size="sm">Change Photo</Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
+              {isLoadingProfile ? (
+                <div className="text-center py-8">Loading profile...</div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="col-span-1">
+                    <Card className="shadow-sm">
+                      <CardHeader>
+                        <CardTitle>Profile</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="flex flex-col items-center space-y-3">
+                            <Avatar className="h-20 w-20" key={profile?.profilePhoto || 'fallback-settings'}>
+                              {profile?.profilePhoto ? (
+                                <AvatarImage 
+                                  src={profile.profilePhoto}
+                                />
+                              ) : (
+                                <AvatarFallback className="bg-muted">
+                                  <User className="h-10 w-10 text-muted-foreground" />
+                                </AvatarFallback>
+                              )}
+                            </Avatar>
+                            <input
+                              type="file"
+                              id="photoUpload"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={handlePhotoUpload}
+                            />
+                            <div className="flex gap-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => document.getElementById('photoUpload')?.click()}
+                                disabled={isUploadingPhoto}
+                              >
+                                {isUploadingPhoto ? 'Uploading...' : 'Change Photo'}
+                              </Button>
+                              {profile?.profilePhoto && (
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={handlePhotoRemove}
+                                  disabled={isUploadingPhoto}
+                                  className="text-red-600 hover:text-red-700"
+                                >
+                                  Remove
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                      </CardContent>
+                    </Card>
+                  </div>
 
-                <div className="col-span-1 md:col-span-2">
-                  <Card className="shadow-sm">
-                    <CardHeader>
-                      <CardTitle>Personal Information</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <form className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium" htmlFor="firstName">First Name</label>
-                            <input 
-                              type="text" 
-                              id="firstName" 
-                              className="w-full p-2 rounded-md border" 
-                              defaultValue="Bikram"
-                            />
+                  <div className="col-span-1 md:col-span-2">
+                    <Card className="shadow-sm">
+                      <CardHeader>
+                        <CardTitle>Personal Information</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <form className="space-y-4" onSubmit={handleProfileUpdate}>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium" htmlFor="firstName">First Name</label>
+                              <input 
+                                type="text" 
+                                id="firstName" 
+                                className="w-full p-2 rounded-md border" 
+                                value={editedProfile?.firstName || ''}
+                                onChange={(e) => setEditedProfile(prev => prev ? ({ ...prev, firstName: e.target.value }) : null)}
+                              />
+
+                              <input 
+                                type="text" 
+                                id="lastName" 
+                                className="w-full p-2 rounded-md border" 
+                                value={editedProfile?.lastName || ''}
+                                onChange={(e) => setEditedProfile(prev => prev ? ({ ...prev, lastName: e.target.value }) : null)}
+                              />
+
+                              <input 
+                                type="email" 
+                                id="email" 
+                                className="w-full p-2 rounded-md border" 
+                                value={editedProfile?.email || ''}
+                                onChange={(e) => setEditedProfile(prev => prev ? ({ ...prev, email: e.target.value }) : null)}
+                              />
+
+                              <input 
+                                type="text" 
+                                id="company" 
+                                className="w-full p-2 rounded-md border" 
+                                value={editedProfile?.company || ''}
+                                onChange={(e) => setEditedProfile(prev => prev ? ({ ...prev, company: e.target.value }) : null)}
+                              />
+                            </div>
                           </div>
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium" htmlFor="lastName">Last Name</label>
-                            <input 
-                              type="text" 
-                              id="lastName" 
-                              className="w-full p-2 rounded-md border" 
-                              defaultValue="Mondal"
-                            />
+                          <Button type="submit" className="w-full md:w-auto">Save Changes</Button>
+                        </form>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className="shadow-sm mt-4">
+                      <CardHeader>
+                        <CardTitle>Notification Settings</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium">Investor Interest Alerts</p>
+                              <p className="text-sm text-muted-foreground">Get notified when investors view your pitch</p>
+                            </div>
+                            <div>
+                              <Switch 
+                                checked={profile?.notifications?.investorInterest ?? false}
+                                onCheckedChange={(checked) => handleNotificationChange('investorInterest', checked)}
+                              />
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium">Message Notifications</p>
+                              <p className="text-sm text-muted-foreground">Get notified when you receive a message</p>
+                            </div>
+                            <div>
+                              <Switch 
+                                checked={profile?.notifications?.messages ?? false}
+                                onCheckedChange={(checked) => handleNotificationChange('messages', checked)}
+                              />
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium">Community Feedback Alerts</p>
+                              <p className="text-sm text-muted-foreground">Get notified when someone leaves feedback</p>
+                            </div>
+                            <div>
+                              <Switch 
+                                checked={profile?.notifications?.communityFeedback ?? false}
+                                onCheckedChange={(checked) => handleNotificationChange('communityFeedback', checked)}
+                              />
+                            </div>
                           </div>
                         </div>
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium" htmlFor="email">Email</label>
-                          <input 
-                            type="email" 
-                            id="email" 
-                            className="w-full p-2 rounded-md border" 
-                            defaultValue="codesnippets45@gmail.com"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium" htmlFor="company">Company</label>
-                          <input 
-                            type="text" 
-                            id="company" 
-                            className="w-full p-2 rounded-md border" 
-                            defaultValue="Articuno.AI."
-                          />
-                        </div>
-                        <Button className="w-full md:w-auto">Save Changes</Button>
-                      </form>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card className="shadow-sm mt-4">
-                    <CardHeader>
-                      <CardTitle>Notification Settings</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium">Investor Interest Alerts</p>
-                            <p className="text-sm text-muted-foreground">Get notified when investors view your pitch</p>
-                          </div>
-                          <div>
-                            <Switch defaultChecked />
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium">Message Notifications</p>
-                            <p className="text-sm text-muted-foreground">Get notified when you receive a message</p>
-                          </div>
-                          <div>
-                            <Switch defaultChecked />
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium">Community Feedback Alerts</p>
-                            <p className="text-sm text-muted-foreground">Get notified when someone leaves feedback</p>
-                          </div>
-                          <div>
-                            <Switch defaultChecked />
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                      </CardContent>
+                    </Card>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
+           
         </main>
       </div>
 
@@ -995,6 +1473,23 @@ export default function Dashboard() {
               }}
             >
               Logout
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+      {/* Profile Update Success Dialog */}
+      <Dialog open={updateSuccessDialogOpen} onOpenChange={setUpdateSuccessDialogOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader className="items-center text-center">
+            <CheckCircle className="h-16 w-16 text-green-500 mb-4" />
+            <DialogTitle className="text-2xl font-bold">Profile Updated!</DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              Your changes have been saved successfully.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="pt-4 flex justify-center">
+            <Button onClick={() => setUpdateSuccessDialogOpen(false)}>
+              Close
             </Button>
           </div>
         </DialogContent>

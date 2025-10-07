@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
+import { useRouter } from "next/navigation"
+import { LogOut } from "lucide-react"
 import {
   Search,
   Filter,
@@ -36,6 +38,8 @@ export default function InvestorPortal() {
   const [aiScoreRange, setAiScoreRange] = useState([7])
   const [videoModalOpen, setVideoModalOpen] = useState(false)
   const [currentStartup, setCurrentStartup] = useState<any>(null)
+  const router = useRouter()
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
 
   useEffect(() => {
     setIsMounted(true)
@@ -150,6 +154,17 @@ export default function InvestorPortal() {
               <MessageSquare className="mr-2 h-4 w-4" />
               Messaging
             </Button>
+            {/* Add this logout button section */}
+            <div className="pt-6 mt-4 border-t">
+              <Button 
+                variant="ghost" 
+                className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/10"
+                onClick={() => setLogoutDialogOpen(true)}
+              >
+                <LogOut className="mr-3 h-4 w-4" />
+                Logout
+              </Button>
+            </div>
           </nav>
         </aside>
 
@@ -398,6 +413,58 @@ export default function InvestorPortal() {
           </div>
         </DialogContent>
       </Dialog>
+      {/* Logout Confirmation Dialog */}
+        <Dialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Confirm Logout</DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <p className="text-muted-foreground">Are you sure you want to logout? Any unsaved changes will be lost.</p>
+            </div>
+            <div className="flex space-x-2 justify-end">
+              <Button 
+                variant="outline" 
+                onClick={() => setLogoutDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button 
+                variant="destructive"
+                onClick={async () => {
+                  setLogoutDialogOpen(false);
+                  
+                  try {
+                    // Call logout API with cache control
+                    await fetch('/api/logout', { 
+                      method: 'POST',
+                      headers: {
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache',
+                        'Expires': '0'
+                      }
+                    });
+                    
+                    // Clear any client-side storage
+                    if (typeof window !== 'undefined') {
+                      sessionStorage.clear();
+                      localStorage.clear();
+                    }
+                    
+                    // Force a hard redirect with cache busting
+                    window.location.href = '/?t=' + Date.now();
+                  } catch (error) {
+                    console.error('Logout error:', error);
+                    // Force redirect anyway with cache busting
+                    window.location.href = '/?t=' + Date.now();
+                  }
+                }}
+              >
+                Logout
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
     </div>
   )
 }

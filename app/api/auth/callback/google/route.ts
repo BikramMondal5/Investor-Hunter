@@ -1,7 +1,7 @@
-// app/api/auth/callback/google/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 import User from '@/models/user';
+import UserProfile from '@/models/userProfile';
 
 async function connectDB() {
   if (!mongoose.connections[0].readyState) {
@@ -16,14 +16,13 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const code = searchParams.get('code');
     const error = searchParams.get('error');
-    const state = searchParams.get('state'); // Get role from state parameter
+    const state = searchParams.get('state');
    
     if (error || !code) {
       console.error('OAuth error:', error);
       return NextResponse.redirect(new URL('/?error=oauth_failed', request.url));
     }
    
-    // Exchange code for tokens
     const tokenParams = new URLSearchParams();
     tokenParams.append('client_id', process.env.GOOGLE_CLIENT_ID as string);
     tokenParams.append('client_secret', process.env.GOOGLE_CLIENT_SECRET as string);
@@ -43,11 +42,9 @@ export async function GET(request: NextRequest) {
       throw new Error('Failed to get access token');
     }
    
-    // Get user info from Google
     const userResponse = await fetch(`https://www.googleapis.com/oauth2/v2/userinfo?access_token=${tokens.access_token}`);
     const googleUser = await userResponse.json();
    
-    // Check if user exists
     let user = await User.findOne({
       $or: [
         { googleId: googleUser.id },
@@ -55,23 +52,18 @@ export async function GET(request: NextRequest) {
       ]
     });
 
-    let userRole = 'entrepreneur'; // default role
+    let userRole = 'entrepreneur';
     let isNewUser = false;
-
-    // ⭐ NEW: Check if this is a sign-in attempt (no state/role parameter)
     const isSignUpFlow = state !== null && state !== undefined && state !== '';
 
     if (!user) {
-      // ⭐ NEW: If user doesn't exist and this is a sign-in flow, reject
       if (!isSignUpFlow) {
         return NextResponse.redirect(new URL('/?error=user_not_found', request.url));
       }
 
-      // New user - only allow in sign-up flow
       userRole = state || 'entrepreneur';
       isNewUser = true;
       
-      // Parse name into first and last name
       const nameParts = googleUser.name.split(' ');
       const firstName = nameParts[0] || googleUser.name;
       const lastName = nameParts.slice(1).join(' ') || '';
@@ -88,11 +80,19 @@ export async function GET(request: NextRequest) {
         isActive: true,
       });
       await user.save();
+
+      // Create user profile for new user
+      await UserProfile.create({
+        userId: user._id,
+        firstName: firstName,
+        lastName: lastName,
+        email: user.email,
+        company: '',
+        profilePhoto: googleUser.picture
+      });
     } else {
-      // Existing user - use their existing role
       userRole = user.role;
       
-      // Update Google ID and avatar if missing
       if (!user.googleId) {
         user.googleId = googleUser.id;
       }
@@ -101,28 +101,42 @@ export async function GET(request: NextRequest) {
       }
       user.lastLogin = new Date();
       await user.save();
+
+      // Ensure profile exists for existing user
+      let profile = await UserProfile.findOne({ userId: user._id });
+      if (!profile) {
+        const nameParts = user.name ? user.name.split(' ') : ['', ''];
+        await UserProfile.create({
+          userId: user._id,
+          firstName: user.firstName || nameParts[0] || '',
+          lastName: user.lastName || nameParts[1] || '',
+          email: user.email,
+          company: '',
+          profilePhoto: user.avatar
+        });
+      }
     }
+
+    // Fetch profile to get latest photo
+    const profile = await UserProfile.findOne({ userId: user._id });
    
-    // Create session data
     const sessionData = {
       userId: user._id.toString(),
       email: user.email,
       name: user.name,
-      avatar: user.avatar,
+      avatar: profile?.profilePhoto || user.avatar,
       role: user.role
     };
    
-    // Redirect based on role
     const redirectPath = userRole === 'investor' ? '/investor' : '/dashboard';
     const successParam = isNewUser ? 'registered' : 'signin';
     const response = NextResponse.redirect(new URL(`${redirectPath}?${successParam}=true`, request.nextUrl.origin));
    
-    // Set session cookie
     response.cookies.set('user_session', JSON.stringify(sessionData), {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      maxAge: 60 * 60 * 24 * 7,
       path: '/'
     });
    

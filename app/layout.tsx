@@ -15,6 +15,8 @@ export const metadata: Metadata = {
     generator: 'v0.dev'
 }
 
+import { AppSessionProvider } from "@/hooks/use-app-session";
+
 export default function RootLayout({
   children,
 }: {
@@ -24,9 +26,11 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          {children}
-          <Toaster />
-          <ClaraAssistant />
+          <AppSessionProvider>
+            {children}
+            <Toaster />
+            <ClaraAssistant />
+          </AppSessionProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -193,9 +193,9 @@ export function AuthModal({ isOpen, onClose, initialError }: AuthModalProps) {
 
     // Small delay before redirect to ensure modal closes smoothly
     setTimeout(() => {
-      const redirectPath = data.user.role === "investor" ? "/investor" : "/dashboard"
-      router.push(redirectPath)
-      router.refresh() // Force a refresh to update session state
+      if (data.user.role === "entrepreneur") {
+        window.location.href = "/dashboard";
+      }
     }, 100)
 
     } catch (error) {
