@@ -12,26 +12,28 @@ const verificationRequestSchema = new mongoose.Schema({
   },
   documents: {
     required: [{
-      documentId: String,
-      documentType: String,
-      fileUrl: String,
-      status: {
+        documentId: String,
+        documentType: String,
+        fileUrls: [String], // Changed from fileUrl to fileUrls array
+        fileCount: Number,
+        status: {
         type: String,
         enum: ['pending_verification', 'approved', 'rejected'],
         default: 'pending_verification'
-      }
+        }
     }],
     optional: [{
-      documentId: String,
-      documentType: String,
-      fileUrl: String,
-      status: {
+        documentId: String,
+        documentType: String,
+        fileUrls: [String], // Changed from fileUrl to fileUrls array
+        fileCount: Number,
+        status: {
         type: String,
         enum: ['pending_verification', 'approved', 'rejected'],
         default: 'pending_verification'
-      }
+        }
     }]
-  },
+    },
   verificationStatus: {
     type: String,
     enum: ['pending', 'approved', 'rejected', 'needs_clarification'],

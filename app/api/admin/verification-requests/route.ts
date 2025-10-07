@@ -5,11 +5,23 @@ import VerificationRequest from '@/models/VerificationRequest'
 export async function GET() {
   try {
     await dbConnect()
-    const requests = await VerificationRequest.find({ verificationStatus: 'pending' })
-      .sort({ submittedAt: -1 })
     
-    return NextResponse.json({ success: true, requests })
+    const requests = await VerificationRequest.find({ 
+      verificationStatus: 'pending' 
+    })
+    .sort({ submittedAt: -1 })
+    .lean()
+    
+    return NextResponse.json({ 
+      success: true, 
+      requests 
+    })
   } catch (error) {
-    return NextResponse.json({ success: false, error: 'Failed to fetch requests' }, { status: 500 })
+    console.error('Error fetching verification requests:', error)
+    return NextResponse.json({ 
+      success: false, 
+      error: 'Failed to fetch requests',
+      requests: [] 
+    }, { status: 500 })
   }
 }

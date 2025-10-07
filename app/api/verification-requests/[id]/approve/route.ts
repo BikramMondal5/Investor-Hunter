@@ -2,50 +2,59 @@ import { NextRequest, NextResponse } from 'next/server'
 import dbConnect from '@/lib/mongodb'
 import VerificationRequest from '@/models/VerificationRequest'
 import UserProfile from '@/models/userProfile'
+import { sendApprovalEmail } from '@/lib/email'
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     await dbConnect()
-    
-    const { id } = params
+   
+    const { id } = await params
     const { adminId } = await request.json()
-    
-    // Find the verification request
+   
     const verificationRequest = await VerificationRequest.findById(id)
-    
+   
     if (!verificationRequest) {
       return NextResponse.json(
         { success: false, error: 'Request not found' },
         { status: 404 }
       )
     }
-
-    // Create the actual user profile ONLY after admin approval
+    
+    // Create the actual user profile
     const userProfile = await UserProfile.create({
-      userId: verificationRequest.personalInfo.userId, // Assuming this was linked earlier
       firstName: verificationRequest.personalInfo.fullName.split(' ')[0],
-      lastName: verificationRequest.personalInfo.fullName.split(' ')[1] || '',
+      lastName: verificationRequest.personalInfo.fullName.split(' ').slice(1).join(' ') || '',
       email: verificationRequest.personalInfo.email,
       company: verificationRequest.personalInfo.businessName,
-      // ... other fields
+      phone: verificationRequest.personalInfo.contactNumber,
+      country: verificationRequest.personalInfo.country,
+      industry: verificationRequest.personalInfo.industryType,
+      businessRegistrationNumber: verificationRequest.personalInfo.businessRegistrationNumber,
     })
-
-    // Update verification request status
+    
+    // Update verification request
     verificationRequest.verificationStatus = 'approved'
     verificationRequest.reviewedAt = new Date()
     verificationRequest.reviewedBy = adminId
     verificationRequest.userProfileId = userProfile._id
     await verificationRequest.save()
-
-    // Send approval email to user
+    await sendApprovalEmail(
+        verificationRequest.personalInfo.email,
+        verificationRequest.personalInfo.fullName
+        )
+    
+    // TODO: Send approval email
     // await sendApprovalEmail(verificationRequest.personalInfo.email)
-
+    
     return NextResponse.json({
       success: true,
       message: 'Verification request approved',
       userProfileId: userProfile._id
     })
-    
+   
   } catch (error) {
     console.error('Error approving verification request:', error)
     return NextResponse.json(

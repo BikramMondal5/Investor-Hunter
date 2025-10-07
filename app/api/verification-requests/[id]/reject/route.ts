@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import dbConnect from '@/lib/mongodb'
 import VerificationRequest from '@/models/VerificationRequest'
+import { sendRejectionEmail } from '@/lib/email'
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     await dbConnect()
-    const { id } = params
+    
+    const { id } = await params
     const { adminId, rejectionReason } = await request.json()
     
     const verificationRequest = await VerificationRequest.findById(id)
@@ -19,11 +24,24 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     verificationRequest.reviewedAt = new Date()
     verificationRequest.reviewedBy = adminId
     await verificationRequest.save()
+    await sendRejectionEmail(
+        verificationRequest.personalInfo.email,
+        verificationRequest.personalInfo.fullName,
+        rejectionReason
+        )
     
     // TODO: Send rejection email
+    // await sendRejectionEmail(verificationRequest.personalInfo.email, rejectionReason)
     
-    return NextResponse.json({ success: true, message: 'Request rejected' })
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Request rejected successfully' 
+    })
   } catch (error) {
-    return NextResponse.json({ success: false, error: 'Failed to reject request' }, { status: 500 })
+    console.error('Error rejecting request:', error)
+    return NextResponse.json({ 
+      success: false, 
+      error: 'Failed to reject request' 
+    }, { status: 500 })
   }
 }

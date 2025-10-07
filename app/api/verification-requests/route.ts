@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import dbConnect from '@/lib/mongodb'
 import VerificationRequest from '@/models/VerificationRequest'
+import { sendAdminNotification } from '@/lib/email'
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,6 +15,10 @@ export async function POST(request: NextRequest) {
       verificationStatus: 'pending',
       submittedAt: new Date()
     })
+    await sendAdminNotification(
+        verificationRequest._id.toString(),
+        data.personalInfo.fullName
+        )
     
     // TODO: Send email notification to admin
     // await sendAdminNotification(verificationRequest._id)

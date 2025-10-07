@@ -7,37 +7,74 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Badge } from '@/components/ui/badge'
 import { Eye, CheckCircle, XCircle } from 'lucide-react'
 import { Textarea } from '@/components/ui/textarea'
+// Assuming this import path is correct for your session hook:
+import { useAppSession } from '@/hooks/use-app-session' 
 
 export default function AdminVerificationPage() {
-  const [requests, setRequests] = useState([])
-  const [loading, setLoading] = useState(true)
+  // --- Session State ---
+  const { session, isLoading: sessionLoading } = useAppSession();
+  const adminId = session?.user?.id; // <-- FIXED: Safely extract the adminId
+  const isAdmin = session?.user?.role === 'admin';
+
+  // --- Local Component State ---
+  const [requests, setRequests] = useState<any[]>([])
+  const [dataLoading, setDataLoading] = useState(true) // Renamed for clarity
   const [selectedRequest, setSelectedRequest] = useState<any>(null)
   const [showRejectDialog, setShowRejectDialog] = useState(false)
   const [rejectionReason, setRejectionReason] = useState('')
 
+  // --- Data Fetching Effect ---
   useEffect(() => {
-    fetchRequests()
-  }, [])
+    // Only attempt to fetch data after the session has finished loading
+    if (!sessionLoading) {
+        if (adminId && isAdmin) {
+            fetchRequests(adminId);
+        } else {
+            // If session loaded but user is not authorized, stop the loading spinner
+            setDataLoading(false);
+        }
+    }
+  }, [sessionLoading, adminId, isAdmin]) // Dependency array now correctly tracks session state
 
-  const fetchRequests = async () => {
-    const res = await fetch('/api/admin/verification-requests')
-    const data = await res.json()
-    setRequests(data.requests || [])
-    setLoading(false)
+  const fetchRequests = async (adminId: string) => {
+    setDataLoading(true); // Start data loading
+    try {
+      const res = await fetch('/api/admin/verification-requests')
+      
+      if (!res.ok) {
+        // Log non-200 responses for better debugging
+        console.error(`Failed to fetch requests: ${res.status} ${res.statusText}`);
+        throw new Error('API request failed');
+      }
+
+      const data = await res.json()
+      setRequests(data.requests || [])
+    } catch(error) {
+        console.error('Error fetching verification requests:', error);
+        setRequests([]); // Clear requests on failure
+    } finally {
+      setDataLoading(false) // Stop data loading
+    }
   }
 
+  // --- Action Handlers ---
+
   const handleApprove = async (id: string) => {
+    if (!adminId) {
+        alert('Authentication Error: Admin ID is missing. Please log in.');
+        return;
+    }
     if (!confirm('Are you sure you want to approve this verification request?')) return
     
     const res = await fetch(`/api/verification-requests/${id}/approve`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminId: 'ADMIN_ID_HERE' }) // Replace with actual admin ID from auth
+      body: JSON.stringify({ adminId: adminId }) // <-- FIXED: Using the actual adminId
     })
     
     if (res.ok) {
       alert('Request approved successfully!')
-      fetchRequests()
+      fetchRequests(adminId) // Re-fetch data
       setSelectedRequest(null)
     } else {
       alert('Failed to approve request')
@@ -45,6 +82,10 @@ export default function AdminVerificationPage() {
   }
 
   const handleReject = async (id: string) => {
+    if (!adminId) {
+        alert('Authentication Error: Admin ID is missing. Please log in.');
+        return;
+    }
     if (!rejectionReason.trim()) {
       alert('Please provide a rejection reason')
       return
@@ -54,14 +95,14 @@ export default function AdminVerificationPage() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
-        adminId: 'ADMIN_ID_HERE', // Replace with actual admin ID from auth
+        adminId: adminId, // <-- FIXED: Using the actual adminId
         rejectionReason 
       })
     })
     
     if (res.ok) {
       alert('Request rejected successfully!')
-      fetchRequests()
+      fetchRequests(adminId) // Re-fetch data
       setSelectedRequest(null)
       setShowRejectDialog(false)
       setRejectionReason('')
@@ -70,11 +111,27 @@ export default function AdminVerificationPage() {
     }
   }
 
-  if (loading) return (
+  // --- Conditional Rendering ---
+
+  if (sessionLoading) return (
+    <div className="container py-8">
+      <div className="text-center">Loading authentication session...</div>
+    </div>
+  )
+
+  if (!isAdmin) return (
+    <div className="container py-8">
+      <div className="text-center text-red-500 font-bold">ACCESS DENIED: You must be an administrator to view this page.</div>
+    </div>
+  )
+
+  if (dataLoading) return (
     <div className="container py-8">
       <div className="text-center">Loading verification requests...</div>
     </div>
   )
+
+  // --- Main Render ---
 
   return (
     <div className="container py-8 max-w-7xl">
@@ -222,41 +279,83 @@ export default function AdminVerificationPage() {
                   </div>
                 </div>
               </div>
-
               <div>
                 <h3 className="font-semibold mb-3">Required Documents</h3>
                 <div className="space-y-2">
-                  {selectedRequest.documents.required.map((doc: any, idx: number) => (
-                    <div key={idx} className="flex justify-between items-center p-3 bg-gray-900 rounded">
-                      <div>
-                        <p className="font-medium">{doc.documentType}</p>
-                        <p className="text-sm text-gray-400">Files: {doc.fileCount}</p>
-                      </div>
-                      <Badge>{doc.status}</Badge>
+                    {selectedRequest.documents.required.map((doc: any, idx: number) => (
+                    <div key={idx} className="p-3 bg-gray-900 rounded">
+                        <div className="flex justify-between items-center mb-2">
+                        <div>
+                            <p className="font-medium">{doc.documentType}</p>
+                            <p className="text-sm text-gray-400">Files: {doc.fileCount}</p>
+                        </div>
+                        <Badge>{doc.status}</Badge>
+                        </div>
+                        {doc.fileUrls && doc.fileUrls.length > 0 && (
+                        <div className="space-y-2 mt-3">
+                            {doc.fileUrls.map((url: string, fileIdx: number) => (
+                            <div key={fileIdx} className="flex items-center gap-2">
+                                <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => window.open(url, '_blank')}
+                                className="text-xs"
+                                >
+                                <Eye className="h-3 w-3 mr-1" />
+                                View File {fileIdx + 1}
+                                </Button>
+                                <span className="text-xs text-gray-400 truncate max-w-xs">
+                                {url.split('/').pop()}
+                                </span>
+                            </div>
+                            ))}
+                        </div>
+                        )}
                     </div>
-                  ))}
+                    ))}
                 </div>
               </div>
 
-              {selectedRequest.documents.optional.some((doc: any) => doc.fileCount > 0) && (
+                {selectedRequest.documents.optional.some((doc: any) => doc.fileCount > 0) && (
                 <div>
-                  <h3 className="font-semibold mb-3">Optional Documents</h3>
-                  <div className="space-y-2">
+                    <h3 className="font-semibold mb-3">Optional Documents</h3>
+                    <div className="space-y-2">
                     {selectedRequest.documents.optional.map((doc: any, idx: number) => (
-                      doc.fileCount > 0 && (
-                        <div key={idx} className="flex justify-between items-center p-3 bg-gray-900 rounded">
-                          <div>
-                            <p className="font-medium">{doc.documentType}</p>
-                            <p className="text-sm text-gray-400">Files: {doc.fileCount}</p>
-                          </div>
-                          <Badge>{doc.status}</Badge>
+                        doc.fileCount > 0 && (
+                        <div key={idx} className="p-3 bg-gray-900 rounded">
+                            <div className="flex justify-between items-center mb-2">
+                            <div>
+                                <p className="font-medium">{doc.documentType}</p>
+                                <p className="text-sm text-gray-400">Files: {doc.fileCount}</p>
+                            </div>
+                            <Badge>{doc.status}</Badge>
+                            </div>
+                            {doc.fileUrls && doc.fileUrls.length > 0 && (
+                            <div className="space-y-2 mt-3">
+                                {doc.fileUrls.map((url: string, fileIdx: number) => (
+                                <div key={fileIdx} className="flex items-center gap-2">
+                                    <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => window.open(url, '_blank')}
+                                    className="text-xs"
+                                    >
+                                    <Eye className="h-3 w-3 mr-1" />
+                                    View File {fileIdx + 1}
+                                    </Button>
+                                    <span className="text-xs text-gray-400 truncate max-w-xs">
+                                    {url.split('/').pop()}
+                                    </span>
+                                </div>
+                                ))}
+                            </div>
+                            )}
                         </div>
-                      )
+                        )
                     ))}
-                  </div>
+                    </div>
                 </div>
-              )}
-
+                )}
               <div className="flex gap-2 pt-4">
                 <Button 
                   className="flex-1 bg-green-600 hover:bg-green-700"

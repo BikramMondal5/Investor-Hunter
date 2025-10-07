@@ -391,7 +391,65 @@ export function EntrepreneurRegistrationContent() {
     setSubmitting(true)
     
     try {
-      // Create verification request payload
+      // Upload all files first
+      const uploadedDocuments: any = {
+        required: [],
+        optional: []
+      }
+
+      // Upload required documents
+      for (const doc of requiredDocuments) {
+        const files = uploadedFiles[doc.id] || []
+        if (files.length > 0) {
+          const formData = new FormData()
+          files.forEach(file => formData.append('files', file))
+          formData.append('documentId', doc.id)
+          formData.append('documentType', doc.title)
+          
+          const uploadRes = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData
+          })
+          
+          const uploadData = await uploadRes.json()
+          
+          uploadedDocuments.required.push({
+            documentId: doc.id,
+            documentType: doc.title,
+            fileUrls: uploadData.fileUrls,
+            fileCount: files.length,
+            status: 'pending_verification'
+          })
+        }
+      }
+
+      // Upload optional documents
+      for (const doc of optionalDocuments) {
+        const files = uploadedFiles[doc.id] || []
+        if (files.length > 0) {
+          const formData = new FormData()
+          files.forEach(file => formData.append('files', file))
+          formData.append('documentId', doc.id)
+          formData.append('documentType', doc.title)
+          
+          const uploadRes = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData
+          })
+          
+          const uploadData = await uploadRes.json()
+          
+          uploadedDocuments.optional.push({
+            documentId: doc.id,
+            documentType: doc.title,
+            fileUrls: uploadData.fileUrls,
+            fileCount: files.length,
+            status: 'pending_verification'
+          })
+        }
+      }
+
+      // Create verification request with file URLs
       const verificationRequest = {
         personalInfo: {
           fullName: formData.fullName,
@@ -402,26 +460,11 @@ export function EntrepreneurRegistrationContent() {
           industryType: formData.industryType,
           country: formData.country
         },
-        // Include reference to uploaded documents
-        documents: {
-          required: requiredDocuments.map(doc => ({
-            documentId: doc.id,
-            documentType: doc.title,
-            fileCount: uploadedFiles[doc.id]?.length || 0,
-            status: 'pending_verification'
-          })),
-          optional: optionalDocuments.map(doc => ({
-            documentId: doc.id,
-            documentType: doc.title,
-            fileCount: uploadedFiles[doc.id]?.length || 0,
-            status: 'pending_verification'
-          }))
-        },
+        documents: uploadedDocuments,
         verificationStatus: 'pending',
         submittedAt: new Date().toISOString()
       }
 
-      // Send verification request to your API
       const response = await fetch('/api/verification-requests', {
         method: 'POST',
         headers: {
@@ -439,17 +482,15 @@ export function EntrepreneurRegistrationContent() {
       setSubmitting(false)
       setShowConfirmation(false)
       
-      // Redirect to pending verification page
+      // Redirect to dashboard
       window.location.href = '/dashboard'
       
     } catch (error) {
       console.error('Error submitting verification request:', error)
       setSubmitting(false)
-      // Show error message to user
       alert('Failed to submit verification request. Please try again.')
     }
   }
-
 
   // Don't render anything during server-side rendering
   if (!isMounted) {
