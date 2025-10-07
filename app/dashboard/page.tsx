@@ -177,27 +177,6 @@ export default function Dashboard() {
     setReplyingTo(null)
     setReplyText("")
   }
-  useEffect(() => {
-  const fetchProfile = async () => {
-    try {
-      const res = await fetch('/api/profile')
-      if (res.ok) {
-        const data = await res.json()
-        setProfile(data.profile)
-      }
-    } catch (error) {
-      console.error('Failed to fetch profile:', error)
-    } finally {
-      setIsLoadingProfile(false)
-    }
-  }
-
-  if (session?.user) {
-    fetchProfile()
-  } else if (!isSessionLoading) {
-    router.push('/');
-  }
-}, [session, isSessionLoading, router])
 
   // Add function to handle photo upload
   const handlePhotoUpload = async (e: ChangeEvent<HTMLInputElement>) => {
