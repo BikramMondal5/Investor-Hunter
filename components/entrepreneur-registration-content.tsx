@@ -84,6 +84,7 @@ type UploadStatus = null | 'pending' | 'approved' | 'rejected';
 interface DocumentUploadProps {
   document: DocumentType;
   onUpload: (files: File[]) => void;
+  uploadedFiles: File[];
 }
 
 // Define document types
@@ -129,15 +130,13 @@ const optionalDocuments: DocumentType[] = [
   }
 ]
 
-// Document file component
-const DocumentUpload: React.FC<DocumentUploadProps> = ({ document, onUpload }) => {
-  const [files, setFiles] = React.useState<File[]>([])
+const DocumentUpload: React.FC<DocumentUploadProps> = ({ document, onUpload, uploadedFiles }) => {
   const [uploading, setUploading] = React.useState(false)
   const [progress, setProgress] = React.useState(0)
-  const [uploadStatus, setUploadStatus] = React.useState<UploadStatus>(null) 
+  const [uploadStatus, setUploadStatus] = React.useState<UploadStatus>(null)
   const [isMounted, setIsMounted] = React.useState(false)
   const fileInputRef = React.useRef<HTMLInputElement>(null)
-  
+
   // Only run on client
   React.useEffect(() => {
     setIsMounted(true)
@@ -145,17 +144,20 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ document, onUpload }) =
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return
-    
+
     const selectedFiles = Array.from(e.target.files)
-    
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+
     // Filter files by type and size
     const validFiles = selectedFiles.filter(file => {
       const validTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png']
       const validSize = file.size <= 10 * 1024 * 1024 // 10MB
-      
+
       return validTypes.includes(file.type) && validSize
     })
-    
+
     if (validFiles.length > 0) {
       simulateUpload(validFiles)
     }
@@ -164,14 +166,13 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ document, onUpload }) =
   const simulateUpload = (validFiles: File[]) => {
     setUploading(true)
     setProgress(0)
-    
+
     const interval = setInterval(() => {
       setProgress(prev => {
         if (prev >= 100) {
           clearInterval(interval)
           setUploading(false)
-          setFiles([...files, ...validFiles])
-          setUploadStatus('pending')
+          onUpload(validFiles)
           return 100
         }
         return prev + 10
@@ -251,7 +252,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ document, onUpload }) =
         <CardDescription className="text-gray-400 mt-2">{document.description}</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 flex">
-        {files.length === 0 ? (
+        {uploadedFiles.length === 0 ? (
           <div
             className="border-2 border-dashed border-gray-700 rounded-lg p-6 text-center cursor-pointer hover:border-amber-500 transition-colors flex flex-col items-center justify-center w-full"
             onDragOver={handleDragOver}
@@ -262,6 +263,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ document, onUpload }) =
             <p className="text-gray-300 mb-2">Drag & drop files here</p>
             <p className="text-gray-400 text-sm">or</p>
             <Button 
+              type="button"
               variant="secondary" 
               size="sm" 
               className="mt-3"
@@ -285,7 +287,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ document, onUpload }) =
         ) : (
           <div className="w-full flex flex-col h-full">
             <div className="space-y-3 w-full flex-1">
-              {files.map((file, index) => (
+              {uploadedFiles.map((file, index) => (
                 <div key={index} className="flex justify-between items-center p-3 bg-gray-900 rounded-md">
                   <div className="flex items-center gap-2 text-sm overflow-hidden">
                     <FileCheck className="h-4 w-4 flex-shrink-0 text-amber-500" />
@@ -320,7 +322,8 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ document, onUpload }) =
                 </div>
               ))}
             </div>
-            <Button 
+            <Button
+              type="button" 
               variant="outline" 
               size="sm" 
               className="mt-4 w-full border-dashed"
@@ -350,6 +353,14 @@ export function EntrepreneurRegistrationContent() {
   const [submitting, setSubmitting] = React.useState(false)
   const [showConfirmation, setShowConfirmation] = React.useState(false)
   const [formData, setFormData] = React.useState<FormData | null>(null)
+  const [uploadedFiles, setUploadedFiles] = React.useState<Record<string, File[]>>({})
+
+  const handleFileUpload = (documentId: string, files: File[]) => {
+    setUploadedFiles(prev => ({
+      ...prev,
+      [documentId]: files
+    }))
+  }
   
   // Only render on client side
   React.useEffect(() => {
@@ -375,17 +386,70 @@ export function EntrepreneurRegistrationContent() {
     setShowConfirmation(true)
   }
 
-  const handleConfirmSubmission = () => {
+  const handleConfirmSubmission = async () => {
+    if (!formData) return
     setSubmitting(true)
-    // Simulate API call
-    setTimeout(() => {
+    
+    try {
+      // Create verification request payload
+      const verificationRequest = {
+        personalInfo: {
+          fullName: formData.fullName,
+          businessName: formData.businessName,
+          email: formData.email,
+          contactNumber: formData.contactNumber,
+          businessRegistrationNumber: formData.businessRegistrationNumber,
+          industryType: formData.industryType,
+          country: formData.country
+        },
+        // Include reference to uploaded documents
+        documents: {
+          required: requiredDocuments.map(doc => ({
+            documentId: doc.id,
+            documentType: doc.title,
+            fileCount: uploadedFiles[doc.id]?.length || 0,
+            status: 'pending_verification'
+          })),
+          optional: optionalDocuments.map(doc => ({
+            documentId: doc.id,
+            documentType: doc.title,
+            fileCount: uploadedFiles[doc.id]?.length || 0,
+            status: 'pending_verification'
+          }))
+        },
+        verificationStatus: 'pending',
+        submittedAt: new Date().toISOString()
+      }
+
+      // Send verification request to your API
+      const response = await fetch('/api/verification-requests', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(verificationRequest)
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to submit verification request')
+      }
+
+      const result = await response.json()
+      
       setSubmitting(false)
       setShowConfirmation(false)
       
-      // Show success toast or redirect
-      window.location.href = "/dashboard" // After document verification, entrepreneurs go to their dashboard
-    }, 2000)
+      // Redirect to pending verification page
+      window.location.href = '/dashboard'
+      
+    } catch (error) {
+      console.error('Error submitting verification request:', error)
+      setSubmitting(false)
+      // Show error message to user
+      alert('Failed to submit verification request. Please try again.')
+    }
   }
+
 
   // Don't render anything during server-side rendering
   if (!isMounted) {
@@ -571,7 +635,8 @@ export function EntrepreneurRegistrationContent() {
                 <DocumentUpload 
                   key={doc.id} 
                   document={doc} 
-                  onUpload={(files) => console.log(`Uploaded ${files.length} files for ${doc.id}`)}
+                  onUpload={(files) => handleFileUpload(doc.id, files)}
+                  uploadedFiles={uploadedFiles[doc.id] || []}
                 />
               ))}
             </div>
@@ -590,7 +655,8 @@ export function EntrepreneurRegistrationContent() {
                 <DocumentUpload 
                   key={doc.id} 
                   document={doc}
-                  onUpload={(files) => console.log(`Uploaded ${files.length} files for ${doc.id}`)}
+                  onUpload={(files) => handleFileUpload(doc.id, files)}
+                  uploadedFiles={uploadedFiles[doc.id] || []}
                 />
               ))}
             </div>
