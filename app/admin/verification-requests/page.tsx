@@ -9,6 +9,8 @@ import { Eye, CheckCircle, XCircle } from 'lucide-react'
 import { Textarea } from '@/components/ui/textarea'
 
 export default function AdminVerificationPage() {
+  const [showApproveDialog, setShowApproveDialog] = useState(false)
+  const [notification, setNotification] = useState<{type: 'success' | 'error', message: string} | null>(null)
   const [requests, setRequests] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedRequest, setSelectedRequest] = useState<any>(null)
@@ -27,43 +29,44 @@ export default function AdminVerificationPage() {
   }
 
   const handleApprove = async (id: string) => {
-    if (!confirm('Are you sure you want to approve this verification request?')) return
-    
     const res = await fetch(`/api/verification-requests/${id}/approve`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
     })
     if (res.ok) {
-      alert('Request approved successfully!')
+      setNotification({ type: 'success', message: 'Request approved successfully!' })
       fetchRequests()
       setSelectedRequest(null)
+      setTimeout(() => setNotification(null), 3000)
     } else {
-      alert('Failed to approve request')
+      setNotification({ type: 'error', message: 'Failed to approve request' })
+      setTimeout(() => setNotification(null), 3000)
     }
   }
 
   const handleReject = async (id: string) => {
     if (!rejectionReason.trim()) {
-      alert('Please provide a rejection reason')
+      setNotification({ type: 'error', message: 'Please provide a rejection reason' })
+      setTimeout(() => setNotification(null), 3000)
       return
     }
     
     const res = await fetch(`/api/verification-requests/${id}/reject`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        rejectionReason 
-      })
+      body: JSON.stringify({ rejectionReason })
     })
     
     if (res.ok) {
-      alert('Request rejected successfully!')
+      setNotification({ type: 'success', message: 'Request rejected successfully!' })
       fetchRequests()
       setSelectedRequest(null)
       setShowRejectDialog(false)
       setRejectionReason('')
+      setTimeout(() => setNotification(null), 3000)
     } else {
-      alert('Failed to reject request')
+      setNotification({ type: 'error', message: 'Failed to reject request' })
+      setTimeout(() => setNotification(null), 3000)
     }
   }
 
@@ -75,6 +78,13 @@ export default function AdminVerificationPage() {
 
   return (
     <div className="container py-8 max-w-7xl">
+      {notification && (
+        <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg ${
+          notification.type === 'success' ? 'bg-green-600' : 'bg-red-600'
+        } text-white animate-in slide-in-from-top`}>
+          {notification.message}
+        </div>
+      )}
       <h1 className="text-3xl font-bold mb-2">Verification Requests</h1>
       <p className="text-gray-400 mb-6">Review and approve entrepreneur registration requests</p>
       
@@ -159,7 +169,10 @@ export default function AdminVerificationPage() {
                   <Button 
                     size="sm"
                     className="bg-green-600 hover:bg-green-700"
-                    onClick={() => handleApprove(req._id)}
+                    onClick={() => {
+                      setSelectedRequest(req)
+                      setShowApproveDialog(true)
+                    }}
                   >
                     <CheckCircle className="h-4 w-4 mr-2" />
                     Approve
@@ -299,7 +312,7 @@ export default function AdminVerificationPage() {
               <div className="flex gap-2 pt-4">
                 <Button 
                   className="flex-1 bg-green-600 hover:bg-green-700"
-                  onClick={() => handleApprove(selectedRequest._id)}
+                  onClick={() => setShowApproveDialog(true)}
                 >
                   <CheckCircle className="h-4 w-4 mr-2" />
                   Approve Request
@@ -353,6 +366,26 @@ export default function AdminVerificationPage() {
                 Confirm Rejection
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+      {/* Approve Confirmation Dialog */}
+      <Dialog open={!!selectedRequest && showApproveDialog} onOpenChange={setShowApproveDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Approval</DialogTitle>
+          </DialogHeader>
+          <p className="text-gray-400">Are you sure you want to approve this verification request?</p>
+          <div className="flex gap-2 mt-4">
+            <Button variant="outline" className="flex-1" onClick={() => setShowApproveDialog(false)}>
+              Cancel
+            </Button>
+            <Button className="flex-1 bg-green-600 hover:bg-green-700" onClick={() => {
+              selectedRequest && handleApprove(selectedRequest._id)
+              setShowApproveDialog(false)
+            }}>
+              Confirm Approval
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

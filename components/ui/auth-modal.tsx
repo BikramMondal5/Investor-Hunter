@@ -255,9 +255,10 @@ export function AuthModal({ isOpen, onClose, initialError }: AuthModalProps) {
       } else {
         // Show the specific error message from the API
         toast({
-          title: "Access Denied",
+          title: "Access Denied !",
           description: data.message || "Invalid admin passkey",
           variant: "destructive",
+          className: "bg-red-800 border-red-600 text-white"
         })
         // Clear the passkey field on error
         setAdminPasskey("")

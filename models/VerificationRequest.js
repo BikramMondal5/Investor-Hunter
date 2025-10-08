@@ -2,6 +2,10 @@ import mongoose from 'mongoose'
 
 const verificationRequestSchema = new mongoose.Schema({
   personalInfo: {
+    userId: { 
+      type: String, 
+      default: () => `USER_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`
+    },
     fullName: { type: String, required: true },
     businessName: { type: String, required: true },
     email: { type: String, required: true },

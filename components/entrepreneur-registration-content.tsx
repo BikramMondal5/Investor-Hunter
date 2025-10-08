@@ -734,8 +734,17 @@ export function EntrepreneurRegistrationContent() {
                   </div>
                 ))}
               </div>
-
-              {/* Optional Documents */}
+          </div>
+          
+          <Separator className="bg-gray-800 my-10" />
+          
+          <div className="space-y-8">
+            <div className="mb-6">
+              <h2 className="text-2xl font-semibold tracking-tight mb-2">3. Optional Documents</h2>
+              <p className="text-gray-400 text-sm mt-2">These documents are not required but can strengthen your business profile</p>
+            </div>
+          </div>
+           {/* Optional Documents */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-8">
                 {optionalDocuments.map((doc) => (
                   <div key={doc.id} id={`document-${doc.id}`}>
@@ -748,16 +757,6 @@ export function EntrepreneurRegistrationContent() {
                   </div>
                 ))}
               </div>
-          </div>
-          
-          <Separator className="bg-gray-800 my-10" />
-          
-          <div className="space-y-8">
-            <div className="mb-6">
-              <h2 className="text-2xl font-semibold tracking-tight mb-2">3. Optional Documents</h2>
-              <p className="text-gray-400 text-sm mt-2">These documents are not required but can strengthen your business profile</p>
-            </div>
-          </div>
           
           <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 flex items-start gap-4 mt-10 max-w-3xl mx-auto">
             <Shield className="h-6 w-6 text-amber-500 mt-0.5 flex-shrink-0" />
