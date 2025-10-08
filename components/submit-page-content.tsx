@@ -68,12 +68,85 @@ export function SubmitPageContent() {
     if (fileInput) fileInput.value = ''
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsSubmitted(true)
-    setTimeout(() => {
-      window.location.href = "/entrepreneur-registration"
-    }, 2000)
+    
+    if (!videoFile) {
+      alert('Please upload a video')
+      return
+    }
+
+    // Show loading state
+    const submitButton = e.currentTarget.querySelector('button[type="submit"]') as HTMLButtonElement
+    if (submitButton) {
+      submitButton.disabled = true
+      submitButton.textContent = 'Submitting...'
+    }
+    
+    try {
+      // First, upload the video
+      const videoFormData = new FormData()
+      videoFormData.append('video', videoFile)
+      
+      console.log('Uploading video...')
+      const videoUploadRes = await fetch('/api/upload-video', {
+        method: 'POST',
+        body: videoFormData
+      })
+      
+      if (!videoUploadRes.ok) {
+        const errorData = await videoUploadRes.json()
+        throw new Error(errorData.error || 'Failed to upload video')
+      }
+      
+      const { videoUrl } = await videoUploadRes.json()
+      console.log('Video uploaded:', videoUrl)
+      
+      // Create FormData from the form
+      const form = e.target as HTMLFormElement
+      const formData = new FormData(form)
+      
+      // Add the video URL
+      formData.append('videoUrl', videoUrl)
+      
+      // Debug: Log all form data
+      console.log('Form data being sent:')
+      for (const [key, value] of formData.entries()) {
+        console.log(`${key}:`, value)
+      }
+      
+      console.log('Submitting pitch...')
+      const response = await fetch('/api/submit-pitch', {
+        method: 'POST',
+        body: formData
+      })
+      
+      const data = await response.json()
+      console.log('Response:', data)
+      
+      if (data.success) {
+        setIsSubmitted(true)
+        // Redirect after showing success message
+        setTimeout(() => {
+          window.location.href = "/entrepreneur-registration"
+        }, 2000)
+      } else {
+        alert(data.error || 'Failed to submit pitch')
+        // Reset button
+        if (submitButton) {
+          submitButton.disabled = false
+          submitButton.innerHTML = 'Analyze & Submit Pitch'
+        }
+      }
+    } catch (error: any) {
+      console.error('Error submitting pitch:', error)
+      alert(error.message || 'Failed to submit pitch. Please try again.')
+      // Reset button
+      if (submitButton) {
+        submitButton.disabled = false
+        submitButton.innerHTML = 'Analyze & Submit Pitch'
+      }
+    }
   }
 
   // Return null during server-side rendering
@@ -121,11 +194,11 @@ export function SubmitPageContent() {
                     <div className="grid md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <Label htmlFor="fullName">Full Name</Label>
-                        <Input id="fullName" placeholder="John Doe" required />
+                        <Input id="fullName" name="fullName" placeholder="John Doe" required />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="startupName">Startup Name</Label>
-                        <Input id="startupName" placeholder="Your Startup" required />
+                        <Input id="startupName" name="startupName" placeholder="Your Startup" required />
                       </div>
                     </div>
 
@@ -133,6 +206,7 @@ export function SubmitPageContent() {
                       <Label htmlFor="oneLiner">One-liner about your startup</Label>
                       <Textarea
                         id="oneLiner"
+                        name="oneLiner"
                         placeholder="Describe your startup in one compelling sentence..."
                         className="min-h-[100px]"
                         required
@@ -223,8 +297,8 @@ export function SubmitPageContent() {
 
                     <div className="grid md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <Label>Industry</Label>
-                        <Select>
+                        <Label htmlFor="industry">Industry</Label>
+                        <Select name="industry" required>
                           <SelectTrigger>
                             <SelectValue placeholder="Select industry" />
                           </SelectTrigger>
@@ -241,13 +315,13 @@ export function SubmitPageContent() {
 
                       <div className="space-y-2">
                         <Label htmlFor="location">Location</Label>
-                        <Input id="location" placeholder="City, Country" required />
+                        <Input id="location" name="location" placeholder="City, Country" required />
                       </div>
                     </div>
 
                     <div className="space-y-4">
                       <Label>Stage</Label>
-                      <RadioGroup defaultValue="idea" className="flex space-x-6">
+                      <RadioGroup defaultValue="idea" name="stage" className="flex space-x-6">
                         <div className="flex items-center space-x-2">
                           <RadioGroupItem value="idea" id="idea" />
                           <Label htmlFor="idea">Idea</Label>
@@ -265,11 +339,11 @@ export function SubmitPageContent() {
 
                     <div className="space-y-2">
                       <Label htmlFor="email">Email Address</Label>
-                      <Input id="email" type="email" placeholder="john@startup.com" required />
+                      <Input id="email" name="email" type="email" placeholder="john@startup.com" required />
                     </div>
 
                     <div className="flex items-center space-x-2">
-                      <Switch id="public" />
+                      <Switch id="public" name="public" />
                       <Label htmlFor="public" className="text-sm">
                         Make my pitch public for community feedback
                       </Label>

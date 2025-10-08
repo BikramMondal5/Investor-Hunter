@@ -1,5 +1,5 @@
 "use client"
-
+import React from "react";
 import { useState, ChangeEvent, FormEvent, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -54,6 +54,9 @@ interface SidebarItem {
 }
 
 export default function Dashboard() {
+  const [approvedPitches, setApprovedPitches] = useState<any[]>([])
+  const [isLoadingPitches, setIsLoadingPitches] = useState(true)
+  const [hasPitches, setHasPitches] = useState(false)
   const router = useRouter()
   const [activeTab, setActiveTab] = useState("dashboard")
   const [videoModalOpen, setVideoModalOpen] = useState(false)
@@ -106,6 +109,27 @@ export default function Dashboard() {
     { id: "settings", label: "Settings", icon: Settings },
   ]
   const [editedProfile, setEditedProfile] = useState<Profile | null>(null)
+
+  useEffect(() => {
+    const fetchApprovedPitches = async () => {
+      try {
+        const res = await fetch('/api/my-pitches')
+        if (res.ok) {
+          const data = await res.json()
+          setApprovedPitches(data.pitches || [])
+          setHasPitches(data.pitches && data.pitches.length > 0)
+        }
+      } catch (error) {
+        console.error('Failed to fetch pitches:', error)
+      } finally {
+        setIsLoadingPitches(false)
+      }
+    }
+
+    if (session?.user) {
+      fetchApprovedPitches()
+    }
+  }, [session])
 
   // Update the useEffect where you fetch profile
   useEffect(() => {
@@ -575,168 +599,259 @@ export default function Dashboard() {
           {activeTab === "pitch" && (
             <div className="space-y-4 max-w-5xl mx-auto">
               <div className="mb-3 mt-0">
-                <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Your Submitted Pitch</h1>
-                <p className="text-muted-foreground">Track your pitch performance and investor interest</p>
+                <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+                  Your Submitted Pitch
+                </h1>
+                <p className="text-muted-foreground">
+                  Track your pitch performance and investor interest
+                </p>
               </div>
 
-              {/* Pitch Overview Card */}
-              <Card className="shadow-sm">
-                <CardHeader className="pb-1 pt-3 px-4">
-                  <CardTitle>Articuno.AI - Your personalized Weather Intelligence</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3 pt-1 px-4 pb-4">
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <div 
-                        className="aspect-[16/9] bg-muted rounded-lg flex items-center justify-center relative group cursor-pointer overflow-hidden"
-                        onClick={() => setVideoModalOpen(true)}
-                      >
-                        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center">
-                          <div className="h-16 w-16 rounded-full bg-primary/90 flex items-center justify-center group-hover:scale-110 transition-transform">
-                            <Play className="h-8 w-8 text-white ml-1" />
-                          </div>
-                        </div>
-                        <img
-                          src="articuno-post1.png"
-                          alt="Pitch video thumbnail"
-                          className="absolute inset-0 w-full h-full object-cover rounded-lg"
-                        />
-                      </div>
-                      <p className="text-xs text-center mt-1 text-muted-foreground">Click to watch your pitch video</p>
+              {isLoadingPitches ? (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground">Loading your pitches...</p>
+                </div>
+              ) : !hasPitches ? (
+                <Card>
+                  <CardContent className="p-8 text-center space-y-4">
+                    <div className="text-muted-foreground">
+                      <p className="text-lg font-medium mb-2">No Approved Pitches Yet</p>
+                      <p className="text-sm">
+                        Your pitch is either pending approval or you haven't submitted one yet.
+                      </p>
                     </div>
+                    <Button onClick={() => router.push("/submit")} size="lg">
+                      <Users className="mr-2 h-4 w-4" />
+                      Submit Your Pitch
+                    </Button>
+                  </CardContent>
+                </Card>
+              ) : (
+                approvedPitches.map((pitch) => (
+                  <React.Fragment key={pitch._id}>
+                    {/* Pitch Overview Card */}
+                    <Card className="shadow-sm">
+                      <CardHeader className="pb-1 pt-3 px-4">
+                        <CardTitle>
+                          {pitch.pitchData?.startupName || "Your Startup"} -{" "}
+                          {pitch.pitchData?.oneLiner || ""}
+                        </CardTitle>
+                      </CardHeader>
 
-                    <div className="space-y-3">
-                      <div>
-                        <h3 className="font-semibold">AI Evaluation Summary</h3>
-                        <div className="space-y-2 mt-1">
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm">Clarity</span>
-                            <div className="flex items-center space-x-2">
-                              <Progress value={89} className="w-20" />
-                              <span className="text-sm font-medium">8.9/10</span>
-                            </div>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm">Uniqueness</span>
-                            <div className="flex items-center space-x-2">
-                              <Progress value={91} className="w-20" />
-                              <span className="text-sm font-medium">9.1/10</span>
-                            </div>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm">Market Fit</span>
-                            <div className="flex items-center space-x-2">
-                              <Progress value={85} className="w-20" />
-                              <span className="text-sm font-medium">8.5/10</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <Button className="w-full">View Full Report</Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Community Feedback */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <MessageCircle className="h-5 w-5" />
-                    <span>Community Feedback</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {communityFeedback.map((feedback) => (
-                    <div key={feedback.id} className="flex flex-col space-y-2">
-                      <div className="flex space-x-3 p-4 rounded-lg bg-muted/30">
-                        <Avatar className="h-8 w-8">
-                          <AvatarFallback className="text-xs">{feedback.avatar}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium text-sm">{feedback.user}</span>
-                            <Badge variant={feedback.type === "positive" ? "default" : "secondary"} className="text-xs">
-                              {feedback.type}
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-muted-foreground">{feedback.comment}</p>
-                          <div className="flex items-center space-x-2">
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="h-6 px-2"
-                              onClick={() => handleLike(feedback.id)}
+                      <CardContent className="space-y-3 pt-1 px-4 pb-4">
+                        <div className="grid md:grid-cols-2 gap-4">
+                          <div>
+                            <div
+                              className="aspect-[16/9] bg-muted rounded-lg flex items-center justify-center relative group cursor-pointer overflow-hidden"
+                              onClick={() => setVideoModalOpen(true)}
                             >
-                              <ThumbsUp className={`h-3 w-3 mr-1`} />
-                              {feedback.likes}
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="h-6 px-2"
-                              onClick={() => handleReply(feedback.id)}
-                            >
-                              <MessageCircle className="h-3 w-3 mr-1" />
-                              Reply
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Replies section */}
-                      {feedback.replies && feedback.replies.length > 0 && (
-                        <div className="pl-11">
-                          {feedback.replies.map((reply) => (
-                            <div key={reply.id} className="flex items-start space-x-3 p-3 rounded-lg bg-muted/20 mb-2">
-                              <Avatar className="h-7 w-7">
-                                <AvatarFallback className="text-xs">{reply.avatar}</AvatarFallback>
-                              </Avatar>
-                              <div className="flex-1">
-                                <div className="flex items-center justify-between">
-                                  <span className="font-medium text-sm">{reply.user}</span>
-                                  <span className="text-xs text-muted-foreground">{reply.timestamp}</span>
+                              <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center">
+                                <div className="h-16 w-16 rounded-full bg-primary/90 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                  <Play className="h-8 w-8 text-white ml-1" />
                                 </div>
-                                <p className="text-sm text-muted-foreground mt-1">{reply.comment}</p>
+                              </div>
+
+                              {pitch.pitchData?.videoUrl ? (
+                                <video
+                                  src={pitch.pitchData.videoUrl}
+                                  className="absolute inset-0 w-full h-full object-cover rounded-lg"
+                                />
+                              ) : (
+                                <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                                  <Play className="h-16 w-16 text-white opacity-50" />
+                                </div>
+                              )}
+                            </div>
+                            <p className="text-xs text-center mt-1 text-muted-foreground">
+                              Click to watch your pitch video
+                            </p>
+                          </div>
+
+                          <div className="space-y-3">
+                            <div>
+                              <h3 className="font-semibold">AI Evaluation Summary</h3>
+                              <div className="space-y-2 mt-1">
+                                <div className="flex justify-between items-center">
+                                  <span className="text-sm">Clarity</span>
+                                  <div className="flex items-center space-x-2">
+                                    <Progress value={89} className="w-20" />
+                                    <span className="text-sm font-medium">8.9/10</span>
+                                  </div>
+                                </div>
+
+                                <div className="flex justify-between items-center">
+                                  <span className="text-sm">Uniqueness</span>
+                                  <div className="flex items-center space-x-2">
+                                    <Progress value={91} className="w-20" />
+                                    <span className="text-sm font-medium">9.1/10</span>
+                                  </div>
+                                </div>
+
+                                <div className="flex justify-between items-center">
+                                  <span className="text-sm">Market Fit</span>
+                                  <div className="flex items-center space-x-2">
+                                    <Progress value={85} className="w-20" />
+                                    <span className="text-sm font-medium">8.5/10</span>
+                                  </div>
+                                </div>
                               </div>
                             </div>
-                          ))}
-                        </div>
-                      )}
 
-                      {/* Reply form */}
-                      {replyingTo === feedback.id && (
-                        <div className="pl-11 pt-1">
-                          <Textarea 
-                            value={replyText}
-                            onChange={(e) => setReplyText(e.target.value)}
-                            placeholder="Write your reply..."
-                            className="resize-none min-h-[80px]"
-                          />
-                          <div className="flex space-x-2 mt-2">
-                            <Button 
-                              onClick={submitReply} 
-                              className="flex-1"
-                              disabled={!replyText.trim()}
-                            >
-                              Post Reply
-                            </Button>
-                            <Button 
-                              onClick={cancelReply} 
-                              variant="outline" 
-                              className="flex-1"
-                            >
-                              Cancel
-                            </Button>
+                            <Button className="w-full">View Full Report</Button>
                           </div>
                         </div>
-                      )}
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
 
+                        {/* Pitch Details */}
+                        <div className="border-t pt-3 mt-3 grid md:grid-cols-2 gap-3">
+                          <div>
+                            <p className="text-xs text-muted-foreground">Industry</p>
+                            <p className="text-sm font-medium">
+                              {pitch.pitchData?.industry || "N/A"}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Stage</p>
+                            <p className="text-sm font-medium capitalize">
+                              {pitch.pitchData?.stage || "N/A"}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Location</p>
+                            <p className="text-sm font-medium">
+                              {pitch.pitchData?.location || "N/A"}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Status</p>
+                            <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
+                              Approved
+                            </Badge>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Community Feedback */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center space-x-2">
+                          <MessageCircle className="h-5 w-5" />
+                          <span>Community Feedback</span>
+                        </CardTitle>
+                      </CardHeader>
+
+                      <CardContent className="space-y-4">
+                        {communityFeedback.map((feedback) => (
+                          <div key={feedback.id} className="flex flex-col space-y-2">
+                            <div className="flex space-x-3 p-4 rounded-lg bg-muted/30">
+                              <Avatar className="h-8 w-8">
+                                <AvatarFallback className="text-xs">
+                                  {feedback.avatar}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1 space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-medium text-sm">{feedback.user}</span>
+                                  <Badge
+                                    variant={
+                                      feedback.type === "positive" ? "default" : "secondary"
+                                    }
+                                    className="text-xs"
+                                  >
+                                    {feedback.type}
+                                  </Badge>
+                                </div>
+                                <p className="text-sm text-muted-foreground">
+                                  {feedback.comment}
+                                </p>
+                                <div className="flex items-center space-x-2">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 px-2"
+                                    onClick={() => handleLike(feedback.id)}
+                                  >
+                                    <ThumbsUp className="h-3 w-3 mr-1" />
+                                    {feedback.likes}
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 px-2"
+                                    onClick={() => handleReply(feedback.id)}
+                                  >
+                                    <MessageCircle className="h-3 w-3 mr-1" />
+                                    Reply
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Replies section */}
+                            {feedback.replies && feedback.replies.length > 0 && (
+                              <div className="pl-11">
+                                {feedback.replies.map((reply) => (
+                                  <div
+                                    key={reply.id}
+                                    className="flex items-start space-x-3 p-3 rounded-lg bg-muted/20 mb-2"
+                                  >
+                                    <Avatar className="h-7 w-7">
+                                      <AvatarFallback className="text-xs">
+                                        {reply.avatar}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex-1">
+                                      <div className="flex items-center justify-between">
+                                        <span className="font-medium text-sm">
+                                          {reply.user}
+                                        </span>
+                                        <span className="text-xs text-muted-foreground">
+                                          {reply.timestamp}
+                                        </span>
+                                      </div>
+                                      <p className="text-sm text-muted-foreground mt-1">
+                                        {reply.comment}
+                                      </p>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Reply form */}
+                            {replyingTo === feedback.id && (
+                              <div className="pl-11 pt-1">
+                                <Textarea
+                                  value={replyText}
+                                  onChange={(e) => setReplyText(e.target.value)}
+                                  placeholder="Write your reply..."
+                                  className="resize-none min-h-[80px]"
+                                />
+                                <div className="flex space-x-2 mt-2">
+                                  <Button
+                                    onClick={submitReply}
+                                    className="flex-1"
+                                    disabled={!replyText.trim()}
+                                  >
+                                    Post Reply
+                                  </Button>
+                                  <Button
+                                    onClick={cancelReply}
+                                    variant="outline"
+                                    className="flex-1"
+                                  >
+                                    Cancel
+                                  </Button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </CardContent>
+                    </Card>
+                  </React.Fragment>
+                ))
+              )}
               {/* Investor Views */}
               <Card>
                 <CardHeader>
@@ -797,234 +912,6 @@ export default function Dashboard() {
               </div>
             </div>
           )}
-
-          {/* Pitch Tab */}
-          {activeTab === "pitch" && (
-            <div className="space-y-4 max-w-5xl mx-auto">
-              <div className="mb-3 mt-0">
-                <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Your Submitted Pitch</h1>
-                <p className="text-muted-foreground">Track your pitch performance and investor interest</p>
-              </div>
-
-              {/* Pitch Overview Card */}
-              <Card className="shadow-sm">
-                <CardHeader className="pb-1 pt-3 px-4">
-                  <CardTitle>Articuno.AI - Your personalized Weather Intelligence</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3 pt-1 px-4 pb-4">
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <div 
-                        className="aspect-[16/9] bg-muted rounded-lg flex items-center justify-center relative group cursor-pointer overflow-hidden"
-                        onClick={() => setVideoModalOpen(true)}
-                      >
-                        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center">
-                          <div className="h-16 w-16 rounded-full bg-primary/90 flex items-center justify-center group-hover:scale-110 transition-transform">
-                            <Play className="h-8 w-8 text-white ml-1" />
-                          </div>
-                        </div>
-                        <img
-                          src="articuno-post1.png"
-                          alt="Pitch video thumbnail"
-                          className="absolute inset-0 w-full h-full object-cover rounded-lg"
-                        />
-                      </div>
-                      <p className="text-xs text-center mt-1 text-muted-foreground">Click to watch your pitch video</p>
-                    </div>
-
-                    <div className="space-y-3">
-                      <div>
-                        <h3 className="font-semibold">AI Evaluation Summary</h3>
-                        <div className="space-y-2 mt-1">
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm">Clarity</span>
-                            <div className="flex items-center space-x-2">
-                              <Progress value={89} className="w-20" />
-                              <span className="text-sm font-medium">8.9/10</span>
-                            </div>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm">Uniqueness</span>
-                            <div className="flex items-center space-x-2">
-                              <Progress value={91} className="w-20" />
-                              <span className="text-sm font-medium">9.1/10</span>
-                            </div>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm">Market Fit</span>
-                            <div className="flex items-center space-x-2">
-                              <Progress value={85} className="w-20" />
-                              <span className="text-sm font-medium">8.5/10</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <Button className="w-full">View Full Report</Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Community Feedback */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <MessageCircle className="h-5 w-5" />
-                    <span>Community Feedback</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {communityFeedback.map((feedback) => (
-                    <div key={feedback.id} className="flex flex-col space-y-2">
-                      <div className="flex space-x-3 p-4 rounded-lg bg-muted/30">
-                        <Avatar className="h-8 w-8">
-                          <AvatarFallback className="text-xs">{feedback.avatar}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium text-sm">{feedback.user}</span>
-                            <Badge variant={feedback.type === "positive" ? "default" : "secondary"} className="text-xs">
-                              {feedback.type}
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-muted-foreground">{feedback.comment}</p>
-                          <div className="flex items-center space-x-2">
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="h-6 px-2"
-                              onClick={() => handleLike(feedback.id)}
-                            >
-                              <ThumbsUp className={`h-3 w-3 mr-1`} />
-                              {feedback.likes}
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="h-6 px-2"
-                              onClick={() => handleReply(feedback.id)}
-                            >
-                              <MessageCircle className="h-3 w-3 mr-1" />
-                              Reply
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Replies section */}
-                      {feedback.replies && feedback.replies.length > 0 && (
-                        <div className="pl-11">
-                          {feedback.replies.map((reply) => (
-                            <div key={reply.id} className="flex items-start space-x-3 p-3 rounded-lg bg-muted/20 mb-2">
-                              <Avatar className="h-7 w-7">
-                                <AvatarFallback className="text-xs">{reply.avatar}</AvatarFallback>
-                              </Avatar>
-                              <div className="flex-1">
-                                <div className="flex items-center justify-between">
-                                  <span className="font-medium text-sm">{reply.user}</span>
-                                  <span className="text-xs text-muted-foreground">{reply.timestamp}</span>
-                                </div>
-                                <p className="text-sm text-muted-foreground mt-1">{reply.comment}</p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Reply form */}
-                      {replyingTo === feedback.id && (
-                        <div className="pl-11 pt-1">
-                          <Textarea 
-                            value={replyText}
-                            onChange={(e) => setReplyText(e.target.value)}
-                            placeholder="Write your reply..."
-                            className="resize-none min-h-[80px]"
-                          />
-                          <div className="flex space-x-2 mt-2">
-                            <Button 
-                              onClick={submitReply} 
-                              className="flex-1"
-                              disabled={!replyText.trim()}
-                            >
-                              Post Reply
-                            </Button>
-                            <Button 
-                              onClick={cancelReply} 
-                              variant="outline" 
-                              className="flex-1"
-                            >
-                              Cancel
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-
-              {/* Investor Views */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Eye className="h-5 w-5" />
-                    <span>Investor Interest</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div className="text-center p-6 bg-muted/30 rounded-lg">
-                      <div className="text-3xl font-bold text-primary">47</div>
-                      <p className="text-sm text-muted-foreground">Total Views</p>
-                    </div>
-                    <div className="text-center p-6 bg-muted/30 rounded-lg">
-                      <div className="text-3xl font-bold text-green-600">8</div>
-                      <p className="text-sm text-muted-foreground">Interested Investors</p>
-                    </div>
-                  </div>
-
-                  <div className="mt-6 space-y-3">
-                    <h4 className="font-semibold">Recent Investor Activity</h4>
-                    {[
-                      { name: "Sequoia Capital", interest: "High", status: "Pending" },
-                      { name: "Andreessen Horowitz", interest: "Moderate", status: "Viewed" },
-                      { name: "Accel Partners", interest: "High", status: "Message Sent" },
-                    ].map((investor, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div>
-                          <p className="font-medium">{investor.name}</p>
-                          <p className="text-sm text-muted-foreground">Interest: {investor.interest}</p>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Badge variant={investor.status === "Message Sent" ? "default" : "secondary"}>
-                            {investor.status}
-                          </Badge>
-                          {investor.status === "Message Sent" && <Button size="sm">Reply</Button>}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Call to Action */}
-              <div className="flex space-x-4">
-                <Button variant="outline" className="flex-1 bg-transparent">
-                  <TrendingUp className="mr-2 h-4 w-4" />
-                  Improve Pitch
-                </Button>
-                <Button 
-                  className="flex-1"
-                  onClick={() => router.push('/submit')}
-                >
-                  <Users className="mr-2 h-4 w-4" />
-                  Submit New Idea
-                </Button>
-              </div>
-            </div>
-          )}
-
           {/* Analytics Tab */}
           {activeTab === "analytics" && (
             <div className="space-y-4 max-w-5xl mx-auto">
@@ -1386,11 +1273,13 @@ export default function Dashboard() {
       <Dialog open={videoModalOpen} onOpenChange={setVideoModalOpen}>
         <DialogContent className="max-w-[85vw] md:max-w-[75vw] lg:max-w-[70vw] p-0 overflow-hidden border-2 shadow-xl">
           <DialogHeader className="p-3 pb-0">
-            <DialogTitle className="text-base">Articuno.AI - Pitch Video by Bikram Mondal</DialogTitle>
+            <DialogTitle className="text-base">
+              {approvedPitches[0]?.pitchData?.startupName || "Pitch Video"} - by {profile?.firstName} {profile?.lastName}
+            </DialogTitle>
           </DialogHeader>
           <div className="relative pb-[42.25%] mt-1">
             <video 
-              src="/articuno.mp4" 
+              src={approvedPitches[0]?.pitchData?.videoUrl || "/articuno.mp4"} 
               className="absolute inset-0 w-full h-full object-contain bg-black"
               controls
               autoPlay

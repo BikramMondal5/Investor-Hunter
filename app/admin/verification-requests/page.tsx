@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
-import { Eye, CheckCircle, XCircle } from 'lucide-react'
+import { Eye, CheckCircle, XCircle, Video } from 'lucide-react'
 import { Textarea } from '@/components/ui/textarea'
 
 export default function AdminVerificationPage() {
@@ -16,6 +16,7 @@ export default function AdminVerificationPage() {
   const [selectedRequest, setSelectedRequest] = useState<any>(null)
   const [showRejectDialog, setShowRejectDialog] = useState(false)
   const [rejectionReason, setRejectionReason] = useState('')
+  const [showVideoDialog, setShowVideoDialog] = useState(false)
 
   useEffect(() => {
     fetchRequests()
@@ -103,6 +104,11 @@ export default function AdminVerificationPage() {
                   <div>
                     <CardTitle className="text-xl">{req.personalInfo.fullName}</CardTitle>
                     <p className="text-gray-400 mt-1">{req.personalInfo.businessName}</p>
+                    {req.pitchData?.startupName && (
+                      <p className="text-sm text-amber-500 mt-1">
+                        Startup: {req.pitchData.startupName}
+                      </p>
+                    )}
                   </div>
                   <Badge variant={req.verificationStatus === 'pending' ? 'secondary' : 'default'}>
                     {req.verificationStatus}
@@ -137,6 +143,13 @@ export default function AdminVerificationPage() {
                   </div>
                 </div>
                 
+                {req.pitchData?.oneLiner && (
+                  <div className="mb-4 p-3 bg-gray-900/50 rounded-lg">
+                    <p className="text-sm text-gray-400 mb-1">Pitch One-liner:</p>
+                    <p className="text-sm">{req.pitchData.oneLiner}</p>
+                  </div>
+                )}
+                
                 <div className="mb-4">
                   <p className="text-sm text-gray-400 mb-2">Documents Uploaded:</p>
                   <div className="flex flex-wrap gap-2">
@@ -158,6 +171,20 @@ export default function AdminVerificationPage() {
                 </div>
                 
                 <div className="flex gap-2">
+                  {req.pitchData?.videoUrl && (
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        setSelectedRequest(req)
+                        setShowVideoDialog(true)
+                      }}
+                      className="border-amber-500/50 hover:bg-amber-500/10"
+                    >
+                      <Video className="h-4 w-4 mr-2" />
+                      Watch Pitch
+                    </Button>
+                  )}
                   <Button 
                     variant="outline" 
                     size="sm"
@@ -195,14 +222,128 @@ export default function AdminVerificationPage() {
         )}
       </div>
 
+      {/* Pitch Video Dialog */}
+      <Dialog open={showVideoDialog} onOpenChange={setShowVideoDialog}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Pitch Video - {selectedRequest?.pitchData?.startupName}</DialogTitle>
+          </DialogHeader>
+          {selectedRequest?.pitchData && (
+            <div className="space-y-4">
+              <div className="bg-black rounded-lg overflow-hidden">
+                <video 
+                  src={selectedRequest.pitchData.videoUrl} 
+                  controls 
+                  className="w-full max-h-[500px]"
+                  controlsList="nodownload"
+                >
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-gray-400">Startup Name</p>
+                  <p className="font-medium">{selectedRequest.pitchData.startupName}</p>
+                </div>
+                <div>
+                  <p className="text-gray-400">Industry</p>
+                  <p className="font-medium">{selectedRequest.pitchData.industry}</p>
+                </div>
+                <div>
+                  <p className="text-gray-400">Stage</p>
+                  <p className="font-medium capitalize">{selectedRequest.pitchData.stage}</p>
+                </div>
+                <div>
+                  <p className="text-gray-400">Location</p>
+                  <p className="font-medium">{selectedRequest.pitchData.location}</p>
+                </div>
+              </div>
+              
+              {selectedRequest.pitchData.oneLiner && (
+                <div className="p-4 bg-gray-900 rounded-lg">
+                  <p className="text-sm text-gray-400 mb-2">One-liner:</p>
+                  <p>{selectedRequest.pitchData.oneLiner}</p>
+                </div>
+              )}
+              
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setShowVideoDialog(false)}
+                >
+                  Close
+                </Button>
+                <Button 
+                  className="flex-1"
+                  onClick={() => {
+                    setShowVideoDialog(false)
+                    setSelectedRequest(selectedRequest)
+                  }}
+                >
+                  <Eye className="h-4 w-4 mr-2" />
+                  View Full Details
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* View Details Dialog */}
-      <Dialog open={!!selectedRequest && !showRejectDialog} onOpenChange={() => setSelectedRequest(null)}>
+      <Dialog open={!!selectedRequest && !showRejectDialog && !showVideoDialog} onOpenChange={() => setSelectedRequest(null)}>
         <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Verification Request Details</DialogTitle>
           </DialogHeader>
           {selectedRequest && (
             <div className="space-y-6">
+              {/* Pitch Information */}
+              {selectedRequest.pitchData && (
+                <div>
+                  <h3 className="font-semibold mb-3 flex items-center gap-2">
+                    <Video className="h-5 w-5 text-amber-500" />
+                    Pitch Information
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4 text-sm mb-3">
+                    <div>
+                      <p className="text-gray-400">Startup Name</p>
+                      <p className="font-medium">{selectedRequest.pitchData.startupName}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400">Industry</p>
+                      <p className="font-medium">{selectedRequest.pitchData.industry}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400">Stage</p>
+                      <p className="font-medium capitalize">{selectedRequest.pitchData.stage}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400">Location</p>
+                      <p className="font-medium">{selectedRequest.pitchData.location}</p>
+                    </div>
+                  </div>
+                  {selectedRequest.pitchData.oneLiner && (
+                    <div className="p-3 bg-gray-900/50 rounded-lg mb-3">
+                      <p className="text-sm text-gray-400 mb-1">One-liner:</p>
+                      <p className="text-sm">{selectedRequest.pitchData.oneLiner}</p>
+                    </div>
+                  )}
+                  {selectedRequest.pitchData.videoUrl && (
+                    <Button 
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowVideoDialog(true)}
+                      className="w-full"
+                    >
+                      <Video className="h-4 w-4 mr-2" />
+                      Watch Pitch Video
+                    </Button>
+                  )}
+                </div>
+              )}
+
               <div>
                 <h3 className="font-semibold mb-3">Personal Information</h3>
                 <div className="grid grid-cols-2 gap-4 text-sm">
@@ -232,6 +373,7 @@ export default function AdminVerificationPage() {
                   </div>
                 </div>
               </div>
+              
               <div>
                 <h3 className="font-semibold mb-3">Required Documents</h3>
                 <div className="space-y-2">
@@ -369,6 +511,7 @@ export default function AdminVerificationPage() {
           </div>
         </DialogContent>
       </Dialog>
+      
       {/* Approve Confirmation Dialog */}
       <Dialog open={!!selectedRequest && showApproveDialog} onOpenChange={setShowApproveDialog}>
         <DialogContent>

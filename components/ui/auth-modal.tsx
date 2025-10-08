@@ -62,7 +62,6 @@ export function AuthModal({ isOpen, onClose, initialError }: AuthModalProps) {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
-    // ⭐ NEW: Use signInError state
     setSignInError(null)
     setIsLoading(true)
 
@@ -89,19 +88,23 @@ export function AuthModal({ isOpen, onClose, initialError }: AuthModalProps) {
         description: "Welcome back!",
         variant: "default",
       })
-       // Reset form
-        setSignInEmail("")
-        setSignInPassword("")
-        
-        // Redirect based on user role
+      
+      // Reset form
+      setSignInEmail("")
+      setSignInPassword("")
+      
+      // Close modal first
+      onClose()
+      
+      // Use window.location.href for hard redirect like Google sign-in
+      setTimeout(() => {
         const redirectPath = data.user.role === "investor" ? "/investor" : "/dashboard"
-        router.push(redirectPath)
-        onClose()
+        window.location.href = redirectPath
+      }, 100)
 
     } catch (error) {
       console.error("Sign in error:", error)
       const errorMessage = error instanceof Error ? error.message : "Sign in failed"
-      // ⭐ NEW: Set signInError state
       setSignInError(errorMessage)
       toast({
         title: "Sign In Failed",

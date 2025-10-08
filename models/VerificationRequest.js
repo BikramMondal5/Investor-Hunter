@@ -6,13 +6,22 @@ const verificationRequestSchema = new mongoose.Schema({
       type: String, 
       default: () => `USER_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`
     },
-    fullName: { type: String, required: true },
-    businessName: { type: String, required: true },
+    fullName: { type: String, required: false }, 
+    businessName: { type: String, required: false }, 
     email: { type: String, required: true },
-    contactNumber: { type: String, required: true },
-    businessRegistrationNumber: { type: String, required: true },
-    industryType: { type: String, required: true },
-    country: { type: String, required: true }
+    contactNumber: { type: String, required: false }, 
+    businessRegistrationNumber: { type: String, required: false }, 
+    industryType: { type: String, required: false }, 
+    country: { type: String, required: false } 
+  },
+  pitchData: {
+    videoUrl: String,
+    startupName: String,
+    oneLiner: String,
+    industry: String,
+    location: String,
+    stage: String,
+    isPublic: { type: Boolean, default: false }
   },
   documents: {
     required: [{
