@@ -85,6 +85,8 @@ interface DocumentUploadProps {
   document: DocumentType;
   onUpload: (files: File[]) => void;
   uploadedFiles: File[];
+  onRemoveFile: (fileIndex: number) => void;
+  error?: string;
 }
 
 // Define document types
@@ -130,14 +132,13 @@ const optionalDocuments: DocumentType[] = [
   }
 ]
 
-const DocumentUpload: React.FC<DocumentUploadProps> = ({ document, onUpload, uploadedFiles }) => {
+const DocumentUpload: React.FC<DocumentUploadProps> = ({ document, onUpload, uploadedFiles, onRemoveFile, error }) => {
   const [uploading, setUploading] = React.useState(false)
   const [progress, setProgress] = React.useState(0)
   const [uploadStatus, setUploadStatus] = React.useState<UploadStatus>(null)
   const [isMounted, setIsMounted] = React.useState(false)
   const fileInputRef = React.useRef<HTMLInputElement>(null)
 
-  // Only run on client
   React.useEffect(() => {
     setIsMounted(true)
   }, [])
@@ -150,16 +151,16 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ document, onUpload, upl
       fileInputRef.current.value = ''
     }
 
-    // Filter files by type and size
     const validFiles = selectedFiles.filter(file => {
       const validTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png']
-      const validSize = file.size <= 10 * 1024 * 1024 // 10MB
-
+      const validSize = file.size <= 10 * 1024 * 1024
       return validTypes.includes(file.type) && validSize
     })
 
     if (validFiles.length > 0) {
       simulateUpload(validFiles)
+    } else {
+      alert('Invalid files. Please upload PDF, JPG, or PNG files under 10MB.')
     }
   }
 
@@ -190,8 +191,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ document, onUpload, upl
     const droppedFiles = Array.from(e.dataTransfer.files)
     const validFiles = droppedFiles.filter(file => {
       const validTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png']
-      const validSize = file.size <= 10 * 1024 * 1024 // 10MB
-      
+      const validSize = file.size <= 10 * 1024 * 1024
       return validTypes.includes(file.type) && validSize
     })
     
@@ -206,20 +206,6 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ document, onUpload, upl
     }
   }
 
-  const getStatusIcon = () => {
-    switch (uploadStatus) {
-      case 'pending':
-        return <Clock className="h-5 w-5 text-amber-500" />
-      case 'approved':
-        return <CheckCircle className="h-5 w-5 text-green-500" />
-      case 'rejected':
-        return <XCircle className="h-5 w-5 text-red-500" />
-      default:
-        return null
-    }
-  }
-
-  // Prevent hydration errors by not rendering interactive elements during SSR
   if (!isMounted) {
     return (
       <Card className="border border-gray-800 bg-gray-950">
@@ -240,21 +226,20 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ document, onUpload, upl
   }
 
   return (
-    <Card className="border border-gray-800 bg-gray-950 h-full flex flex-col">
+    <Card className={`border bg-gray-950 h-full flex flex-col ${error ? 'border-red-500' : 'border-gray-800'}`}>
       <CardHeader className="pb-3">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
             <document.icon className="h-5 w-5 text-amber-500 flex-shrink-0" />
             <CardTitle className="text-lg">{document.title}</CardTitle>
-            {uploadStatus && getStatusIcon()}
           </div>
         </div>
         <CardDescription className="text-gray-400 mt-2">{document.description}</CardDescription>
       </CardHeader>
-      <CardContent className="flex-1 flex">
+      <CardContent className="flex-1 flex flex-col">
         {uploadedFiles.length === 0 ? (
           <div
-            className="border-2 border-dashed border-gray-700 rounded-lg p-6 text-center cursor-pointer hover:border-amber-500 transition-colors flex flex-col items-center justify-center w-full"
+            className="border-2 border-dashed border-gray-700 rounded-lg p-6 text-center cursor-pointer hover:border-amber-500 transition-colors flex flex-col items-center justify-center w-full flex-1"
             onDragOver={handleDragOver}
             onDrop={handleDrop}
             onClick={handleBrowse}
@@ -286,7 +271,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ document, onUpload, upl
           </div>
         ) : (
           <div className="w-full flex flex-col h-full">
-            <div className="space-y-3 w-full flex-1">
+            <div className="space-y-3 w-full flex-1 max-h-[300px] overflow-y-auto">
               {uploadedFiles.map((file, index) => (
                 <div key={index} className="flex justify-between items-center p-3 bg-gray-900 rounded-md">
                   <div className="flex items-center gap-2 text-sm overflow-hidden">
@@ -297,24 +282,18 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ document, onUpload, upl
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <Eye className="h-4 w-4" />
+                          <Button 
+                            type="button"
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-950"
+                            onClick={() => onRemoveFile(index)}
+                          >
+                            <XCircle className="h-4 w-4" />
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>View file</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleBrowse}>
-                            <RefreshCw className="h-4 w-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Replace file</p>
+                          <p>Remove file</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -332,6 +311,14 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ document, onUpload, upl
               <Upload className="h-3 w-3 mr-2" />
               Add More Files
             </Button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden"
+              multiple
+              accept=".pdf,.jpg,.jpeg,.png"
+            />
           </div>
         )}
         {uploading && (
@@ -341,6 +328,11 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ document, onUpload, upl
           </div>
         )}
       </CardContent>
+      {error && (
+        <CardFooter className="pt-0 pb-4">
+          <p className="text-sm text-red-500">{error}</p>
+        </CardFooter>
+      )}
     </Card>
   )
 }
@@ -354,12 +346,32 @@ export function EntrepreneurRegistrationContent() {
   const [showConfirmation, setShowConfirmation] = React.useState(false)
   const [formData, setFormData] = React.useState<FormData | null>(null)
   const [uploadedFiles, setUploadedFiles] = React.useState<Record<string, File[]>>({})
+  const [documentErrors, setDocumentErrors] = React.useState<Record<string, string>>({})
 
   const handleFileUpload = (documentId: string, files: File[]) => {
-    setUploadedFiles(prev => ({
-      ...prev,
-      [documentId]: files
-    }))
+    setUploadedFiles(prev => {
+      const existingFiles = prev[documentId] || []
+      
+      // Filter out duplicate files based on name and size
+      const newFiles = files.filter(newFile => 
+        !existingFiles.some(existingFile => 
+          existingFile.name === newFile.name && 
+          existingFile.size === newFile.size
+        )
+      )
+      
+      return {
+        ...prev,
+        [documentId]: [...existingFiles, ...newFiles]
+      }
+    })
+    
+    // Clear error when file is uploaded
+    setDocumentErrors(prev => {
+      const newErrors = { ...prev }
+      delete newErrors[documentId]
+      return newErrors
+    })
   }
   
   // Only render on client side
@@ -380,8 +392,45 @@ export function EntrepreneurRegistrationContent() {
       country: "",
     },
   })
+  const handleRemoveFile = (documentId: string, fileIndex: number) => {
+    setUploadedFiles(prev => {
+      const files = prev[documentId] || []
+      return {
+        ...prev,
+        [documentId]: files.filter((_, index) => index !== fileIndex)
+      }
+    })
+  }
+
+  // Update DocumentUpload component props interface:
+  interface DocumentUploadProps {
+    document: DocumentType;
+    onUpload: (files: File[]) => void;
+    uploadedFiles: File[];
+    onRemoveFile: (fileIndex: number) => void;
+  }
 
   const onSubmit = (data: FormData) => {
+    // Validate required documents
+    const errors: Record<string, string> = {}
+    
+    requiredDocuments.forEach(doc => {
+      if (!uploadedFiles[doc.id] || uploadedFiles[doc.id].length === 0) {
+        errors[doc.id] = `${doc.title} is required`
+      }
+    })
+    
+    if (Object.keys(errors).length > 0) {
+      setDocumentErrors(errors)
+      // Scroll to first error
+      const firstErrorElement = document.getElementById(`document-${Object.keys(errors)[0]}`)
+      if (firstErrorElement) {
+        firstErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+      return
+    }
+    
+    setDocumentErrors({})
     setFormData(data)
     setShowConfirmation(true)
   }
@@ -671,16 +720,34 @@ export function EntrepreneurRegistrationContent() {
               <p className="text-gray-400 text-sm mt-2">Please upload the following required documents for verification</p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-8">
-              {requiredDocuments.map((doc) => (
-                <DocumentUpload 
-                  key={doc.id} 
-                  document={doc} 
-                  onUpload={(files) => handleFileUpload(doc.id, files)}
-                  uploadedFiles={uploadedFiles[doc.id] || []}
-                />
-              ))}
-            </div>
+            {/* Required Documents */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-8">
+                {requiredDocuments.map((doc) => (
+                  <div key={doc.id} id={`document-${doc.id}`}>
+                    <DocumentUpload 
+                      document={doc} 
+                      onUpload={(files) => handleFileUpload(doc.id, files)}
+                      uploadedFiles={uploadedFiles[doc.id] || []}
+                      onRemoveFile={(fileIndex) => handleRemoveFile(doc.id, fileIndex)}
+                      error={documentErrors[doc.id]}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Optional Documents */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-8">
+                {optionalDocuments.map((doc) => (
+                  <div key={doc.id} id={`document-${doc.id}`}>
+                    <DocumentUpload 
+                      document={doc}
+                      onUpload={(files) => handleFileUpload(doc.id, files)}
+                      uploadedFiles={uploadedFiles[doc.id] || []}
+                      onRemoveFile={(fileIndex) => handleRemoveFile(doc.id, fileIndex)}
+                    />
+                  </div>
+                ))}
+              </div>
           </div>
           
           <Separator className="bg-gray-800 my-10" />
@@ -689,17 +756,6 @@ export function EntrepreneurRegistrationContent() {
             <div className="mb-6">
               <h2 className="text-2xl font-semibold tracking-tight mb-2">3. Optional Documents</h2>
               <p className="text-gray-400 text-sm mt-2">These documents are not required but can strengthen your business profile</p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-8">
-              {optionalDocuments.map((doc) => (
-                <DocumentUpload 
-                  key={doc.id} 
-                  document={doc}
-                  onUpload={(files) => handleFileUpload(doc.id, files)}
-                  uploadedFiles={uploadedFiles[doc.id] || []}
-                />
-              ))}
             </div>
           </div>
           
