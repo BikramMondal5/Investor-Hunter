@@ -1,5 +1,5 @@
 "use client"
-
+import { Textarea } from "@/components/ui/textarea"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
@@ -29,12 +29,14 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription
 } from "@/components/ui/dialog"
 
 interface StartupPitch {
   _id: string;
   personalInfo?: {
     fullName?: string;
+    userId?: string;
   };
   pitchData?: {
     startupName?: string;
@@ -55,8 +57,19 @@ export default function InvestorPortal() {
   const [currentStartup, setCurrentStartup] = useState<StartupPitch | null>(null)
   const router = useRouter()
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
-  
-  // States for approved pitches
+
+const [messageModalOpen, setMessageModalOpen] = useState(false)
+const [selectedStartup, setSelectedStartup] = useState<StartupPitch | null>(null)
+const [messageContent, setMessageContent] = useState('')
+const [isSendingMessage, setIsSendingMessage] = useState(false)
+
+
+const handleMessage = (startup: StartupPitch) => {
+  setSelectedStartup(startup)
+  setMessageModalOpen(true)
+  setMessageContent('')
+}
+
   const [startups, setStartups] = useState<StartupPitch[]>([])
   const [isLoadingStartups, setIsLoadingStartups] = useState(true)
   const [showAll, setShowAll] = useState(false)
@@ -67,12 +80,39 @@ export default function InvestorPortal() {
   }, [])
 
   useEffect(() => {
+    if (activeTab === 'saved') {
+      const fetchSavedPitches = async () => {
+        try {
+          const res = await fetch('/api/saved-pitches')
+          if (res.ok) {
+            const data = await res.json()
+            const savedIds = new Set<string>(
+              data.pitches.map((p: any) => {
+                const pitchId = typeof p.pitchId === 'string' ? p.pitchId : p.pitchId?._id
+                return pitchId || ''
+              }).filter((id: string) => id)
+            )
+            setSavedPitches(savedIds)
+          }
+        } catch (error) {
+          console.error('Failed to fetch saved pitches:', error)
+        }
+      }
+      fetchSavedPitches()
+    }
+  }, [activeTab])
+
+  useEffect(() => {
     const fetchApprovedPitches = async () => {
       try {
         const res = await fetch('/api/approved-pitches')
         if (res.ok) {
           const data = await res.json()
           setStartups(data.pitches || [])
+        } else {
+          console.error('Failed to fetch approved pitches, status:', res.status)
+          const errorText = await res.text()
+          console.error('Error response:', errorText)
         }
       } catch (error) {
         console.error('Failed to fetch approved pitches:', error)
@@ -93,22 +133,70 @@ export default function InvestorPortal() {
     setVideoModalOpen(true)
   }
 
-  const toggleSave = (startupId: string) => {
-    setSavedPitches(prev => {
-      const newSet = new Set(prev)
-      if (newSet.has(startupId)) {
-        newSet.delete(startupId)
-      } else {
-        newSet.add(startupId)
+  const toggleSave = async (startupId: string) => {
+    try {
+      const startup = startups.find(s => s._id === startupId)
+      // Use userId if available, fallback to _id
+      const entrepreneurId = startup?.personalInfo?.userId || startup?._id || startupId
+      const isSaved = savedPitches.has(startupId)
+      
+      const res = await fetch('/api/saved-pitches', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pitchId: startupId,
+          entrepreneurId: entrepreneurId,
+          action: isSaved ? 'unsave' : 'save'
+        })
+      })
+
+      if (res.ok) {
+        setSavedPitches(prev => {
+          const newSet = new Set(prev)
+          if (newSet.has(startupId)) {
+            newSet.delete(startupId)
+          } else {
+            newSet.add(startupId)
+          }
+          return newSet
+        })
       }
-      return newSet
-    })
+    } catch (error) {
+      console.error('Failed to save pitch:', error)
+    }
   }
 
-  const handleMessage = (startup: StartupPitch) => {
-    // Navigate to messages tab
-    setActiveTab("messages")
-    console.log('Message startup:', startup)
+  const handleSendMessage = async () => {
+    if (!selectedStartup || !messageContent.trim()) return
+
+    setIsSendingMessage(true)
+    try {
+      const entrepreneurId = selectedStartup.personalInfo?.userId || selectedStartup._id
+      
+      const res = await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          recipientId: entrepreneurId,
+          pitchId: selectedStartup._id,
+          content: messageContent,
+          senderRole: 'investor'
+        })
+      })
+
+      if (res.ok) {
+        setMessageModalOpen(false)
+        setMessageContent('')
+        alert('Message sent successfully!')
+      } else {
+        alert('Failed to send message')
+      }
+    } catch (error) {
+      console.error('Failed to send message:', error)
+      alert('Error sending message')
+    } finally {
+      setIsSendingMessage(false)
+    }
   }
 
   const displayedStartups = showAll ? startups : startups.slice(0, 3)
@@ -411,18 +499,24 @@ export default function InvestorPortal() {
                   <p className="text-muted-foreground">Startups you've bookmarked for later review</p>
                 </div>
 
-                <Card>
-                  <CardContent className="p-6">
-                    <div className="text-center py-12">
-                      <Bookmark className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold mb-2">No saved pitches yet</h3>
-                      <p className="text-muted-foreground mb-4">
-                        Start exploring startups and save the ones that interest you
-                      </p>
-                      <Button onClick={() => setActiveTab("discover")}>Discover Startups</Button>
+                {savedPitches.size === 0 ? (
+                    <Card>
+                      <CardContent className="p-6">
+                        <div className="text-center py-12">
+                          <Bookmark className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                          <h3 className="text-lg font-semibold mb-2">No saved pitches yet</h3>
+                          <p className="text-muted-foreground mb-4">
+                            Start exploring startups and save the ones that interest you
+                          </p>
+                          <Button onClick={() => setActiveTab("discover")}>Discover Startups</Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <div className={`grid gap-6 ${viewMode === "grid" ? "md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"}`}>
+                      {/* Map through saved pitches from state/API */}
                     </div>
-                  </CardContent>
-                </Card>
+                  )}
               </div>
             )}
 
@@ -524,6 +618,42 @@ export default function InvestorPortal() {
           </div>
         </DialogContent>
       </Dialog>
+      <Dialog open={messageModalOpen} onOpenChange={setMessageModalOpen}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Message {selectedStartup?.pitchData?.startupName || 'Founder'}</DialogTitle>
+          <DialogDescription>
+            {selectedStartup?.personalInfo?.fullName || 'Founder'}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="p-3 bg-muted rounded-lg">
+            <p className="text-sm font-medium">{selectedStartup?.pitchData?.startupName}</p>
+            <p className="text-xs text-muted-foreground">{selectedStartup?.pitchData?.oneLiner}</p>
+          </div>
+          <Textarea
+            placeholder="Type your message..."
+            value={messageContent}
+            onChange={(e) => setMessageContent(e.target.value)}
+            className="min-h-[100px]"
+          />
+          <div className="flex space-x-2 justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setMessageModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSendMessage}
+              disabled={isSendingMessage || !messageContent.trim()}
+            >
+              {isSendingMessage ? 'Sending...' : 'Send Message'}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
     </div>
   )
 }
