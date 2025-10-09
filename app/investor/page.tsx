@@ -31,76 +31,87 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 
+interface StartupPitch {
+  _id: string;
+  personalInfo?: {
+    fullName?: string;
+  };
+  pitchData?: {
+    startupName?: string;
+    oneLiner?: string;
+    location?: string;
+    stage?: string;
+    industry?: string;
+    videoUrl?: string;
+  };
+}
+
 export default function InvestorPortal() {
   const [isMounted, setIsMounted] = useState(false)
   const [activeTab, setActiveTab] = useState("discover")
   const [viewMode, setViewMode] = useState("grid")
   const [aiScoreRange, setAiScoreRange] = useState([7])
   const [videoModalOpen, setVideoModalOpen] = useState(false)
-  const [currentStartup, setCurrentStartup] = useState<any>(null)
+  const [currentStartup, setCurrentStartup] = useState<StartupPitch | null>(null)
   const router = useRouter()
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
+  
+  // States for approved pitches
+  const [startups, setStartups] = useState<StartupPitch[]>([])
+  const [isLoadingStartups, setIsLoadingStartups] = useState(true)
+  const [showAll, setShowAll] = useState(false)
+  const [savedPitches, setSavedPitches] = useState(new Set<string>())
 
   useEffect(() => {
     setIsMounted(true)
+  }, [])
+
+  useEffect(() => {
+    const fetchApprovedPitches = async () => {
+      try {
+        const res = await fetch('/api/approved-pitches')
+        if (res.ok) {
+          const data = await res.json()
+          setStartups(data.pitches || [])
+        }
+      } catch (error) {
+        console.error('Failed to fetch approved pitches:', error)
+      } finally {
+        setIsLoadingStartups(false)
+      }
+    }
+
+    fetchApprovedPitches()
   }, [])
 
   if (!isMounted) {
     return null
   }
 
-  const startups = [
-    {
-      id: 1,
-      name: "Articuno.AI",
-      logo: "Ar",
-      tagline: "AI-powered workflow automation for small businesses",
-      location: "San Francisco, CA",
-      stage: "MVP",
-      industry: "SaaS",
-      aiScore: 8.8,
-      founder: "Bikram Mondal",
-      isVerified: true,
-      views: 47,
-      saved: false,
-      videoUrl: "/articuno.mp4"
-    },
-    {
-      id: 2,
-      name: "EcoTrack",
-      logo: "ET",
-      tagline: "Carbon footprint tracking for sustainable living",
-      location: "Berlin, Germany",
-      stage: "Growth",
-      industry: "Climate Tech",
-      aiScore: 9.2,
-      founder: "Maria Schmidt",
-      isVerified: true,
-      views: 89,
-      saved: true,
-      videoUrl: "/articuno.mp4" // Using same video for demo
-    },
-    {
-      id: 3,
-      name: "HealthAI",
-      logo: "HA",
-      tagline: "AI-driven personalized health recommendations",
-      location: "Toronto, Canada",
-      stage: "Idea",
-      industry: "HealthTech",
-      aiScore: 7.9,
-      founder: "Dr. Sarah Chen",
-      isVerified: true,
-      views: 23,
-      saved: false,
-      videoUrl: "/articuno.mp4" // Using same video for demo
-    },
-  ]
-
-  const openVideoModal = (startup) => {
+  const openVideoModal = (startup: StartupPitch) => {
     setCurrentStartup(startup)
     setVideoModalOpen(true)
   }
+
+  const toggleSave = (startupId: string) => {
+    setSavedPitches(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(startupId)) {
+        newSet.delete(startupId)
+      } else {
+        newSet.add(startupId)
+      }
+      return newSet
+    })
+  }
+
+  const handleMessage = (startup: StartupPitch) => {
+    // Navigate to messages tab
+    setActiveTab("messages")
+    console.log('Message startup:', startup)
+  }
+
+  const displayedStartups = showAll ? startups : startups.slice(0, 3)
 
   return (
     <div className="min-h-screen bg-background">
@@ -154,7 +165,6 @@ export default function InvestorPortal() {
               <MessageSquare className="mr-2 h-4 w-4" />
               Messaging
             </Button>
-            {/* Add this logout button section */}
             <div className="pt-6 mt-4 border-t">
               <Button 
                 variant="ghost" 
@@ -251,7 +261,7 @@ export default function InvestorPortal() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h2 className="text-2xl font-bold">Discover Startups</h2>
-                    <p className="text-muted-foreground">Found {startups.length} startups matching your criteria</p>
+                    <p className="text-muted-foreground">Found {startups.length} startups</p>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Button
@@ -271,74 +281,126 @@ export default function InvestorPortal() {
                   </div>
                 </div>
 
-                {/* Startup Cards */}
-                <div className={`grid gap-6 ${viewMode === "grid" ? "md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"}`}>
-                  {startups.map((startup) => (
-                    <Card key={startup.id} className="group hover:shadow-lg transition-all duration-300">
-                      <CardHeader className="pb-3">
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center space-x-3">
-                            <Avatar className="h-12 w-12">
-                              <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                                {startup.logo}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <div className="flex items-center space-x-2">
-                                <h3 className="font-semibold">{startup.name}</h3>
-                                {startup.isVerified && <CheckCircle className="h-4 w-4 text-green-500" />}
+                {/* Loading State */}
+                {isLoadingStartups ? (
+                  <div className="text-center py-12">
+                    <p className="text-muted-foreground">Loading startups...</p>
+                  </div>
+                ) : startups.length === 0 ? (
+                  <Card>
+                    <CardContent className="p-12 text-center">
+                      <p className="text-muted-foreground">No approved startups available yet.</p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <>
+                    {/* Startup Cards */}
+                    <div className={`grid gap-6 ${viewMode === "grid" ? "md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"}`}>
+                      {displayedStartups.map((startup) => {
+                        const isSaved = savedPitches.has(startup._id)
+                        const founderName = startup.personalInfo?.fullName || 'Anonymous'
+                        const initials = startup.pitchData?.startupName
+                          ?.split(' ')
+                          .map((word: string) => word[0])
+                          .join('')
+                          .toUpperCase()
+                          .slice(0, 2) || 'ST'
+
+                        return (
+                          <Card key={startup._id} className="group hover:shadow-lg transition-all duration-300">
+                            <CardHeader className="pb-3">
+                              <div className="flex items-start justify-between">
+                                <div className="flex items-center space-x-3">
+                                  <Avatar className="h-12 w-12">
+                                    <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                                      {initials}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div>
+                                    <div className="flex items-center space-x-2">
+                                      <h3 className="font-semibold">{startup.pitchData?.startupName || 'Startup'}</h3>
+                                      <CheckCircle className="h-4 w-4 text-green-500" />
+                                    </div>
+                                    <p className="text-sm text-muted-foreground">by {founderName}</p>
+                                  </div>
+                                </div>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className={isSaved ? "text-red-500" : ""}
+                                  onClick={() => toggleSave(startup._id)}
+                                >
+                                  <Heart className={`h-4 w-4 ${isSaved ? "fill-current" : ""}`} />
+                                </Button>
                               </div>
-                              <p className="text-sm text-muted-foreground">by {startup.founder}</p>
-                            </div>
-                          </div>
-                          <Button variant="ghost" size="icon" className={startup.saved ? "text-red-500" : ""}>
-                            <Heart className={`h-4 w-4 ${startup.saved ? "fill-current" : ""}`} />
-                          </Button>
-                        </div>
-                      </CardHeader>
+                            </CardHeader>
 
-                      <CardContent className="space-y-4">
-                        <p className="text-sm">{startup.tagline}</p>
+                            <CardContent className="space-y-4">
+                              <p className="text-sm">{startup.pitchData?.oneLiner || 'No description available'}</p>
 
-                        <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-                          <div className="flex items-center space-x-1">
-                            <MapPin className="h-3 w-3" />
-                            <span>{startup.location}</span>
-                          </div>
-                          <Badge variant="secondary" className="text-xs">
-                            {startup.stage}
-                          </Badge>
-                          <Badge variant="outline" className="text-xs">
-                            {startup.industry}
-                          </Badge>
-                        </div>
+                              <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+                                <div className="flex items-center space-x-1">
+                                  <MapPin className="h-3 w-3" />
+                                  <span>{startup.pitchData?.location || 'Location not specified'}</span>
+                                </div>
+                                <Badge variant="secondary" className="text-xs">
+                                  {startup.pitchData?.stage || 'N/A'}
+                                </Badge>
+                                <Badge variant="outline" className="text-xs">
+                                  {startup.pitchData?.industry || 'N/A'}
+                                </Badge>
+                              </div>
 
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                            <span className="font-semibold">{startup.aiScore}</span>
-                            <span className="text-xs text-muted-foreground">AI Score</span>
-                          </div>
-                          <div className="flex items-center space-x-1 text-xs text-muted-foreground">
-                            <Eye className="h-3 w-3" />
-                            <span>{startup.views} views</span>
-                          </div>
-                        </div>
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-2">
+                                  <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                                  <span className="font-semibold">8.7</span>
+                                  <span className="text-xs text-muted-foreground">AI Score</span>
+                                </div>
+                                <div className="flex items-center space-x-1 text-xs text-muted-foreground">
+                                  <Eye className="h-3 w-3" />
+                                  <span>47 views</span>
+                                </div>
+                              </div>
 
-                        <div className="flex space-x-2">
-                          <Button size="sm" className="flex-1" onClick={() => openVideoModal(startup)}>
-                            <Play className="mr-2 h-3 w-3" />
-                            Watch Pitch
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            <MessageSquare className="mr-2 h-3 w-3" />
-                            Contact
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+                              <div className="flex space-x-2">
+                                <Button 
+                                  size="sm" 
+                                  className="flex-1" 
+                                  onClick={() => openVideoModal(startup)}
+                                >
+                                  <Play className="mr-2 h-3 w-3" />
+                                  Watch Pitch
+                                </Button>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => handleMessage(startup)}
+                                >
+                                  <MessageSquare className="mr-2 h-3 w-3" />
+                                  Message
+                                </Button>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        )
+                      })}
+                    </div>
+
+                    {/* Show More Button */}
+                    {startups.length > 3 && (
+                      <div className="flex justify-center pt-4">
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setShowAll(!showAll)}
+                          className="min-w-[200px]"
+                        >
+                          {showAll ? 'Show Less' : `Show More (${startups.length - 3} more)`}
+                        </Button>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             )}
 
@@ -394,12 +456,12 @@ export default function InvestorPortal() {
         <DialogContent className="max-w-[85vw] md:max-w-[75vw] lg:max-w-[70vw] p-0 overflow-hidden border-2 shadow-xl">
           <DialogHeader className="p-3 pb-0">
             <DialogTitle className="text-base">
-              {currentStartup?.name} - Pitch Video by {currentStartup?.founder}
+              {currentStartup?.pitchData?.startupName} - Pitch Video by {currentStartup?.personalInfo?.fullName}
             </DialogTitle>
           </DialogHeader>
           <div className="relative pb-[42.25%] mt-1">
             <video 
-              src={currentStartup?.videoUrl} 
+              src={currentStartup?.pitchData?.videoUrl} 
               className="absolute inset-0 w-full h-full object-contain bg-black"
               controls
               autoPlay
@@ -413,58 +475,55 @@ export default function InvestorPortal() {
           </div>
         </DialogContent>
       </Dialog>
+
       {/* Logout Confirmation Dialog */}
-        <Dialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Confirm Logout</DialogTitle>
-            </DialogHeader>
-            <div className="py-4">
-              <p className="text-muted-foreground">Are you sure you want to logout? Any unsaved changes will be lost.</p>
-            </div>
-            <div className="flex space-x-2 justify-end">
-              <Button 
-                variant="outline" 
-                onClick={() => setLogoutDialogOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button 
-                variant="destructive"
-                onClick={async () => {
-                  setLogoutDialogOpen(false);
-                  
-                  try {
-                    // Call logout API with cache control
-                    await fetch('/api/logout', { 
-                      method: 'POST',
-                      headers: {
-                        'Cache-Control': 'no-cache, no-store, must-revalidate',
-                        'Pragma': 'no-cache',
-                        'Expires': '0'
-                      }
-                    });
-                    
-                    // Clear any client-side storage
-                    if (typeof window !== 'undefined') {
-                      sessionStorage.clear();
-                      localStorage.clear();
+      <Dialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirm Logout</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-muted-foreground">Are you sure you want to logout? Any unsaved changes will be lost.</p>
+          </div>
+          <div className="flex space-x-2 justify-end">
+            <Button 
+              variant="outline" 
+              onClick={() => setLogoutDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive"
+              onClick={async () => {
+                setLogoutDialogOpen(false);
+                
+                try {
+                  await fetch('/api/logout', { 
+                    method: 'POST',
+                    headers: {
+                      'Cache-Control': 'no-cache, no-store, must-revalidate',
+                      'Pragma': 'no-cache',
+                      'Expires': '0'
                     }
-                    
-                    // Force a hard redirect with cache busting
-                    window.location.href = '/?t=' + Date.now();
-                  } catch (error) {
-                    console.error('Logout error:', error);
-                    // Force redirect anyway with cache busting
-                    window.location.href = '/?t=' + Date.now();
+                  });
+                  
+                  if (typeof window !== 'undefined') {
+                    sessionStorage.clear();
+                    localStorage.clear();
                   }
-                }}
-              >
-                Logout
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+                  
+                  window.location.href = '/?t=' + Date.now();
+                } catch (error) {
+                  console.error('Logout error:', error);
+                  window.location.href = '/?t=' + Date.now();
+                }
+              }}
+            >
+              Logout
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
