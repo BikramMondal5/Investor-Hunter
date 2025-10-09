@@ -49,6 +49,14 @@ interface StartupPitch {
 }
 
 export default function InvestorPortal() {
+  const [savedPitchDetails, setSavedPitchDetails] = useState<StartupPitch[]>([])
+  const [conversations, setConversations] = useState<any[]>([])
+  const [isLoadingConversations, setIsLoadingConversations] = useState(false)
+  const [selectedConversation, setSelectedConversation] = useState<any | null>(null)
+  const [conversationMessages, setConversationMessages] = useState<any[]>([])
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false)
+  const [messageInput, setMessageInput] = useState('')
+  const [isSendingInConversation, setIsSendingInConversation] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
   const [activeTab, setActiveTab] = useState("discover")
   const [viewMode, setViewMode] = useState("grid")
@@ -78,6 +86,57 @@ const handleMessage = (startup: StartupPitch) => {
   useEffect(() => {
     setIsMounted(true)
   }, [])
+  useEffect(() => {
+    if (activeTab === 'messages') {
+      fetchConversations()
+    }
+  }, [activeTab])
+
+  useEffect(() => {
+    if (activeTab === 'discover') {
+      const loadSavedPitches = async () => {
+        try {
+          const res = await fetch('/api/saved-pitches')
+          if (res.ok) {
+            const data = await res.json()
+            const savedIds = new Set<string>(
+              data.pitches.map((p: any) => {
+                const pitchId = typeof p.pitchId === 'string' ? p.pitchId : p.pitchId?._id
+                return pitchId || ''
+              }).filter((id: string) => id)
+            )
+            setSavedPitches(savedIds)
+          }
+        } catch (error) {
+          console.error('Failed to load saved pitches:', error)
+        }
+      }
+
+      loadSavedPitches()
+    }
+  }, [activeTab])
+
+  useEffect(() => {
+    const loadSavedPitches = async () => {
+      try {
+        const res = await fetch('/api/saved-pitches')
+        if (res.ok) {
+          const data = await res.json()
+          const savedIds = new Set<string>(
+            data.pitches.map((p: any) => {
+              const pitchId = typeof p.pitchId === 'string' ? p.pitchId : p.pitchId?._id
+              return pitchId || ''
+            }).filter((id: string) => id)
+          )
+          setSavedPitches(savedIds)
+        }
+      } catch (error) {
+        console.error('Failed to load saved pitches:', error)
+      }
+    }
+
+    loadSavedPitches()
+  }, [])
 
   useEffect(() => {
     if (activeTab === 'saved') {
@@ -93,6 +152,12 @@ const handleMessage = (startup: StartupPitch) => {
               }).filter((id: string) => id)
             )
             setSavedPitches(savedIds)
+            
+            // Extract full pitch details for display
+            const pitchDetails = data.pitches.map((p: any) => 
+              typeof p.pitchId === 'object' ? p.pitchId : p
+            )
+            setSavedPitchDetails(pitchDetails)
           }
         } catch (error) {
           console.error('Failed to fetch saved pitches:', error)
@@ -134,11 +199,19 @@ const handleMessage = (startup: StartupPitch) => {
   }
 
   const toggleSave = async (startupId: string) => {
+    const isSaved = savedPitches.has(startupId)
+    setSavedPitches(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(startupId)) {
+        newSet.delete(startupId)
+      } else {
+        newSet.add(startupId)
+      }
+      return newSet
+    })
     try {
       const startup = startups.find(s => s._id === startupId)
-      // Use userId if available, fallback to _id
       const entrepreneurId = startup?.personalInfo?.userId || startup?._id || startupId
-      const isSaved = savedPitches.has(startupId)
       
       const res = await fetch('/api/saved-pitches', {
         method: 'POST',
@@ -150,19 +223,28 @@ const handleMessage = (startup: StartupPitch) => {
         })
       })
 
-      if (res.ok) {
+      if (!res.ok) {
         setSavedPitches(prev => {
           const newSet = new Set(prev)
-          if (newSet.has(startupId)) {
-            newSet.delete(startupId)
-          } else {
+          if (isSaved) {
             newSet.add(startupId)
+          } else {
+            newSet.delete(startupId)
           }
           return newSet
         })
       }
     } catch (error) {
       console.error('Failed to save pitch:', error)
+      setSavedPitches(prev => {
+        const newSet = new Set(prev)
+        if (isSaved) {
+          newSet.add(startupId)
+        } else {
+          newSet.delete(startupId)
+        }
+        return newSet
+      })
     }
   }
 
@@ -187,15 +269,69 @@ const handleMessage = (startup: StartupPitch) => {
       if (res.ok) {
         setMessageModalOpen(false)
         setMessageContent('')
-        alert('Message sent successfully!')
+        fetchConversations()
       } else {
-        alert('Failed to send message')
+        console.error('Failed to send message')
       }
     } catch (error) {
       console.error('Failed to send message:', error)
-      alert('Error sending message')
     } finally {
       setIsSendingMessage(false)
+    }
+  }
+  const fetchConversations = async () => {
+    setIsLoadingConversations(true)
+    try {
+      const res = await fetch('/api/messages?type=list')
+      if (res.ok) {
+        const data = await res.json()
+        setConversations(data.conversations || [])
+      }
+    } catch (error) {
+      console.error('Failed to fetch conversations:', error)
+    } finally {
+      setIsLoadingConversations(false)
+    }
+  }
+  const fetchConversationMessages = async (conversationId: string) => {
+    setIsLoadingMessages(true)
+    try {
+      const res = await fetch(`/api/messages?type=detail&conversationId=${conversationId}`)
+      if (res.ok) {
+        const data = await res.json()
+        setConversationMessages(data.messages || [])
+      }
+    } catch (error) {
+      console.error('Failed to fetch messages:', error)
+    } finally {
+      setIsLoadingMessages(false)
+    }
+  }
+  const handleSendMessageInConversation = async () => {
+    if (!messageInput.trim() || !selectedConversation) return
+
+    setIsSendingInConversation(true)
+    try {
+      const res = await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          recipientId: selectedConversation.otherUser.id,
+          pitchId: selectedConversation.pitch.id,
+          content: messageInput,
+          senderRole: 'investor'
+        })
+      })
+
+      if (res.ok) {
+        setMessageInput('')
+        // Refetch messages to show the new message
+        fetchConversationMessages(selectedConversation.conversationId)
+      }
+    } catch (error) {
+      console.error('Failed to send message:', error)
+    } finally {
+      setIsSendingInConversation(false)
     }
   }
 
@@ -493,54 +629,303 @@ const handleMessage = (startup: StartupPitch) => {
             )}
 
             {activeTab === "saved" && (
-              <div className="space-y-6">
-                <div>
-                  <h2 className="text-2xl font-bold">My Saved Pitches</h2>
-                  <p className="text-muted-foreground">Startups you've bookmarked for later review</p>
-                </div>
-
-                {savedPitches.size === 0 ? (
-                    <Card>
-                      <CardContent className="p-6">
-                        <div className="text-center py-12">
-                          <Bookmark className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                          <h3 className="text-lg font-semibold mb-2">No saved pitches yet</h3>
-                          <p className="text-muted-foreground mb-4">
-                            Start exploring startups and save the ones that interest you
-                          </p>
-                          <Button onClick={() => setActiveTab("discover")}>Discover Startups</Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ) : (
-                    <div className={`grid gap-6 ${viewMode === "grid" ? "md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"}`}>
-                      {/* Map through saved pitches from state/API */}
-                    </div>
-                  )}
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-2xl font-bold">My Saved Pitches</h2>
+                <p className="text-muted-foreground">Startups you've bookmarked for later review</p>
               </div>
-            )}
 
-            {activeTab === "messages" && (
-              <div className="space-y-6">
-                <div>
-                  <h2 className="text-2xl font-bold">Messages</h2>
-                  <p className="text-muted-foreground">Connect with startup founders</p>
-                </div>
-
+              {savedPitches.size === 0 ? (
                 <Card>
                   <CardContent className="p-6">
                     <div className="text-center py-12">
-                      <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold mb-2">Your inbox is empty</h3>
+                      <Bookmark className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold mb-2">No saved pitches yet</h3>
                       <p className="text-muted-foreground mb-4">
-                        Start conversations with startups you're interested in
+                        Start exploring startups and save the ones that interest you
                       </p>
                       <Button onClick={() => setActiveTab("discover")}>Discover Startups</Button>
                     </div>
                   </CardContent>
                 </Card>
+              ) : (
+                <div className={`grid gap-6 ${viewMode === "grid" ? "md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"}`}>
+                  {savedPitchDetails.map((startup) => {
+                    const isSaved = savedPitches.has(startup._id)
+                    const founderName = startup.personalInfo?.fullName || 'Anonymous'
+                    const initials = startup.pitchData?.startupName
+                      ?.split(' ')
+                      .map((word: string) => word[0])
+                      .join('')
+                      .toUpperCase()
+                      .slice(0, 2) || 'ST'
+
+                    return (
+                      <Card key={startup._id} className="group hover:shadow-lg transition-all duration-300">
+                        <CardHeader className="pb-3">
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-center space-x-3">
+                              <Avatar className="h-12 w-12">
+                                <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                                  {initials}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <div className="flex items-center space-x-2">
+                                  <h3 className="font-semibold">{startup.pitchData?.startupName || 'Startup'}</h3>
+                                  <CheckCircle className="h-4 w-4 text-green-500" />
+                                </div>
+                                <p className="text-sm text-muted-foreground">by {founderName}</p>
+                              </div>
+                            </div>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className={isSaved ? "text-red-500" : ""}
+                              onClick={() => toggleSave(startup._id)}
+                            >
+                              <Heart className={`h-4 w-4 ${isSaved ? "fill-current" : ""}`} />
+                            </Button>
+                          </div>
+                        </CardHeader>
+
+                        <CardContent className="space-y-4">
+                          <p className="text-sm">{startup.pitchData?.oneLiner || 'No description available'}</p>
+
+                          <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+                            <div className="flex items-center space-x-1">
+                              <MapPin className="h-3 w-3" />
+                              <span>{startup.pitchData?.location || 'Location not specified'}</span>
+                            </div>
+                            <Badge variant="secondary" className="text-xs">
+                              {startup.pitchData?.stage || 'N/A'}
+                            </Badge>
+                            <Badge variant="outline" className="text-xs">
+                              {startup.pitchData?.industry || 'N/A'}
+                            </Badge>
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2">
+                              <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                              <span className="font-semibold">8.7</span>
+                              <span className="text-xs text-muted-foreground">AI Score</span>
+                            </div>
+                            <div className="flex items-center space-x-1 text-xs text-muted-foreground">
+                              <Eye className="h-3 w-3" />
+                              <span>47 views</span>
+                            </div>
+                          </div>
+
+                          <div className="flex space-x-2">
+                            <Button 
+                              size="sm" 
+                              className="flex-1" 
+                              onClick={() => openVideoModal(startup)}
+                            >
+                              <Play className="mr-2 h-3 w-3" />
+                              Watch Pitch
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleMessage(startup)}
+                            >
+                              <MessageSquare className="mr-2 h-3 w-3" />
+                              Message
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+          {activeTab === "messages" && (
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-2xl font-bold">Messages</h2>
+                <p className="text-muted-foreground">Connect with startup founders</p>
               </div>
-            )}
+
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 h-[650px]">
+                {/* Conversations List - Left Sidebar */}
+                <Card className="md:col-span-1 overflow-hidden flex flex-col">
+                  <CardHeader className="pb-4 border-b">
+                    <h3 className="font-semibold text-lg">Inbox</h3>
+                  </CardHeader>
+                  <CardContent className="flex-1 overflow-y-auto p-0">
+                    {isLoadingConversations ? (
+                      <div className="p-4 text-center text-sm text-muted-foreground">Loading...</div>
+                    ) : conversations.length === 0 ? (
+                      <div className="p-6 text-center space-y-3">
+                        <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto opacity-50" />
+                        <div>
+                          <h4 className="text-sm font-semibold mb-1">No conversations yet</h4>
+                          <p className="text-xs text-muted-foreground">
+                            Message a startup founder to get started
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="divide-y">
+                        {conversations.map((conv) => (
+                          <button
+                            key={conv.conversationId}
+                            onClick={() => {
+                              setSelectedConversation(conv)
+                              fetchConversationMessages(conv.conversationId)
+                            }}
+                            className={`w-full text-left p-4 hover:bg-muted/50 transition-colors border-l-4 ${
+                              selectedConversation?.conversationId === conv.conversationId
+                                ? 'border-primary bg-muted/30'
+                                : 'border-transparent hover:border-muted'
+                            }`}
+                          >
+                            <div className="space-y-1">
+                              <div className="flex items-start justify-between">
+                                <p className="font-semibold text-sm">
+                                  {conv.otherUser.name}
+                                </p>
+                                {conv.unreadCount > 0 && (
+                                  <Badge className="h-5 px-2 text-xs">
+                                    {conv.unreadCount}
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-xs text-muted-foreground font-medium">
+                                {conv.pitch.name}
+                              </p>
+                              <p className="text-xs text-muted-foreground truncate line-clamp-2 mt-1">
+                                {conv.lastMessage}
+                              </p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Messages Detail Area - Right Side */}
+                {selectedConversation ? (
+                  <Card className="md:col-span-3 overflow-hidden flex flex-col border-l">
+                    {/* Header */}
+                    <CardHeader className="pb-4 border-b bg-muted/30">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-semibold text-base">
+                            {selectedConversation.otherUser.name}
+                          </h3>
+                          <p className="text-xs text-muted-foreground">
+                            {selectedConversation.pitch.name}
+                          </p>
+                        </div>
+                        <Avatar className="h-10 w-10">
+                          <AvatarFallback className="text-xs">
+                            {selectedConversation.otherUser.name
+                              ?.split(' ')
+                              .map((n: string) => n[0])
+                              .join('')}
+                          </AvatarFallback>
+                        </Avatar>
+                      </div>
+                    </CardHeader>
+
+                    {/* Messages Container */}
+                    <CardContent className="flex-1 overflow-y-auto p-6 space-y-4 bg-background">
+                      {isLoadingMessages ? (
+                        <div className="text-center text-sm text-muted-foreground">
+                          Loading messages...
+                        </div>
+                      ) : conversationMessages.length === 0 ? (
+                        <div className="h-full flex items-center justify-center">
+                          <div className="text-center">
+                            <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-3 opacity-50" />
+                            <p className="text-sm text-muted-foreground">
+                              No messages yet. Start the conversation!
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        conversationMessages.map((msg) => (
+                          <div
+                            key={msg._id}
+                            className={`flex ${
+                              msg.senderRole === 'investor'
+                                ? 'justify-end'
+                                : 'justify-start'
+                            }`}
+                          >
+                            <div
+                              className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl ${
+                                msg.senderRole === 'investor'
+                                  ? 'bg-primary text-primary-foreground rounded-br-none'
+                                  : 'bg-muted rounded-bl-none'
+                              }`}
+                            >
+                              <p className="text-sm">{msg.content}</p>
+                              <p className={`text-xs mt-1 ${
+                                msg.senderRole === 'investor'
+                                  ? 'opacity-70'
+                                  : 'text-muted-foreground'
+                              }`}>
+                                {new Date(msg.createdAt).toLocaleTimeString([], {
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </p>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </CardContent>
+
+                    {/* Message Input */}
+                    <div className="border-t p-4 bg-muted/20 space-y-2">
+                      <div className="flex space-x-2">
+                        <Textarea
+                          placeholder="Say something..."
+                          value={messageInput}
+                          onChange={(e) => setMessageInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault()
+                              handleSendMessageInConversation()
+                            }
+                          }}
+                          className="min-h-[44px] max-h-[120px] resize-none"
+                        />
+                        <Button
+                          onClick={handleSendMessageInConversation}
+                          disabled={isSendingInConversation || !messageInput.trim()}
+                          className="self-end"
+                          size="sm"
+                        >
+                          {isSendingInConversation ? '...' : 'Send'}
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Press Shift + Enter for new line
+                      </p>
+                    </div>
+                  </Card>
+                ) : (
+                  <Card className="md:col-span-3 flex items-center justify-center border-l bg-gradient-to-br from-muted/30 to-muted/10">
+                    <CardContent className="text-center">
+                      <MessageSquare className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-40" />
+                      <h3 className="text-lg font-semibold mb-2">Select a conversation</h3>
+                      <p className="text-muted-foreground mb-4 max-w-xs">
+                        Choose a conversation from your inbox to start chatting
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </div>
+          )}
           </div>
         </main>
       </div>
