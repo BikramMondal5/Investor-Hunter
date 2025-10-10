@@ -1,8 +1,8 @@
 "use client"
 import { Textarea } from "@/components/ui/textarea"
-import { useState, useEffect } from "react"
+import { useState, useEffect, ChangeEvent, FormEvent} from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Card, CardContent, CardTitle, CardHeader } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider"
 import { useRouter } from "next/navigation"
 import { LogOut } from "lucide-react"
+import { AvatarImage } from "@/components/ui/avatar"
+import {User, Settings} from "lucide-react"
 import {
   Search,
   Filter,
@@ -31,6 +33,14 @@ import {
   DialogTitle,
   DialogDescription
 } from "@/components/ui/dialog"
+
+interface Profile {
+  firstName: string;
+  lastName: string;
+  email: string;
+  company: string;
+  profilePhoto?: string;
+}
 
 interface StartupPitch {
   _id: string;
@@ -63,6 +73,11 @@ export default function InvestorPortal() {
   const [aiScoreRange, setAiScoreRange] = useState([7])
   const [videoModalOpen, setVideoModalOpen] = useState(false)
   const [currentStartup, setCurrentStartup] = useState<StartupPitch | null>(null)
+  const [profile, setProfile] = useState<Profile | null>(null)
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true)
+  const [editedProfile, setEditedProfile] = useState<Profile | null>(null)
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false)
+  const [updateSuccessDialogOpen, setUpdateSuccessDialogOpen] = useState(false)
   const router = useRouter()
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
 
@@ -115,6 +130,25 @@ const handleMessage = (startup: StartupPitch) => {
       loadSavedPitches()
     }
   }, [activeTab])
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await fetch('/api/profile')
+        if (res.ok) {
+          const data = await res.json()
+          setProfile(data.profile)
+          setEditedProfile(data.profile)
+        }
+      } catch (error) {
+        console.error('Failed to fetch profile:', error)
+      } finally {
+        setIsLoadingProfile(false)
+      }
+    }
+
+    fetchProfile()
+  }, [])
 
   useEffect(() => {
     const loadSavedPitches = async () => {
@@ -248,6 +282,94 @@ const handleMessage = (startup: StartupPitch) => {
     }
   }
 
+  const handlePhotoUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsUploadingPhoto(true)
+    
+    try {
+      const formData = new FormData()
+      formData.append('photo', file)
+
+      const res = await fetch('/api/upload-photo', {
+        method: 'POST',
+        body: formData
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        if (data.profile) {
+          setProfile(prev => prev ? { ...prev, profilePhoto: data.profile.profilePhoto } : data.profile)
+          setEditedProfile(prev => prev ? { ...prev, profilePhoto: data.profile.profilePhoto } : data.profile)
+        }
+      } else {
+        console.error('Failed to upload photo:', await res.text())
+        alert('Failed to upload photo')
+      }
+    } catch (error) {
+      console.error('Failed to upload photo:', error)
+      alert('Failed to upload photo')
+    } finally {
+      setIsUploadingPhoto(false)
+      e.target.value = ''
+    }
+  }
+
+  const handlePhotoRemove = async () => {
+    setIsUploadingPhoto(true)
+    
+    try {
+      const res = await fetch('/api/remove-photo', {
+        method: 'POST',
+      })
+
+      if (res.ok) {
+        setProfile(prev => prev ? { ...prev, profilePhoto: undefined } : null)
+        setEditedProfile(prev => prev ? { ...prev, profilePhoto: undefined } : null)
+      } else {
+        console.error('Failed to remove photo:', await res.text())
+        alert('Failed to remove photo')
+      }
+    } catch (error) {
+      console.error('Failed to remove photo:', error)
+      alert('Failed to remove photo')
+    } finally {
+      setIsUploadingPhoto(false)
+    }
+  }
+
+  const handleProfileUpdate = async (e: FormEvent) => {
+    e.preventDefault()
+    if (!editedProfile) return
+    
+    try {
+      const res = await fetch('/api/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: editedProfile.firstName,
+          lastName: editedProfile.lastName,
+          email: editedProfile.email,
+          company: editedProfile.company
+        })
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        setProfile(data.profile)
+        setEditedProfile(data.profile)
+        setUpdateSuccessDialogOpen(true)
+      } else {
+        alert('Failed to update profile')
+      }
+    } catch (error) {
+      console.error('Failed to update profile:', error)
+      alert('Failed to update profile')
+    }
+  }
+
+
   const handleSendMessage = async () => {
     if (!selectedStartup || !messageContent.trim()) return
 
@@ -355,9 +477,22 @@ const handleMessage = (startup: StartupPitch) => {
             </div>
           </div>
 
-          <Avatar>
-            <AvatarFallback>VC</AvatarFallback>
-          </Avatar>
+          <div className="flex items-center space-x-4">
+            {profile && (
+              <span className="text-sm font-medium hidden md:inline-block">
+                {profile.firstName} {profile.lastName}
+              </span>
+            )}
+            <Avatar key={profile?.profilePhoto || 'fallback-header'}>
+              {profile?.profilePhoto ? (
+                <AvatarImage src={profile.profilePhoto} />
+              ) : (
+                <AvatarFallback className="bg-muted">
+                  <User className="h-5 w-5 text-muted-foreground" />
+                </AvatarFallback>
+              )}
+            </Avatar>
+</div>
         </div>
       </header>
 
@@ -388,6 +523,14 @@ const handleMessage = (startup: StartupPitch) => {
             >
               <MessageSquare className="mr-2 h-4 w-4" />
               Messaging
+            </Button>
+            <Button
+              variant={activeTab === "settings" ? "default" : "ghost"}
+              className="w-full justify-start"
+              onClick={() => setActiveTab("settings")}
+            >
+              <Settings className="mr-2 h-4 w-4" />
+              Settings
             </Button>
             <div className="pt-6 mt-4 border-t">
               <Button 
@@ -927,6 +1070,121 @@ const handleMessage = (startup: StartupPitch) => {
             </div>
           )}
           </div>
+          {activeTab === "settings" && (
+          <div className="space-y-6 pl-4 md:pl-6">
+            <div>
+              <h2 className="text-2xl font-bold">Account Settings</h2>
+              <p className="text-muted-foreground">Manage your account preferences</p>
+            </div>
+
+            {isLoadingProfile ? (
+              <div className="text-center py-8">Loading profile...</div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="col-span-1">
+                  <Card className="shadow-sm">
+                    <CardHeader>
+                      <CardTitle>Profile</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex flex-col items-center space-y-3">
+                        <Avatar className="h-20 w-20" key={profile?.profilePhoto || 'fallback-settings'}>
+                          {profile?.profilePhoto ? (
+                            <AvatarImage src={profile.profilePhoto} />
+                          ) : (
+                            <AvatarFallback className="bg-muted">
+                              <User className="h-10 w-10 text-muted-foreground" />
+                            </AvatarFallback>
+                          )}
+                        </Avatar>
+                        <input
+                          type="file"
+                          id="photoUpload"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handlePhotoUpload}
+                        />
+                        <div className="flex gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => document.getElementById('photoUpload')?.click()}
+                            disabled={isUploadingPhoto}
+                          >
+                            {isUploadingPhoto ? 'Uploading...' : 'Change Photo'}
+                          </Button>
+                          {profile?.profilePhoto && (
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={handlePhotoRemove}
+                              disabled={isUploadingPhoto}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              Remove
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <div className="col-span-1 md:col-span-2">
+                  <Card className="shadow-sm">
+                    <CardHeader>
+                      <CardTitle>Personal Information</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <form className="space-y-4" onSubmit={handleProfileUpdate}>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium" htmlFor="firstName">First Name</label>
+                            <Input 
+                              type="text" 
+                              id="firstName"
+                              value={editedProfile?.firstName || ''}
+                              onChange={(e) => setEditedProfile(prev => prev ? ({ ...prev, firstName: e.target.value }) : null)}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium" htmlFor="lastName">Last Name</label>
+                            <Input 
+                              type="text" 
+                              id="lastName"
+                              value={editedProfile?.lastName || ''}
+                              onChange={(e) => setEditedProfile(prev => prev ? ({ ...prev, lastName: e.target.value }) : null)}
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium" htmlFor="email">Email</label>
+                          <Input 
+                            type="email" 
+                            id="email"
+                            value={editedProfile?.email || ''}
+                            onChange={(e) => setEditedProfile(prev => prev ? ({ ...prev, email: e.target.value }) : null)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium" htmlFor="company">Company</label>
+                          <Input 
+                            type="text" 
+                            id="company"
+                            value={editedProfile?.company || ''}
+                            onChange={(e) => setEditedProfile(prev => prev ? ({ ...prev, company: e.target.value }) : null)}
+                          />
+                        </div>
+                        <Button type="submit" className="w-full md:w-auto">Save Changes</Button>
+                      </form>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         </main>
       </div>
 
@@ -1036,6 +1294,22 @@ const handleMessage = (startup: StartupPitch) => {
               {isSendingMessage ? 'Sending...' : 'Send Message'}
             </Button>
           </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+    <Dialog open={updateSuccessDialogOpen} onOpenChange={setUpdateSuccessDialogOpen}>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader className="items-center text-center">
+          <CheckCircle className="h-16 w-16 text-green-500 mb-4" />
+          <DialogTitle className="text-2xl font-bold">Profile Updated!</DialogTitle>
+          <DialogDescription className="text-muted-foreground">
+            Your changes have been saved successfully.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="pt-4 flex justify-center">
+          <Button onClick={() => setUpdateSuccessDialogOpen(false)}>
+            Close
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
