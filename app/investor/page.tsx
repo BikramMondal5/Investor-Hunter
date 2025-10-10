@@ -362,6 +362,40 @@ const handleMessage = (startup: StartupPitch) => {
     setFiltersApplied(false)
     setFilteredStartups(startups)
   }
+
+  const handlePhotoUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsUploadingPhoto(true)
+    
+    try {
+      const formData = new FormData()
+      formData.append('photo', file)
+
+      const res = await fetch('/api/upload-photo', {
+        method: 'POST',
+        body: formData
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        if (data.profile) {
+          setProfile(prev => prev ? { ...prev, profilePhoto: data.profile.profilePhoto } : data.profile)
+          setEditedProfile(prev => prev ? { ...prev, profilePhoto: data.profile.profilePhoto } : data.profile)
+        }
+      } else {
+        console.error('Failed to upload photo:', await res.text())
+        alert('Failed to upload photo')
+      }
+    } catch (error) {
+      console.error('Failed to upload photo:', error)
+      alert('Failed to upload photo')
+    } finally {
+      setIsUploadingPhoto(false)
+      e.target.value = ''
+    }
+  }
   const handlePhotoRemove = async () => {
     setIsUploadingPhoto(true)
     
