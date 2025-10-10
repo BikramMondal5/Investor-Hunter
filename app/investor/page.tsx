@@ -60,6 +60,11 @@ interface StartupPitch {
 
 export default function InvestorPortal() {
   const [savedPitchDetails, setSavedPitchDetails] = useState<StartupPitch[]>([])
+  const [searchQuery, setSearchQuery] = useState("")
+  const [selectedIndustry, setSelectedIndustry] = useState("all")
+  const [selectedLocation, setSelectedLocation] = useState("")
+  const [selectedStage, setSelectedStage] = useState("all")
+  const [filteredStartups, setFilteredStartups] = useState<StartupPitch[]>([])
   const [conversations, setConversations] = useState<any[]>([])
   const [isLoadingConversations, setIsLoadingConversations] = useState(false)
   const [selectedConversation, setSelectedConversation] = useState<any | null>(null)
@@ -75,6 +80,7 @@ export default function InvestorPortal() {
   const [currentStartup, setCurrentStartup] = useState<StartupPitch | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [isLoadingProfile, setIsLoadingProfile] = useState(true)
+  const [filtersApplied, setFiltersApplied] = useState(false)
   const [editedProfile, setEditedProfile] = useState<Profile | null>(null)
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false)
   const [updateSuccessDialogOpen, setUpdateSuccessDialogOpen] = useState(false)
@@ -106,6 +112,30 @@ const handleMessage = (startup: StartupPitch) => {
       fetchConversations()
     }
   }, [activeTab])
+
+  useEffect(() => {
+    if (!filtersApplied) {
+      setFilteredStartups(startups)
+    }
+  }, [startups, filtersApplied])
+
+  useEffect(() => {
+    if (!filtersApplied) {
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase()
+        const filtered = startups.filter(startup => 
+          startup.pitchData?.startupName?.toLowerCase().includes(query) ||
+          startup.pitchData?.oneLiner?.toLowerCase().includes(query) ||
+          startup.pitchData?.industry?.toLowerCase().includes(query) ||
+          startup.personalInfo?.fullName?.toLowerCase().includes(query)
+        )
+        setFilteredStartups(filtered)
+      } else {
+        setFilteredStartups(startups)
+      }
+    }
+  }, [searchQuery, startups, filtersApplied])
+
 
   useEffect(() => {
     if (activeTab === 'discover') {
@@ -282,40 +312,56 @@ const handleMessage = (startup: StartupPitch) => {
     }
   }
 
-  const handlePhotoUpload = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+  const handleApplyFilters = () => {
+    let filtered = [...startups]
 
-    setIsUploadingPhoto(true)
-    
-    try {
-      const formData = new FormData()
-      formData.append('photo', file)
-
-      const res = await fetch('/api/upload-photo', {
-        method: 'POST',
-        body: formData
-      })
-
-      if (res.ok) {
-        const data = await res.json()
-        if (data.profile) {
-          setProfile(prev => prev ? { ...prev, profilePhoto: data.profile.profilePhoto } : data.profile)
-          setEditedProfile(prev => prev ? { ...prev, profilePhoto: data.profile.profilePhoto } : data.profile)
-        }
-      } else {
-        console.error('Failed to upload photo:', await res.text())
-        alert('Failed to upload photo')
-      }
-    } catch (error) {
-      console.error('Failed to upload photo:', error)
-      alert('Failed to upload photo')
-    } finally {
-      setIsUploadingPhoto(false)
-      e.target.value = ''
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase()
+      filtered = filtered.filter(startup => 
+        startup.pitchData?.startupName?.toLowerCase().includes(query) ||
+        startup.pitchData?.oneLiner?.toLowerCase().includes(query) ||
+        startup.pitchData?.industry?.toLowerCase().includes(query) ||
+        startup.personalInfo?.fullName?.toLowerCase().includes(query)
+      )
     }
+
+    // Apply industry filter
+    if (selectedIndustry !== "all") {
+      filtered = filtered.filter(startup => 
+        startup.pitchData?.industry?.toLowerCase() === selectedIndustry.toLowerCase()
+      )
+    }
+
+    // Apply location filter
+    if (selectedLocation.trim()) {
+      filtered = filtered.filter(startup => 
+        startup.pitchData?.location?.toLowerCase().includes(selectedLocation.toLowerCase())
+      )
+    }
+
+    // Apply stage filter
+    if (selectedStage !== "all") {
+      filtered = filtered.filter(startup => 
+        startup.pitchData?.stage?.toLowerCase() === selectedStage.toLowerCase()
+      )
+    }
+
+    setFilteredStartups(filtered)
+    setFiltersApplied(true)
+    console.log('Filters applied:', { selectedIndustry, selectedLocation, selectedStage, aiScoreRange })
   }
 
+  // ADD this new function:
+  const handleClearFilters = () => {
+    setSearchQuery("")
+    setSelectedIndustry("all")
+    setSelectedLocation("")
+    setSelectedStage("all")
+    setAiScoreRange([7])
+    setFiltersApplied(false)
+    setFilteredStartups(startups)
+  }
   const handlePhotoRemove = async () => {
     setIsUploadingPhoto(true)
     
@@ -457,7 +503,7 @@ const handleMessage = (startup: StartupPitch) => {
     }
   }
 
-  const displayedStartups = showAll ? startups : startups.slice(0, 3)
+  const displayedStartups = showAll ? filteredStartups : filteredStartups.slice(0, 3)
 
   return (
     <div className="min-h-screen bg-background">
@@ -473,10 +519,14 @@ const handleMessage = (startup: StartupPitch) => {
           <div className="flex items-center space-x-4 flex-1 max-w-md mx-8">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search startups, industries, or founders..." className="pl-10" />
+              <Input 
+                placeholder="Search startups, industries, or founders..." 
+                className="pl-10"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
           </div>
-
           <div className="flex items-center space-x-4">
             {profile && (
               <span className="text-sm font-medium hidden md:inline-block">
@@ -492,7 +542,7 @@ const handleMessage = (startup: StartupPitch) => {
                 </AvatarFallback>
               )}
             </Avatar>
-</div>
+          </div>
         </div>
       </header>
 
@@ -570,7 +620,7 @@ const handleMessage = (startup: StartupPitch) => {
                     <div className="grid md:grid-cols-5 gap-4 items-end">
                       <div className="space-y-2">
                         <label className="text-sm font-medium">Industry</label>
-                        <Select>
+                        <Select value={selectedIndustry} onValueChange={setSelectedIndustry}>
                           <SelectTrigger>
                             <SelectValue placeholder="All Industries" />
                           </SelectTrigger>
@@ -580,18 +630,25 @@ const handleMessage = (startup: StartupPitch) => {
                             <SelectItem value="fintech">Fintech</SelectItem>
                             <SelectItem value="healthtech">HealthTech</SelectItem>
                             <SelectItem value="climate">Climate Tech</SelectItem>
+                            <SelectItem value="edtech">EdTech</SelectItem>
+                            <SelectItem value="ecommerce">E-commerce</SelectItem>
+                            <SelectItem value="ai/ml">AI/ML</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
 
                       <div className="space-y-2">
                         <label className="text-sm font-medium">Location</label>
-                        <Input placeholder="Any location" />
+                        <Input 
+                          placeholder="Any location" 
+                          value={selectedLocation}
+                          onChange={(e) => setSelectedLocation(e.target.value)}
+                        />
                       </div>
 
                       <div className="space-y-2">
                         <label className="text-sm font-medium">Stage</label>
-                        <Select>
+                        <Select value={selectedStage} onValueChange={setSelectedStage}>
                           <SelectTrigger>
                             <SelectValue placeholder="All Stages" />
                           </SelectTrigger>
@@ -600,6 +657,8 @@ const handleMessage = (startup: StartupPitch) => {
                             <SelectItem value="idea">Idea</SelectItem>
                             <SelectItem value="mvp">MVP</SelectItem>
                             <SelectItem value="growth">Growth</SelectItem>
+                            <SelectItem value="early">Early Stage</SelectItem>
+                            <SelectItem value="series-a">Series A</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -616,7 +675,7 @@ const handleMessage = (startup: StartupPitch) => {
                         />
                       </div>
 
-                      <Button>
+                      <Button onClick={handleApplyFilters}>
                         <Filter className="mr-2 h-4 w-4" />
                         Apply Filters
                       </Button>
@@ -628,7 +687,10 @@ const handleMessage = (startup: StartupPitch) => {
                 <div className="flex items-center justify-between">
                   <div>
                     <h2 className="text-2xl font-bold">Discover Startups</h2>
-                    <p className="text-muted-foreground">Found {startups.length} startups</p>
+                    <p className="text-muted-foreground">
+                      Found {filteredStartups.length} startup{filteredStartups.length !== 1 ? 's' : ''}
+                      {searchQuery && ` matching "${searchQuery}"`}
+                    </p>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Button
@@ -650,17 +712,30 @@ const handleMessage = (startup: StartupPitch) => {
 
                 {/* Loading State */}
                 {isLoadingStartups ? (
-                  <div className="text-center py-12">
-                    <p className="text-muted-foreground">Loading startups...</p>
-                  </div>
-                ) : startups.length === 0 ? (
-                  <Card>
-                    <CardContent className="p-12 text-center">
-                      <p className="text-muted-foreground">No approved startups available yet.</p>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <>
+                    <div className="text-center py-12">
+                      <p className="text-muted-foreground">Loading startups...</p>
+                    </div>
+                  ) : filteredStartups.length === 0 ? (
+                    <Card>
+                      <CardContent className="p-12 text-center">
+                        <p className="text-muted-foreground">
+                          {startups.length === 0 
+                            ? "No approved startups available yet."
+                            : "No startups match your search criteria. Try adjusting your filters."}
+                        </p>
+                        {startups.length > 0 && (
+                          <Button 
+                            variant="outline" 
+                            className="mt-4"
+                            onClick={handleClearFilters}
+                          >
+                            Clear All Filters
+                          </Button>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <>
                     {/* Startup Cards */}
                     <div className={`grid gap-6 ${viewMode === "grid" ? "md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"}`}>
                       {displayedStartups.map((startup) => {
@@ -755,14 +830,14 @@ const handleMessage = (startup: StartupPitch) => {
                     </div>
 
                     {/* Show More Button */}
-                    {startups.length > 3 && (
+                     {filteredStartups.length > 3 && (
                       <div className="flex justify-center pt-4">
                         <Button 
                           variant="outline" 
                           onClick={() => setShowAll(!showAll)}
                           className="min-w-[200px]"
                         >
-                          {showAll ? 'Show Less' : `Show More (${startups.length - 3} more)`}
+                          {showAll ? 'Show Less' : `Show More (${filteredStartups.length - 3} more)`}
                         </Button>
                       </div>
                     )}
