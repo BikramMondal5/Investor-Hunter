@@ -28,78 +28,103 @@ export async function GET(request: NextRequest) {
 
     await connectDB()
 
+     if (type === 'unread-count') {
+    const unreadConversations = await Message.aggregate([
+      {
+        $match: {
+          recipientId: new mongoose.Types.ObjectId(sessionData.userId),
+          isRead: false
+        }
+      },
+      {
+        $group: {
+          _id: '$conversationId'
+        }
+      },
+      {
+        $count: 'total'
+      }
+    ])
+
+    const unreadCount = unreadConversations.length > 0 ? unreadConversations[0].total : 0
+
+    return NextResponse.json({
+      success: true,
+      unreadCount
+    }, { status: 200 })
+  }
+
     if (type === 'list') {
-      // Get unique conversations for this user
-      const messages = await Message.aggregate([
-        {
-          $match: {
-            $or: [
-              { senderId: new mongoose.Types.ObjectId(sessionData.userId) },
-              { recipientId: new mongoose.Types.ObjectId(sessionData.userId) }
-            ]
-          }
-        },
-        { $sort: { createdAt: -1 } },
-        {
-          $group: {
-            _id: '$conversationId',
-            lastMessage: { $first: '$content' },
-            lastMessageTime: { $first: '$createdAt' },
-            senderId: { $first: '$senderId' },
-            recipientId: { $first: '$recipientId' },
-            senderRole: { $first: '$senderRole' },
-            pitchId: { $first: '$pitchId' },
-            unreadCount: {
-              $sum: {
-                $cond: [
-                  {
-                    $and: [
-                      { $eq: ['$recipientId', new mongoose.Types.ObjectId(sessionData.userId)] },
-                      { $eq: ['$isRead', false] }
-                    ]
-                  },
-                  1,
-                  0
-                ]
-              }
+    const messages = await Message.aggregate([
+      {
+        $match: {
+          $or: [
+            { senderId: new mongoose.Types.ObjectId(sessionData.userId) },
+            { recipientId: new mongoose.Types.ObjectId(sessionData.userId) }
+          ]
+        }
+      },
+      { $sort: { createdAt: -1 } },
+      {
+        $group: {
+          _id: '$conversationId',
+          lastMessage: { $first: '$content' },
+          lastMessageTime: { $first: '$createdAt' },
+          senderId: { $first: '$senderId' },
+          recipientId: { $first: '$recipientId' },
+          senderRole: { $first: '$senderRole' },
+          pitchId: { $first: '$pitchId' },
+          unreadCount: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    { $eq: ['$recipientId', new mongoose.Types.ObjectId(sessionData.userId)] },
+                    { $eq: ['$isRead', false] }
+                  ]
+                },
+                1,
+                0
+              ]
             }
           }
-        },
-        { $sort: { lastMessageTime: -1 } }
-      ])
+        }
+      },
+      { $sort: { lastMessageTime: -1 } }
+    ])
 
-      // Populate sender/recipient details
-      const enrichedMessages = await Promise.all(
-        messages.map(async (msg) => {
-          const otherUserId = msg.senderId.toString() === sessionData.userId ? msg.recipientId : msg.senderId
-          const otherUser = await User.findById(otherUserId).select('firstName lastName email avatar')
-          const pitch = await VerificationRequest.findById(msg.pitchId).select('pitchData')
+    const enrichedMessages = await Promise.all(
+      messages.map(async (msg) => {
+        const otherUserId = msg.senderId.toString() === sessionData.userId ? msg.recipientId : msg.senderId
+        const otherUser = await User.findById(otherUserId).select('firstName lastName email avatar role company')
+        const pitch = await VerificationRequest.findById(msg.pitchId).select('pitchData')
 
-          return {
-            conversationId: msg._id,
-            otherUser: {
-              id: otherUserId,
-              name: otherUser?.firstName + ' ' + otherUser?.lastName || 'Unknown',
-              email: otherUser?.email,
-              avatar: otherUser?.avatar
-            },
-            pitch: {
-              id: msg.pitchId,
-              name: pitch?.pitchData?.startupName || 'Unnamed Pitch'
-            },
-            lastMessage: msg.lastMessage,
-            lastMessageTime: msg.lastMessageTime,
-            unreadCount: msg.unreadCount
-          }
-        })
-      )
+        return {
+          conversationId: msg._id,
+          otherUser: {
+            id: otherUserId,
+            name: otherUser?.firstName + ' ' + otherUser?.lastName || 'Unknown',
+            email: otherUser?.email,
+            avatar: otherUser?.avatar,
+            role: otherUser?.role,
+             ...(otherUser?.role === 'entrepreneur' && { company: otherUser?.company })
+          },
+          pitch: {
+            id: msg.pitchId,
+            name: pitch?.pitchData?.startupName || 'Unnamed Pitch'
+          },
+          lastMessage: msg.lastMessage,
+          lastMessageTime: msg.lastMessageTime,
+          unreadCount: msg.unreadCount
+        }
+      })
+    )
 
-      return NextResponse.json({
-        success: true,
-        conversations: enrichedMessages
-      }, { status: 200 })
-
-    } else if (type === 'detail') {
+    return NextResponse.json({
+      success: true,
+      conversations: enrichedMessages
+    }, { status: 200 })
+  } else if (type === 'detail') {
       // Get detailed conversation
       const conversationId = searchParams.get('conversationId')
       

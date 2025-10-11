@@ -37,7 +37,7 @@ interface Profile {
   firstName: string;
   lastName: string;
   email: string;
-  company: string;
+
   profilePhoto?: string;
   notifications: {
     investorInterest: boolean;
@@ -54,6 +54,14 @@ interface SidebarItem {
 }
 
 export default function Dashboard() {
+  const [unreadCount, setUnreadCount] = useState(0)
+  const [conversations, setConversations] = useState<any[]>([])
+  const [isLoadingConversations, setIsLoadingConversations] = useState(false)
+  const [selectedConversation, setSelectedConversation] = useState<any | null>(null)
+  const [conversationMessages, setConversationMessages] = useState<any[]>([])
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false)
+  const [messageInput, setMessageInput] = useState('')
+  const [isSendingInConversation, setIsSendingInConversation] = useState(false)
   const [approvedPitches, setApprovedPitches] = useState<any[]>([])
   const [isLoadingPitches, setIsLoadingPitches] = useState(true)
   const [hasPitches, setHasPitches] = useState(false)
@@ -111,6 +119,21 @@ export default function Dashboard() {
   const [editedProfile, setEditedProfile] = useState<Profile | null>(null)
 
   useEffect(() => {
+    if (activeTab === 'messages') {
+      fetchConversations()
+    }
+  }, [activeTab])
+
+  useEffect(() => {
+    if (session?.user) {
+      fetchUnreadCount()
+      // Poll every 30 seconds for new messages
+      const interval = setInterval(fetchUnreadCount, 30000)
+      return () => clearInterval(interval)
+    }
+  }, [session])
+
+  useEffect(() => {
     const fetchApprovedPitches = async () => {
       try {
         const res = await fetch('/api/my-pitches')
@@ -154,53 +177,6 @@ export default function Dashboard() {
       router.push('/');
     }
   }, [session, isSessionLoading, router])
-
-  const handleLike = (feedbackId: number) => {
-    setCommunityFeedback(prev => 
-      prev.map(feedback => 
-        feedback.id === feedbackId 
-          ? { ...feedback, likes: feedback.likes + 1 } 
-          : feedback
-      )
-    )
-  }
-
-  const handleReply = (feedbackId: number) => {
-    setReplyingTo(feedbackId)
-    setReplyText("")
-  }
-
-  const submitReply = () => {
-    if (!replyingTo || !replyText.trim()) return
-
-    setCommunityFeedback(prev => 
-      prev.map(feedback => 
-        feedback.id === replyingTo 
-          ? { 
-              ...feedback, 
-              replies: [
-                ...feedback.replies, 
-                {
-                  id: Date.now(),
-                  user: "You",
-                  avatar: "BM",
-                  comment: replyText,
-                  timestamp: "Just now"
-                }
-              ] 
-            } 
-          : feedback
-      )
-    )
-
-    setReplyingTo(null)
-    setReplyText("")
-  }
-
-  const cancelReply = () => {
-    setReplyingTo(null)
-    setReplyText("")
-  }
 
   // Add function to handle photo upload
   const handlePhotoUpload = async (e: ChangeEvent<HTMLInputElement>) => {
@@ -262,6 +238,90 @@ export default function Dashboard() {
     }
   }
 
+  const fetchConversations = async () => {
+    setIsLoadingConversations(true)
+    try {
+      const res = await fetch('/api/messages?type=list')
+      if (res.ok) {
+        const data = await res.json()
+        setConversations(data.conversations || [])
+      }
+    } catch (error) {
+      console.error('Failed to fetch conversations:', error)
+    } finally {
+      setIsLoadingConversations(false)
+    }
+  }
+
+ const fetchConversationMessages = async (conversationId: string) => {
+    try {
+      const res = await fetch(`/api/messages?type=detail&conversationId=${conversationId}`)
+      if (res.ok) {
+        const data = await res.json()
+        setConversationMessages(data.messages || [])
+        
+        // Refresh counts in background
+        setTimeout(() => {
+          fetchUnreadCount()
+          fetchConversations()
+        }, 100)
+      }
+    } catch (error) {
+      console.error('Failed to fetch messages:', error)
+    }
+  }
+  // Add this helper function:
+  const fetchUnreadCount = async () => {
+    try {
+      const res = await fetch('/api/messages?type=unread-count')
+      if (res.ok) {
+        const data = await res.json()
+        setUnreadCount(data.unreadCount || 0)
+      }
+    } catch (error) {
+      console.error('Failed to fetch unread count:', error)
+    }
+  }
+  const handleSendMessageInConversation = async () => {
+    if (!messageInput.trim() || !selectedConversation) return
+
+    setIsSendingInConversation(true)
+    const tempMessage = messageInput
+    
+    try {
+      const res = await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          recipientId: selectedConversation.otherUser.id,
+          pitchId: selectedConversation.pitch.id,
+          content: messageInput,
+          senderRole: 'entrepreneur'
+        })
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        
+        // Optimistically add the message to the UI immediately
+        setConversationMessages(prev => [...prev, data.message])
+        setMessageInput('')
+        
+        // Refresh in the background without blocking UI
+        setTimeout(() => {
+          fetchUnreadCount()
+          fetchConversations()
+        }, 100)
+      }
+    } catch (error) {
+      console.error('Failed to send message:', error)
+      // Restore the message on error
+      setMessageInput(tempMessage)
+    } finally {
+      setIsSendingInConversation(false)
+    }
+  }
+
   // Add function to handle profile updates
   const handleProfileUpdate = async (e: FormEvent) => {
     e.preventDefault()
@@ -275,7 +335,6 @@ export default function Dashboard() {
           firstName: editedProfile.firstName,
           lastName: editedProfile.lastName,
           email: editedProfile.email,
-          company: editedProfile.company
         })
       })
 
@@ -366,23 +425,29 @@ export default function Dashboard() {
         {/* Sidebar */}
         <aside className="w-64 border-r bg-muted/30 min-h-[calc(100vh-4rem)]">
           <nav className="p-4 space-y-2">
-            {sidebarItems.map((item) => (
-              <Button
-                key={item.id}
-                variant={activeTab === item.id ? "default" : "ghost"}
-                className="w-full justify-start"
-                onClick={() => {
-                  if (item.link) {
-                    router.push(item.link);
-                  } else {
-                    setActiveTab(item.id);
-                  }
-                }}
-              >
-                <item.icon className="mr-2 h-4 w-4" />
-                {item.label}
-              </Button>
-            ))}
+              {sidebarItems.map((item) => (
+                <Button
+                  key={item.id}
+                  variant={activeTab === item.id ? "default" : "ghost"}
+                  className="w-full justify-start relative"
+                  onClick={() => {
+                    if (item.link) {
+                      router.push(item.link);
+                    } else {
+                      setActiveTab(item.id);
+                    }
+                  }}
+                >
+                  <item.icon className="mr-2 h-4 w-4" />
+                  {item.label}
+                  {item.id === "messages" && unreadCount > 0 && (
+                    <span className="absolute right-2 top-1/2 -translate-y-1/2 bg-red-500 text-white text-xs font-bold rounded-full h-5 min-w-[20px] flex items-center justify-center px-1">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
+                </Button>
+              ))}
+            
             <div className="pt-6 mt-4 border-t">
               <Button 
                 variant="ghost" 
@@ -508,63 +573,6 @@ export default function Dashboard() {
                         <Progress value={85} className="h-1.5" />
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              {/* Recent Activity */}
-              <Card className="shadow-sm">
-                <CardHeader className="pb-3">
-                  <CardTitle>Recent Activity</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {[
-                      {
-                        type: "view",
-                        entity: "Sequoia Capital",
-                        time: "2 hours ago",
-                        message: "viewed your pitch",
-                        icon: Eye,
-                      },
-                      {
-                        type: "message",
-                        entity: "Accel Partners",
-                        time: "5 hours ago",
-                        message: "sent you a message",
-                        icon: MessageCircle,
-                      },
-                      {
-                        type: "feedback",
-                        entity: "Community Member",
-                        time: "1 day ago",
-                        message: "left feedback on your pitch",
-                        icon: ThumbsUp,
-                      },
-                      {
-                        type: "view",
-                        entity: "Andreessen Horowitz",
-                        time: "2 days ago",
-                        message: "viewed your pitch",
-                        icon: Eye,
-                      },
-                    ].map((activity, index) => (
-                      <div key={index} className="flex items-start space-x-3 py-2">
-                        <div className={`mt-0.5 rounded-full p-1.5 ${
-                          activity.type === "view" ? "bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:text-blue-500" :
-                          activity.type === "message" ? "bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-500" :
-                          "bg-amber-100 text-amber-600 dark:bg-amber-900/20 dark:text-amber-500"
-                        }`}>
-                          <activity.icon className="h-4 w-4" />
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-sm font-medium">
-                            {activity.entity} {activity.message}
-                          </p>
-                          <p className="text-xs text-muted-foreground">{activity.time}</p>
-                        </div>
-                      </div>
-                    ))}
                   </div>
                 </CardContent>
               </Card>
@@ -730,171 +738,9 @@ export default function Dashboard() {
                         </div>
                       </CardContent>
                     </Card>
-
-                    {/* Community Feedback */}
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center space-x-2">
-                          <MessageCircle className="h-5 w-5" />
-                          <span>Community Feedback</span>
-                        </CardTitle>
-                      </CardHeader>
-
-                      <CardContent className="space-y-4">
-                        {communityFeedback.map((feedback) => (
-                          <div key={feedback.id} className="flex flex-col space-y-2">
-                            <div className="flex space-x-3 p-4 rounded-lg bg-muted/30">
-                              <Avatar className="h-8 w-8">
-                                <AvatarFallback className="text-xs">
-                                  {feedback.avatar}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div className="flex-1 space-y-2">
-                                <div className="flex items-center justify-between">
-                                  <span className="font-medium text-sm">{feedback.user}</span>
-                                  <Badge
-                                    variant={
-                                      feedback.type === "positive" ? "default" : "secondary"
-                                    }
-                                    className="text-xs"
-                                  >
-                                    {feedback.type}
-                                  </Badge>
-                                </div>
-                                <p className="text-sm text-muted-foreground">
-                                  {feedback.comment}
-                                </p>
-                                <div className="flex items-center space-x-2">
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-6 px-2"
-                                    onClick={() => handleLike(feedback.id)}
-                                  >
-                                    <ThumbsUp className="h-3 w-3 mr-1" />
-                                    {feedback.likes}
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-6 px-2"
-                                    onClick={() => handleReply(feedback.id)}
-                                  >
-                                    <MessageCircle className="h-3 w-3 mr-1" />
-                                    Reply
-                                  </Button>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Replies section */}
-                            {feedback.replies && feedback.replies.length > 0 && (
-                              <div className="pl-11">
-                                {feedback.replies.map((reply) => (
-                                  <div
-                                    key={reply.id}
-                                    className="flex items-start space-x-3 p-3 rounded-lg bg-muted/20 mb-2"
-                                  >
-                                    <Avatar className="h-7 w-7">
-                                      <AvatarFallback className="text-xs">
-                                        {reply.avatar}
-                                      </AvatarFallback>
-                                    </Avatar>
-                                    <div className="flex-1">
-                                      <div className="flex items-center justify-between">
-                                        <span className="font-medium text-sm">
-                                          {reply.user}
-                                        </span>
-                                        <span className="text-xs text-muted-foreground">
-                                          {reply.timestamp}
-                                        </span>
-                                      </div>
-                                      <p className="text-sm text-muted-foreground mt-1">
-                                        {reply.comment}
-                                      </p>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-
-                            {/* Reply form */}
-                            {replyingTo === feedback.id && (
-                              <div className="pl-11 pt-1">
-                                <Textarea
-                                  value={replyText}
-                                  onChange={(e) => setReplyText(e.target.value)}
-                                  placeholder="Write your reply..."
-                                  className="resize-none min-h-[80px]"
-                                />
-                                <div className="flex space-x-2 mt-2">
-                                  <Button
-                                    onClick={submitReply}
-                                    className="flex-1"
-                                    disabled={!replyText.trim()}
-                                  >
-                                    Post Reply
-                                  </Button>
-                                  <Button
-                                    onClick={cancelReply}
-                                    variant="outline"
-                                    className="flex-1"
-                                  >
-                                    Cancel
-                                  </Button>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </CardContent>
-                    </Card>
                   </React.Fragment>
                 ))
               )}
-              {/* Investor Views */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Eye className="h-5 w-5" />
-                    <span>Investor Interest</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div className="text-center p-6 bg-muted/30 rounded-lg">
-                      <div className="text-3xl font-bold text-primary">47</div>
-                      <p className="text-sm text-muted-foreground">Total Views</p>
-                    </div>
-                    <div className="text-center p-6 bg-muted/30 rounded-lg">
-                      <div className="text-3xl font-bold text-green-600">8</div>
-                      <p className="text-sm text-muted-foreground">Interested Investors</p>
-                    </div>
-                  </div>
-
-                  <div className="mt-6 space-y-3">
-                    <h4 className="font-semibold">Recent Investor Activity</h4>
-                    {[
-                      { name: "Sequoia Capital", interest: "High", status: "Pending" },
-                      { name: "Andreessen Horowitz", interest: "Moderate", status: "Viewed" },
-                      { name: "Accel Partners", interest: "High", status: "Message Sent" },
-                    ].map((investor, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div>
-                          <p className="font-medium">{investor.name}</p>
-                          <p className="text-sm text-muted-foreground">Interest: {investor.interest}</p>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Badge variant={investor.status === "Message Sent" ? "default" : "secondary"}>
-                            {investor.status}
-                          </Badge>
-                          {investor.status === "Message Sent" && <Button size="sm">Reply</Button>}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
 
               {/* Call to Action */}
               <div className="flex space-x-4">
@@ -1023,84 +869,199 @@ export default function Dashboard() {
 
           {/* Messages Tab */}
           {activeTab === "messages" && (
-            <div className="space-y-4 max-w-5xl mx-auto">
-              <div className="mb-3 mt-0">
-                <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Investor Messages</h1>
-                <p className="text-muted-foreground">Communicate with interested investors</p>
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-2xl font-bold">Messages</h2>
+                <p className="text-muted-foreground">Connect with interested investors</p>
               </div>
 
-              {/* Messages List */}
-              <Card className="shadow-sm">
-                <CardHeader className="pb-3">
-                  <CardTitle>Inbox (5)</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {[
-                      {
-                        investor: "Sequoia Capital",
-                        avatar: "SC",
-                        message: "We'd like to schedule a call to discuss your pitch in more detail.",
-                        time: "2 hours ago",
-                        unread: true,
-                      },
-                      {
-                        investor: "Accel Partners",
-                        avatar: "AP",
-                        message: "Your AI-powered solution seems interesting. Can you share more information about your tech stack?",
-                        time: "5 hours ago",
-                        unread: true,
-                      },
-                      {
-                        investor: "Andreessen Horowitz",
-                        avatar: "AH",
-                        message: "We're interested in learning more about your customer acquisition strategy and current traction.",
-                        time: "Yesterday",
-                        unread: false,
-                      },
-                      {
-                        investor: "Y Combinator",
-                        avatar: "YC",
-                        message: "Thanks for your detailed response. Let's set up a meeting next week.",
-                        time: "2 days ago",
-                        unread: false,
-                      },
-                      {
-                        investor: "Kleiner Perkins",
-                        avatar: "KP",
-                        message: "Your approach to solving this problem is unique. We'd like to discuss potential market sizes.",
-                        time: "3 days ago",
-                        unread: false,
-                      },
-                    ].map((message, index) => (
-                      <div 
-                        key={index} 
-                        className={`p-3 rounded-lg flex items-start space-x-3 cursor-pointer transition-colors ${
-                          message.unread 
-                            ? "bg-blue-50 dark:bg-blue-900/10 hover:bg-blue-100 dark:hover:bg-blue-900/20" 
-                            : "hover:bg-muted/50"
-                        }`}
-                      >
-                        <Avatar className="h-10 w-10 mt-0.5">
-                          <AvatarFallback className="text-xs">{message.avatar}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <h4 className={`font-medium text-sm ${message.unread ? "text-blue-700 dark:text-blue-400" : ""}`}>
-                              {message.investor}
-                              {message.unread && <span className="ml-2 h-2 w-2 bg-blue-600 rounded-full inline-block"></span>}
-                            </h4>
-                            <span className="text-xs text-muted-foreground">{message.time}</span>
-                          </div>
-                          <p className={`text-sm mt-1 ${message.unread ? "font-medium" : "text-muted-foreground"}`}>
-                            {message.message}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 h-[650px]">
+                {/* Conversations List - Left Sidebar */}
+                <Card className="md:col-span-1 overflow-hidden flex flex-col">
+                  <CardHeader className="pb-4 border-b">
+                    <h3 className="font-semibold text-lg">Inbox</h3>
+                  </CardHeader>
+                  <CardContent className="flex-1 overflow-y-auto p-0">
+                    {isLoadingConversations ? (
+                      <div className="p-4 text-center text-sm text-muted-foreground">Loading...</div>
+                    ) : conversations.length === 0 ? (
+                      <div className="p-6 text-center space-y-3">
+                        <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto opacity-50" />
+                        <div>
+                          <h4 className="text-sm font-semibold mb-1">No conversations yet</h4>
+                          <p className="text-xs text-muted-foreground">
+                            Wait for investors to reach out
                           </p>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+                    ) : (
+                      <div className="divide-y">
+                        {conversations.map((conv) => (
+                          <button
+                            key={conv.conversationId}
+                            onClick={() => {
+                              setSelectedConversation(conv)
+                              fetchConversationMessages(conv.conversationId)
+                            }}
+                            className={`w-full text-left p-4 hover:bg-muted/50 transition-colors border-l-4 ${
+                              selectedConversation?.conversationId === conv.conversationId
+                                ? 'border-primary bg-muted/30'
+                                : 'border-transparent hover:border-muted'
+                            }`}
+                          >
+                            <div className="space-y-1">
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2">
+                                    <p className="font-semibold text-sm">
+                                      {conv.otherUser.name}
+                                    </p>
+                                    {conv.unreadCount > 0 && (
+                                      <span className="h-2 w-2 bg-blue-600 rounded-full"></span>
+                                    )}
+                                  </div>
+                                  {/* Don't show company for investors - they are individuals */}
+                                  {conv.otherUser.role === 'investor' && (
+                                    <p className="text-xs text-muted-foreground">
+                                      Investor
+                                    </p>
+                                  )}
+                                </div>
+                                {conv.unreadCount > 0 && (
+                                  <Badge className="h-5 px-2 text-xs">
+                                    {conv.unreadCount}
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-xs text-muted-foreground truncate line-clamp-2 mt-1">
+                                {conv.lastMessage}
+                              </p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Messages Detail Area - Right Side */}
+                {selectedConversation ? (
+                  <Card className="md:col-span-3 overflow-hidden flex flex-col border-l">
+                    {/* Header */}
+                    <CardHeader className="pb-4 border-b bg-muted/30">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-semibold text-base">
+                            {selectedConversation.otherUser.name}
+                          </h3>
+                          {/* Show "Investor" label instead of company */}
+                          {selectedConversation.otherUser.role === 'investor' && (
+                            <p className="text-xs text-muted-foreground">
+                              Investor
+                            </p>
+                          )}
+                        </div>
+                        <Avatar className="h-10 w-10">
+                          <AvatarFallback className="text-xs">
+                            {selectedConversation.otherUser.name
+                              ?.split(' ')
+                              .map((n: string) => n[0])
+                              .join('')}
+                          </AvatarFallback>
+                        </Avatar>
+                      </div>
+                    </CardHeader>
+
+                    {/* Messages Container */}
+                    <CardContent className="flex-1 overflow-y-auto p-6 space-y-4 bg-background">
+                      {isLoadingMessages ? (
+                        <div className="text-center text-sm text-muted-foreground">
+                          Loading messages...
+                        </div>
+                      ) : conversationMessages.length === 0 ? (
+                        <div className="h-full flex items-center justify-center">
+                          <div className="text-center">
+                            <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-3 opacity-50" />
+                            <p className="text-sm text-muted-foreground">
+                              No messages yet. Start the conversation!
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        conversationMessages.map((msg) => (
+                          <div
+                            key={msg._id}
+                            className={`flex ${
+                              msg.senderRole === 'entrepreneur'
+                                ? 'justify-end'
+                                : 'justify-start'
+                            }`}
+                          >
+                            <div
+                              className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl ${
+                                msg.senderRole === 'entrepreneur'
+                                  ? 'bg-primary text-primary-foreground rounded-br-none'
+                                  : 'bg-muted rounded-bl-none'
+                              }`}
+                            >
+                              <p className="text-sm">{msg.content}</p>
+                              <p className={`text-xs mt-1 ${
+                                msg.senderRole === 'entrepreneur'
+                                  ? 'opacity-70'
+                                  : 'text-muted-foreground'
+                              }`}>
+                                {new Date(msg.createdAt).toLocaleTimeString([], {
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </p>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </CardContent>
+
+                    {/* Message Input */}
+                    <div className="border-t p-4 bg-muted/20 space-y-2">
+                      <div className="flex space-x-2">
+                        <Textarea
+                          placeholder="Type your reply..."
+                          value={messageInput}
+                          onChange={(e) => setMessageInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault()
+                              handleSendMessageInConversation()
+                            }
+                          }}
+                          className="min-h-[44px] max-h-[120px] resize-none"
+                        />
+                        <Button
+                          onClick={handleSendMessageInConversation}
+                          disabled={isSendingInConversation || !messageInput.trim()}
+                          className="self-end"
+                          size="sm"
+                        >
+                          {isSendingInConversation ? '...' : 'Send'}
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Press Shift + Enter for new line
+                      </p>
+                    </div>
+                  </Card>
+                ) : (
+                  <Card className="md:col-span-3 flex items-center justify-center border-l bg-gradient-to-br from-muted/30 to-muted/10">
+                    <CardContent className="text-center">
+                      <MessageSquare className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-40" />
+                      <h3 className="text-lg font-semibold mb-2">Select a conversation</h3>
+                      <p className="text-muted-foreground mb-4 max-w-xs">
+                        Choose a conversation from your inbox to start chatting
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
             </div>
           )}
 
@@ -1199,14 +1160,6 @@ export default function Dashboard() {
                                 className="w-full p-2 rounded-md border" 
                                 value={editedProfile?.email || ''}
                                 onChange={(e) => setEditedProfile(prev => prev ? ({ ...prev, email: e.target.value }) : null)}
-                              />
-
-                              <input 
-                                type="text" 
-                                id="company" 
-                                className="w-full p-2 rounded-md border" 
-                                value={editedProfile?.company || ''}
-                                onChange={(e) => setEditedProfile(prev => prev ? ({ ...prev, company: e.target.value }) : null)}
                               />
                             </div>
                           </div>
