@@ -37,6 +37,7 @@ export function LandingPageContent() {
   // Set isMounted to true on client-side
   useEffect(() => {
     setIsMounted(true)
+    document.documentElement.classList.add('dark')
   }, []);
 
   // Separate useEffect for handling OAuth errors

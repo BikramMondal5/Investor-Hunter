@@ -368,9 +368,16 @@ const handleMessage = (startup: StartupPitch) => {
       )
     }
 
+    // Apply pitch score filter (NEW)
+    filtered = filtered.filter(startup => {
+      const score = startup.pitchData?.pitchScore
+      // Only show pitches that have been scored
+      return score && score >= aiScoreRange[0]
+    })
+
     setFilteredStartups(filtered)
     setFiltersApplied(true)
-    console.log('Filters applied:', { selectedIndustry, selectedLocation, selectedStage, aiScoreRange })
+    console.log('Filters applied:', { selectedIndustry, selectedLocation, selectedStage, pitchScore: aiScoreRange[0] })
   }
 
   // ADD this new function:
@@ -379,7 +386,7 @@ const handleMessage = (startup: StartupPitch) => {
     setSelectedIndustry("all")
     setSelectedLocation("")
     setSelectedStage("all")
-    setAiScoreRange([7])
+    setAiScoreRange([1])
     setFiltersApplied(false)
     setFilteredStartups(startups)
   }

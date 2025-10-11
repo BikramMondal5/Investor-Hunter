@@ -345,29 +345,24 @@ export function SubmitPageContent() {
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <Brain className="h-5 w-5 text-primary" />
-                    <span>How AI Evaluation Works</span>
+                    <span>How Admin Evaluation Works</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-start space-x-3">
                     <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0" />
-                    <p className="text-sm">Analyzes clarity & uniqueness</p>
+                    <p className="text-sm">Our admin team reviews each pitch for clarity and originality</p>
                   </div>
                   <div className="flex items-start space-x-3">
                     <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0" />
-                    <p className="text-sm">Multilingual speech-to-text supported</p>
+                    <p className="text-sm">Manual evaluation ensures fair and accurate assessment</p>
                   </div>
                   <div className="flex items-start space-x-3">
                     <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0" />
-                    <p className="text-sm">Feedback from early backers</p>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0" />
-                    <p className="text-sm">Get notified when investors view</p>
+                    <p className="text-sm">You’ll be notified once your pitch gets approved</p>
                   </div>
                 </CardContent>
               </Card>
-
               <Card>
                 <CardContent className="p-6 space-y-4">
                   <div className="flex items-center space-x-2">
