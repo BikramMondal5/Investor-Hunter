@@ -662,36 +662,39 @@ export default function Dashboard() {
                           </div>
 
                           <div className="space-y-3">
-                            <div>
-                              <h3 className="font-semibold">AI Evaluation Summary</h3>
-                              <div className="space-y-2 mt-1">
-                                <div className="flex justify-between items-center">
-                                  <span className="text-sm">Clarity</span>
-                                  <div className="flex items-center space-x-2">
-                                    <Progress value={89} className="w-20" />
-                                    <span className="text-sm font-medium">8.9/10</span>
-                                  </div>
+                            <h3 className="font-semibold">Admin Evaluation Score</h3>
+                            <div className="p-6 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20">
+                              <div className="flex flex-col items-center space-y-3">
+                                <div className="text-6xl font-bold text-primary">
+                                  {pitch.pitchScore || 'N/A'}
+                                  <span className="text-2xl text-muted-foreground">/10</span>
                                 </div>
-
-                                <div className="flex justify-between items-center">
-                                  <span className="text-sm">Uniqueness</span>
-                                  <div className="flex items-center space-x-2">
-                                    <Progress value={91} className="w-20" />
-                                    <span className="text-sm font-medium">9.1/10</span>
+                                <p className="text-sm text-center text-muted-foreground">
+                                  {pitch.pitchScore 
+                                    ? `Your pitch scored ${pitch.pitchScore} out of 10 by our admin team`
+                                    : 'Score pending evaluation'}
+                                </p>
+                                {pitch.pitchScore && (
+                                  <div className="w-full mt-2">
+                                    <Progress 
+                                      value={pitch.pitchScore * 10} 
+                                      className="h-3"
+                                    />
                                   </div>
-                                </div>
-
-                                <div className="flex justify-between items-center">
-                                  <span className="text-sm">Market Fit</span>
-                                  <div className="flex items-center space-x-2">
-                                    <Progress value={85} className="w-20" />
-                                    <span className="text-sm font-medium">8.5/10</span>
-                                  </div>
-                                </div>
+                                )}
                               </div>
                             </div>
-
-                            <Button className="w-full">View Full Report</Button>
+                            
+                            {pitch.pitchScore && (
+                              <div className="mt-4 p-4 rounded-lg bg-muted/30">
+                                <p className="text-xs font-semibold mb-2">Score Interpretation:</p>
+                                <ul className="text-xs space-y-1 text-muted-foreground">
+                                  {pitch.pitchScore >= 8 && <li>• Excellent pitch with strong potential</li>}
+                                  {pitch.pitchScore >= 6 && pitch.pitchScore < 8 && <li>• Good pitch with room for improvement</li>}
+                                  {pitch.pitchScore < 6 && <li>• Needs significant improvement</li>}
+                                </ul>
+                              </div>
+                            )}
                           </div>
                         </div>
 
@@ -730,10 +733,6 @@ export default function Dashboard() {
 
               {/* Call to Action */}
               <div className="flex space-x-4">
-                <Button variant="outline" className="flex-1 bg-transparent">
-                  <TrendingUp className="mr-2 h-4 w-4" />
-                  Improve Pitch
-                </Button>
                 <Button 
                   className="flex-1"
                   onClick={() => router.push('/submit')}

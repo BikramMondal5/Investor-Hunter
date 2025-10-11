@@ -135,7 +135,7 @@ export function SubmitPageContent() {
         // Reset button
         if (submitButton) {
           submitButton.disabled = false
-          submitButton.innerHTML = 'Analyze & Submit Pitch'
+          submitButton.innerHTML = 'Submit Pitch'
         }
       }
     } catch (error: any) {
@@ -144,7 +144,7 @@ export function SubmitPageContent() {
       // Reset button
       if (submitButton) {
         submitButton.disabled = false
-        submitButton.innerHTML = 'Analyze & Submit Pitch'
+        submitButton.innerHTML = 'Submit Pitch'
       }
     }
   }
@@ -332,7 +332,7 @@ export function SubmitPageContent() {
                       disabled={!videoFile}
                     >
                       <Brain className="mr-2 h-4 w-4" />
-                      Analyze & Submit Pitch
+                       Submit Pitch
                     </Button>
                   </form>
                 </CardContent>

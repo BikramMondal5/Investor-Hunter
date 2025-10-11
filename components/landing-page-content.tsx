@@ -251,7 +251,7 @@ export function LandingPageContent() {
               {
                 step: "01",
                 icon: Film,
-                title: "Upload & Analyze Pitch",
+                title: "Upload Pitch",
                 description: "Upload a 3–4 minute video pitch, then run AI analysis before final submission.",
               },
               {

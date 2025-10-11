@@ -12,45 +12,55 @@ async function connectDB() {
 export async function GET(request: NextRequest) {
   try {
     const sessionCookie = request.cookies.get('user_session')?.value
-    
+   
     if (!sessionCookie) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }
       )
     }
-
+    
     const sessionData = JSON.parse(sessionCookie)
     await connectDB()
-
-    // Count pitches submitted
+    
+    // Get the user's email from session or fetch from UserProfile
+    const userEmail = sessionData.email
+    
+    if (!userEmail) {
+      return NextResponse.json(
+        { success: false, error: 'User email not found' },
+        { status: 400 }
+      )
+    }
+    
+    // Count pitches submitted - by user email
     const pitchesSubmitted = await VerificationRequest.countDocuments({
-      userProfileId: sessionData.userId
+      'personalInfo.email': userEmail
     })
-
-    // Count pitches approved
+    
+    // Count pitches approved - by user email
     const pitchesApproved = await VerificationRequest.countDocuments({
-      userProfileId: sessionData.userId,
+      'personalInfo.email': userEmail,
       verificationStatus: 'approved'
     })
-
+    
     // Count unread messages
     const unreadMessages = await Message.countDocuments({
       recipientId: new mongoose.Types.ObjectId(sessionData.userId),
       isRead: false
     })
-
+    
     return NextResponse.json({
       success: true,
       pitchesSubmitted,
       pitchesApproved,
       unreadMessages
     }, { status: 200 })
-
+    
   } catch (error: any) {
     console.error('Error fetching dashboard stats:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch stats' },
+      { success: false, error: 'Failed to fetch stats', details: error.message },
       { status: 500 }
     )
   }
