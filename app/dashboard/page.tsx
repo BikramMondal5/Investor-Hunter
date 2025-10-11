@@ -753,29 +753,184 @@ export default function Dashboard() {
 
               {/* Analytics Overview */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Pitch Views Chart */}
                 <Card className="shadow-sm">
                   <CardHeader>
-                    <CardTitle>Pitch Views Over Time</CardTitle>
+                    <CardTitle className="flex items-center justify-between">
+                      <span>Pitch Views Over Time</span>
+                      <TrendingUp className="h-5 w-5 text-primary" />
+                    </CardTitle>
                   </CardHeader>
-                  <CardContent className="h-64 relative">
-                    <img 
-                      src="/pitch_views_over_time.png" 
-                      alt="Line graph showing pitch views over time increasing from 120 to over 550 views" 
-                      className="w-full h-full object-contain"
-                    />
+                  <CardContent className="h-64">
+                    <div className="w-full h-full relative">
+                      <svg viewBox="0 0 400 200" className="w-full h-full">
+                        {/* Grid lines */}
+                        <line x1="40" y1="20" x2="40" y2="180" stroke="currentColor" strokeWidth="1" className="text-muted-foreground/20" />
+                        <line x1="40" y1="180" x2="380" y2="180" stroke="currentColor" strokeWidth="1" className="text-muted-foreground/20" />
+                        
+                        {/* Y-axis labels */}
+                        <text x="30" y="25" fontSize="10" fill="currentColor" className="text-muted-foreground" textAnchor="end">550</text>
+                        <text x="30" y="70" fontSize="10" fill="currentColor" className="text-muted-foreground" textAnchor="end">450</text>
+                        <text x="30" y="115" fontSize="10" fill="currentColor" className="text-muted-foreground" textAnchor="end">300</text>
+                        <text x="30" y="160" fontSize="10" fill="currentColor" className="text-muted-foreground" textAnchor="end">150</text>
+                        
+                        {/* X-axis labels */}
+                        <text x="60" y="195" fontSize="9" fill="currentColor" className="text-muted-foreground">Sept 10</text>
+                        <text x="120" y="195" fontSize="9" fill="currentColor" className="text-muted-foreground">Sept 20</text>
+                        <text x="180" y="195" fontSize="9" fill="currentColor" className="text-muted-foreground">Sept 30</text>
+                        <text x="240" y="195" fontSize="9" fill="currentColor" className="text-muted-foreground">Oct 10</text>
+                        <text x="300" y="195" fontSize="9" fill="currentColor" className="text-muted-foreground">Oct 20</text>
+                        
+                        {/* Animated line path */}
+                        <path
+                          d="M 50,165 L 80,158 L 110,160 L 140,148 L 170,142 L 200,136 L 230,120 L 260,110 L 290,90 L 320,68 L 350,50 L 370,25"
+                          fill="none"
+                          stroke="url(#gradient)"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="animate-draw-line"
+                          style={{
+                            strokeDasharray: 1000,
+                            strokeDashoffset: 1000,
+                            animation: 'drawLine 2s ease-out forwards'
+                          }}
+                        />
+                        
+                        {/* Gradient definition */}
+                        <defs>
+                          <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stopColor="#3b82f6" />
+                            <stop offset="100%" stopColor="#8b5cf6" />
+                          </linearGradient>
+                          
+                          <filter id="glow">
+                            <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                            <feMerge>
+                              <feMergeNode in="coloredBlur"/>
+                              <feMergeNode in="SourceGraphic"/>
+                            </feMerge>
+                          </filter>
+                        </defs>
+                        
+                        {/* Animated data points */}
+                        {[
+                          {x: 50, y: 165, delay: 0},
+                          {x: 80, y: 158, delay: 0.2},
+                          {x: 110, y: 160, delay: 0.4},
+                          {x: 140, y: 148, delay: 0.6},
+                          {x: 170, y: 142, delay: 0.8},
+                          {x: 200, y: 136, delay: 1},
+                          {x: 230, y: 120, delay: 1.2},
+                          {x: 260, y: 110, delay: 1.4},
+                          {x: 290, y: 90, delay: 1.6},
+                          {x: 320, y: 68, delay: 1.8},
+                          {x: 350, y: 50, delay: 2},
+                          {x: 370, y: 25, delay: 2.2}
+                        ].map((point, i) => (
+                          <circle
+                            key={i}
+                            cx={point.x}
+                            cy={point.y}
+                            r="4"
+                            fill="#3b82f6"
+                            filter="url(#glow)"
+                            className="animate-fade-in"
+                            style={{
+                              opacity: 0,
+                              animation: `fadeIn 0.5s ease-out ${point.delay}s forwards`
+                            }}
+                          />
+                        ))}
+                      </svg>
+                      
+                      <style jsx>{`
+                        @keyframes drawLine {
+                          to {
+                            stroke-dashoffset: 0;
+                          }
+                        }
+                        
+                        @keyframes fadeIn {
+                          to {
+                            opacity: 1;
+                          }
+                        }
+                      `}</style>
+                    </div>
                   </CardContent>
                 </Card>
 
+                {/* Investor Demographics Chart */}
                 <Card className="shadow-sm">
                   <CardHeader>
-                    <CardTitle>Investor Demographics</CardTitle>
+                    <CardTitle className="flex items-center justify-between">
+                      <span>Investor Demographics</span>
+                      <Users className="h-5 w-5 text-primary" />
+                    </CardTitle>
                   </CardHeader>
-                  <CardContent className="h-64 relative">
-                    <img 
-                      src="/investor_demographics.png" 
-                      alt="Bar chart showing investor demographics: VC Firms 35%, Angel Investors 25%, Corporate Investors 20%, Accelerators 10%, Crowdfunders 10%" 
-                      className="w-full h-full object-contain"
-                    />
+                  <CardContent className="h-64">
+                    <div className="w-full h-full flex flex-col justify-around py-2">
+                      {[
+                        {label: 'VC Firms', percentage: 35, color: 'bg-gradient-to-r from-blue-500 to-blue-600', delay: 0},
+                        {label: 'Angel Investors', percentage: 25, color: 'bg-gradient-to-r from-purple-500 to-purple-600', delay: 0.2},
+                        {label: 'Corporate Investors', percentage: 20, color: 'bg-gradient-to-r from-pink-500 to-pink-600', delay: 0.4},
+                        {label: 'Accelerators', percentage: 10, color: 'bg-gradient-to-r from-orange-500 to-orange-600', delay: 0.6},
+                        {label: 'Crowdfunders', percentage: 10, color: 'bg-gradient-to-r from-green-500 to-green-600', delay: 0.8}
+                      ].map((item, i) => (
+                        <div key={i} className="space-y-1">
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="font-medium">{item.label}</span>
+                            <span className="text-muted-foreground font-semibold">{item.percentage}%</span>
+                          </div>
+                          <div className="relative h-8 bg-muted rounded-lg overflow-hidden">
+                            <div 
+                              className={`h-full ${item.color} rounded-lg transition-all duration-1000 ease-out flex items-center justify-end pr-3`}
+                              style={{
+                                width: '0%',
+                                animation: `expandBar 1s ease-out ${item.delay}s forwards`
+                              }}
+                            >
+                              <span className="text-white text-xs font-bold opacity-0" style={{
+                                animation: `fadeIn 0.5s ease-out ${item.delay + 0.8}s forwards`
+                              }}>
+                                {item.percentage}%
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      
+                      <style jsx>{`
+                        @keyframes expandBar {
+                          to {
+                            width: ${35}%;
+                          }
+                        }
+                        
+                        div:nth-child(1) .${''} {
+                          animation: expandBar-35 1s ease-out 0s forwards;
+                        }
+                        div:nth-child(2) .${''} {
+                          animation: expandBar-25 1s ease-out 0.2s forwards;
+                        }
+                        div:nth-child(3) .${''} {
+                          animation: expandBar-20 1s ease-out 0.4s forwards;
+                        }
+                        div:nth-child(4) .${''} {
+                          animation: expandBar-10 1s ease-out 0.6s forwards;
+                        }
+                        div:nth-child(5) .${''} {
+                          animation: expandBar-10-2 1s ease-out 0.8s forwards;
+                        }
+                        
+                        @keyframes expandBar-35 { to { width: 35%; } }
+                        @keyframes expandBar-25 { to { width: 25%; } }
+                        @keyframes expandBar-20 { to { width: 20%; } }
+                        @keyframes expandBar-10 { to { width: 10%; } }
+                        @keyframes expandBar-10-2 { to { width: 10%; } }
+                      `}</style>
+                    </div>
                   </CardContent>
                 </Card>
               </div>
@@ -783,11 +938,14 @@ export default function Dashboard() {
               {/* Feedback Analysis */}
               <Card className="shadow-sm">
                 <CardHeader>
-                  <CardTitle>AI-Generated Feedback Analysis</CardTitle>
+                  <CardTitle>Admin Evaluation Feedback</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="p-4 rounded-lg bg-muted/30">
-                    <h4 className="font-semibold mb-2">Key Strengths</h4>
+                  <div className="p-4 rounded-lg bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/10 dark:to-emerald-900/10 border border-green-200 dark:border-green-800">
+                    <h4 className="font-semibold mb-2 flex items-center text-green-700 dark:text-green-400">
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Key Strengths
+                    </h4>
                     <ul className="list-disc pl-5 space-y-1">
                       <li className="text-sm">Clear value proposition for target market</li>
                       <li className="text-sm">Strong technical demonstration with practical use cases</li>
@@ -795,18 +953,17 @@ export default function Dashboard() {
                     </ul>
                   </div>
 
-                  <div className="p-4 rounded-lg bg-muted/30">
-                    <h4 className="font-semibold mb-2">Areas for Improvement</h4>
+                  <div className="p-4 rounded-lg bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/10 dark:to-orange-900/10 border border-amber-200 dark:border-amber-800">
+                    <h4 className="font-semibold mb-2 flex items-center text-amber-700 dark:text-amber-400">
+                      <TrendingUp className="h-4 w-4 mr-2" />
+                      Areas for Improvement
+                    </h4>
                     <ul className="list-disc pl-5 space-y-1">
                       <li className="text-sm">Consider elaborating more on go-to-market strategy</li>
                       <li className="text-sm">Add more specific details about revenue projections</li>
                       <li className="text-sm">Provide clearer explanation of technical scalability</li>
                     </ul>
                   </div>
-
-                  <Button className="w-full md:w-auto">
-                    Generate Detailed Report
-                  </Button>
                 </CardContent>
               </Card>
 
@@ -817,41 +974,40 @@ export default function Dashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-1">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm font-medium">Positive Sentiment</span>
-                          <Badge className="bg-green-100 text-green-700 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-500">76%</Badge>
+                    {[
+                      {label: 'Positive Sentiment', value: 76, color: 'bg-green-600', badgeColor: 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-500', delay: 0},
+                      {label: 'Neutral Sentiment', value: 18, color: 'bg-gray-400', badgeColor: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400', delay: 0.3},
+                      {label: 'Areas for Improvement', value: 6, color: 'bg-red-500', badgeColor: 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-500', delay: 0.6}
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-center justify-between">
+                        <div className="space-y-1 flex-1">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-sm font-medium">{item.label}</span>
+                            <Badge className={`${item.badgeColor} hover:${item.badgeColor}`}>{item.value}%</Badge>
+                          </div>
+                          <div className="relative h-2 bg-muted rounded-full overflow-hidden">
+                            <div 
+                              className={`h-full ${item.color} rounded-full transition-all duration-1000 ease-out`}
+                              style={{
+                                width: '0%',
+                                animation: `expandProgress-${item.value} 1.5s ease-out ${item.delay}s forwards`
+                              }}
+                            />
+                          </div>
                         </div>
-                        <Progress value={76} className="h-2 bg-muted [&>div]:bg-green-600" />
                       </div>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-1">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm font-medium">Neutral Sentiment</span>
-                          <Badge variant="outline">18%</Badge>
-                        </div>
-                        <Progress value={18} className="h-2 bg-muted [&>div]:bg-gray-400" />
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-1">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm font-medium">Areas for Improvement</span>
-                          <Badge variant="destructive">6%</Badge>
-                        </div>
-                        <Progress value={6} className="h-2 bg-muted [&>div]:bg-red-500" />
-                      </div>
-                    </div>
+                    ))}
+                    
+                    <style jsx>{`
+                      @keyframes expandProgress-76 { to { width: 76%; } }
+                      @keyframes expandProgress-18 { to { width: 18%; } }
+                      @keyframes expandProgress-6 { to { width: 6%; } }
+                    `}</style>
                   </div>
                 </CardContent>
               </Card>
             </div>
           )}
-
           {/* Messages Tab */}
           {activeTab === "messages" && (
             <div className="space-y-6">
