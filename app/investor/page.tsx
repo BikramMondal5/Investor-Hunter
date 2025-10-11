@@ -56,6 +56,7 @@ interface StartupPitch {
     stage?: string;
     industry?: string;
     videoUrl?: string;
+    pitchScore?: number|null;
   };
 }
 
@@ -740,7 +741,7 @@ const handleMessage = (startup: StartupPitch) => {
                       </div>
 
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">AI Score: {aiScoreRange[0]}+</label>
+                        <label className="text-sm font-medium">Pitch Score: {aiScoreRange[0]}+</label>
                         <Slider
                           value={aiScoreRange}
                           onValueChange={setAiScoreRange}
@@ -750,7 +751,6 @@ const handleMessage = (startup: StartupPitch) => {
                           className="w-full"
                         />
                       </div>
-
                       <Button onClick={handleApplyFilters}>
                         <Filter className="mr-2 h-4 w-4" />
                         Apply Filters
@@ -870,15 +870,13 @@ const handleMessage = (startup: StartupPitch) => {
                               </div>
 
                               <div className="flex items-center justify-between">
-                                <div className="flex items-center space-x-2">
-                                  <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                                  <span className="font-semibold">8.7</span>
-                                  <span className="text-xs text-muted-foreground">AI Score</span>
-                                </div>
-                                <div className="flex items-center space-x-1 text-xs text-muted-foreground">
-                                  <Eye className="h-3 w-3" />
-                                  <span>47 views</span>
-                                </div>
+                                {startup.pitchData?.pitchScore && (
+                                  <div className="flex items-center space-x-2">
+                                    <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                                    <span className="font-semibold">{startup.pitchData.pitchScore}</span>
+                                    <span className="text-xs text-muted-foreground">Pitch Score</span>
+                                  </div>
+                                )}
                               </div>
 
                               <div className="flex space-x-2">
@@ -1000,15 +998,13 @@ const handleMessage = (startup: StartupPitch) => {
                           </div>
 
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-2">
-                              <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                              <span className="font-semibold">8.7</span>
-                              <span className="text-xs text-muted-foreground">AI Score</span>
-                            </div>
-                            <div className="flex items-center space-x-1 text-xs text-muted-foreground">
-                              <Eye className="h-3 w-3" />
-                              <span>47 views</span>
-                            </div>
+                            {startup.pitchData?.pitchScore && (
+                              <div className="flex items-center space-x-2">
+                                <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                                <span className="font-semibold">{startup.pitchData.pitchScore}</span>
+                                <span className="text-xs text-muted-foreground">Pitch Score</span>
+                              </div>
+                            )}
                           </div>
 
                           <div className="flex space-x-2">

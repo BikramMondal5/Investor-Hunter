@@ -23,6 +23,12 @@ const verificationRequestSchema = new mongoose.Schema({
     stage: String,
     isPublic: { type: Boolean, default: false }
   },
+  pitchScore: {
+    type: Number,
+    min: 1,
+    max: 10,
+    default: null
+  },
   documents: {
     required: [{
         documentId: String,

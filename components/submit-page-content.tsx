@@ -217,16 +217,6 @@ export function SubmitPageContent() {
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <Label>Pitch Video (Max 3 minutes)</Label>
-                        {hasReceivedFeedback && (
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => setShowAIFeedback(true)}
-                            className="text-xs flex items-center gap-1"
-                          >
-                            <Brain className="h-3 w-3" /> View AI feedback
-                          </Button>
-                        )}
                       </div>
                       
                       {videoPreviewUrl ? (
@@ -244,18 +234,6 @@ export function SubmitPageContent() {
                               className="absolute top-2 right-2 flex items-center gap-1 bg-background/80 backdrop-blur-sm"
                             >
                               <RefreshCw className="h-3 w-3" /> Re-record
-                            </Button>
-                          </div>
-                          {/* Adding Analyze Button below video preview */}
-                          <div className="mt-2">
-                            <Button
-                              type="button"
-                              onClick={() => setShowAIFeedback(true)}
-                              className="w-full"
-                              variant="outline"
-                            >
-                              <Brain className="mr-2 h-4 w-4" />
-                              Analyze My Pitch
                             </Button>
                           </div>
                         </div>
@@ -280,18 +258,6 @@ export function SubmitPageContent() {
                           <Progress value={uploadProgress} />
                           <p className="text-xs text-muted-foreground text-center">Uploading... {uploadProgress}%</p>
                         </div>
-                      )}
-                      
-                      {/* Adding Analyze Button directly under file upload area when file is uploaded but not yet analyzed */}
-                      {videoFile && !isUploading && !videoPreviewUrl && (
-                        <Button
-                          type="button"
-                          onClick={() => setShowAIFeedback(true)}
-                          className="w-full mt-2"
-                        >
-                          <Brain className="mr-2 h-4 w-4" />
-                          Analyze My Pitch
-                        </Button>
                       )}
                     </div>
 

@@ -54,6 +54,12 @@ interface SidebarItem {
 }
 
 export default function Dashboard() {
+  const [stats, setStats] = useState({
+    pitchesSubmitted: 0,
+    pitchesApproved: 0,
+    unreadMessages: 0
+  })
+  const [isLoadingStats, setIsLoadingStats] = useState(true)
   const [unreadCount, setUnreadCount] = useState(0)
   const [conversations, setConversations] = useState<any[]>([])
   const [isLoadingConversations, setIsLoadingConversations] = useState(false)
@@ -123,6 +129,30 @@ export default function Dashboard() {
       fetchConversations()
     }
   }, [activeTab])
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await fetch('/api/dashboard-stats')
+        if (res.ok) {
+          const data = await res.json()
+          setStats({
+            pitchesSubmitted: data.pitchesSubmitted || 0,
+            pitchesApproved: data.pitchesApproved || 0,
+            unreadMessages: data.unreadMessages || 0
+          })
+        }
+      } catch (error) {
+        console.error('Failed to fetch stats:', error)
+      } finally {
+        setIsLoadingStats(false)
+      }
+    }
+
+    if (session?.user) {
+      fetchStats()
+    }
+  }, [session])
 
   useEffect(() => {
     if (session?.user) {
@@ -477,17 +507,17 @@ export default function Dashboard() {
                   <CardContent className="p-4">
                     <div className="flex justify-between items-center">
                       <div>
-                        <p className="text-sm text-muted-foreground">Pitch Views</p>
-                        <h3 className="text-2xl font-bold mt-1">47</h3>
+                        <p className="text-sm text-muted-foreground">Pitches Submitted</p>
+                        <h3 className="text-2xl font-bold mt-1">{stats.pitchesSubmitted}</h3>
                       </div>
                       <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center">
-                        <Eye className="h-5 w-5 text-primary" />
+                        <Play className="h-5 w-5 text-primary" />
                       </div>
                     </div>
                     <div className="mt-2">
                       <div className="flex items-center text-xs text-green-600">
                         <TrendingUp className="h-3 w-3 mr-1" />
-                        <span>+12% from last week</span>
+                        <span>Total submissions</span>
                       </div>
                     </div>
                   </CardContent>
@@ -497,17 +527,17 @@ export default function Dashboard() {
                   <CardContent className="p-4">
                     <div className="flex justify-between items-center">
                       <div>
-                        <p className="text-sm text-muted-foreground">Investor Interest</p>
-                        <h3 className="text-2xl font-bold mt-1">8</h3>
+                        <p className="text-sm text-muted-foreground">Pitches Approved</p>
+                        <h3 className="text-2xl font-bold mt-1">{stats.pitchesApproved}</h3>
                       </div>
                       <div className="h-12 w-12 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center">
-                        <Users className="h-5 w-5 text-green-600 dark:text-green-500" />
+                        <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-500" />
                       </div>
                     </div>
                     <div className="mt-2">
                       <div className="flex items-center text-xs text-green-600">
                         <TrendingUp className="h-3 w-3 mr-1" />
-                        <span>+3 this week</span>
+                        <span>Approved by platform</span>
                       </div>
                     </div>
                   </CardContent>
@@ -517,8 +547,8 @@ export default function Dashboard() {
                   <CardContent className="p-4">
                     <div className="flex justify-between items-center">
                       <div>
-                        <p className="text-sm text-muted-foreground">Messages</p>
-                        <h3 className="text-2xl font-bold mt-1">5</h3>
+                        <p className="text-sm text-muted-foreground">Unread Messages</p>
+                        <h3 className="text-2xl font-bold mt-1">{stats.unreadMessages}</h3>
                       </div>
                       <div className="h-12 w-12 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
                         <MessageCircle className="h-5 w-5 text-blue-600 dark:text-blue-500" />
@@ -526,56 +556,12 @@ export default function Dashboard() {
                     </div>
                     <div className="mt-2">
                       <div className="flex items-center text-xs text-amber-600">
-                        <span>2 unread messages</span>
+                        <span>From investors</span>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
               </div>
-
-              {/* Pitch Score Card */}
-              <Card className="shadow-sm">
-                <CardHeader className="pb-3">
-                  <CardTitle>Pitch Performance Score</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">Overall Score</span>
-                        <span className="text-sm font-medium">8.7/10</span>
-                      </div>
-                      <Progress value={87} className="h-2" />
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm">Clarity</span>
-                          <span className="text-sm font-medium">8.9/10</span>
-                        </div>
-                        <Progress value={89} className="h-1.5" />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm">Uniqueness</span>
-                          <span className="text-sm font-medium">9.1/10</span>
-                        </div>
-                        <Progress value={91} className="h-1.5" />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm">Market Fit</span>
-                          <span className="text-sm font-medium">8.5/10</span>
-                        </div>
-                        <Progress value={85} className="h-1.5" />
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
 
               {/* Quick Actions */}
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
