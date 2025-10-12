@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation"
 import { LogOut } from "lucide-react"
 import { AvatarImage } from "@/components/ui/avatar"
 import {User, Settings} from "lucide-react"
+import { Trash2 } from "lucide-react"
 import {
   Search,
   Filter,
@@ -1165,25 +1166,50 @@ const handleMessage = (startup: StartupPitch) => {
                                 : 'justify-start'
                             }`}
                           >
-                            <div
-                              className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl ${
-                                msg.senderRole === 'investor'
-                                  ? 'bg-primary text-primary-foreground rounded-br-none'
-                                  : 'bg-muted rounded-bl-none'
-                              }`}
-                            >
-                              <p className="text-sm">{msg.content}</p>
-                              <p className={`text-xs mt-1 ${
-                                msg.senderRole === 'investor'
-                                  ? 'opacity-70'
-                                  : 'text-muted-foreground'
-                              }`}>
-                                {new Date(msg.createdAt).toLocaleTimeString([], {
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                })}
-                              </p>
-                            </div>
+                            {msg.senderRole === 'investor' ? (
+                              // Investor's message (can delete)
+                              <div className="flex items-start gap-2 group">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity self-end mb-1"
+                                  onClick={async () => {
+                                    try {
+                                      const res = await fetch(`/api/messages?messageId=${msg._id}`, {
+                                        method: 'DELETE'
+                                      })
+                                      if (res.ok) {
+                                        setConversationMessages(prev => prev.filter(m => m._id !== msg._id))
+                                      }
+                                    } catch (error) {
+                                      console.error('Failed to delete message:', error)
+                                    }
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                                </Button>
+                                <div className="max-w-xs lg:max-w-md px-4 py-2 rounded-2xl bg-primary text-primary-foreground rounded-br-none">
+                                  <p className="text-sm">{msg.content}</p>
+                                  <p className="text-xs mt-1 opacity-70">
+                                    {new Date(msg.createdAt).toLocaleTimeString([], {
+                                      hour: '2-digit',
+                                      minute: '2-digit'
+                                    })}
+                                  </p>
+                                </div>
+                              </div>
+                            ) : (
+                              // Entrepreneur's message (cannot delete)
+                              <div className="max-w-xs lg:max-w-md px-4 py-2 rounded-2xl bg-muted rounded-bl-none">
+                                <p className="text-sm">{msg.content}</p>
+                                <p className="text-xs mt-1 text-muted-foreground">
+                                  {new Date(msg.createdAt).toLocaleTimeString([], {
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </p>
+                              </div>
+                            )}
                           </div>
                         ))
                       )}

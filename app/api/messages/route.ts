@@ -221,3 +221,60 @@ export async function POST(request: NextRequest) {
     )
   }
 }
+export async function DELETE(request: NextRequest) {
+  try {
+    const sessionCookie = request.cookies.get('user_session')?.value
+    
+    if (!sessionCookie) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const sessionData = JSON.parse(sessionCookie)
+    const { searchParams } = new URL(request.url)
+    const messageId = searchParams.get('messageId')
+
+    if (!messageId) {
+      return NextResponse.json(
+        { success: false, error: 'Missing messageId' },
+        { status: 400 }
+      )
+    }
+
+    await connectDB()
+
+    const message = await Message.findById(messageId)
+
+    if (!message) {
+      return NextResponse.json(
+        { success: false, error: 'Message not found' },
+        { status: 404 }
+      )
+    }
+
+    // Only sender can delete their own message
+    if (message.senderId.toString() !== sessionData.userId) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized to delete this message' },
+        { status: 403 }
+      )
+    }
+
+    // Permanently delete the message
+    await Message.findByIdAndDelete(messageId)
+
+    return NextResponse.json({
+      success: true,
+      message: 'Message deleted successfully'
+    }, { status: 200 })
+
+  } catch (error: any) {
+    console.error('Error deleting message:', error)
+    return NextResponse.json(
+      { success: false, error: 'Failed to delete message' },
+      { status: 500 }
+    )
+  }
+}
