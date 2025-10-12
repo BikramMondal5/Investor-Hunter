@@ -5,6 +5,10 @@ export function middleware(request: NextRequest) {
   const session = request.cookies.get('user_session')?.value
   const pathname = request.nextUrl.pathname
   
+  // Check if this is a redirect from OAuth with success params
+  const searchParams = request.nextUrl.searchParams
+  const isOAuthRedirect = searchParams.has('registered') || searchParams.has('signin')
+  
   // Protected routes that require authentication
   const protectedRoutes = ['/dashboard', '/investor', '/submit', '/internal-interview', '/investor-meeting']
   const adminRoutes = ['/admin']
@@ -36,7 +40,8 @@ export function middleware(request: NextRequest) {
   }
   
   // If trying to access protected routes without authentication
-  if (!session && isProtectedRoute) {
+  // BUT allow OAuth redirects to pass through (cookie will be set via redirect)
+  if (!session && isProtectedRoute && !isOAuthRedirect) {
     const url = new URL('/', request.url)
     url.searchParams.set('redirected', 'true')
     const response = NextResponse.redirect(url)
@@ -45,6 +50,14 @@ export function middleware(request: NextRequest) {
     response.headers.set('Pragma', 'no-cache')
     response.headers.set('Expires', '0')
     
+    return response
+  }
+  
+  // If OAuth redirect but no session yet, allow it through once
+  // The cookie should be present on the next request
+  if (!session && isOAuthRedirect && isProtectedRoute) {
+    const response = NextResponse.next()
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
     return response
   }
   

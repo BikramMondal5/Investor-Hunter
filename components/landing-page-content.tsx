@@ -37,6 +37,7 @@ export function LandingPageContent() {
   // Set isMounted to true on client-side
   useEffect(() => {
     setIsMounted(true)
+    document.documentElement.classList.add('dark')
   }, []);
 
   // Separate useEffect for handling OAuth errors
@@ -250,7 +251,7 @@ export function LandingPageContent() {
               {
                 step: "01",
                 icon: Film,
-                title: "Upload & Analyze Pitch",
+                title: "Upload Pitch",
                 description: "Upload a 3–4 minute video pitch, then run AI analysis before final submission.",
               },
               {

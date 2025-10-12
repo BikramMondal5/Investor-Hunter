@@ -7,7 +7,7 @@ import { sendApprovalEmail } from '@/lib/email'
 
 export async function POST(
     request: NextRequest,
-    { params }: { params: Promise<{ id: string }> }  // ← Changed signature
+    { params }: { params: Promise<{ id: string }> }
   ) {
     try {
       const sessionCookie = request.cookies.get('user_session')?.value;
@@ -28,11 +28,19 @@ export async function POST(
         )
       }
       
+      const { id } = await params
+      const { pitchScore } = await request.json()
+      
+      if (!pitchScore || pitchScore < 1 || pitchScore > 10) {
+        return NextResponse.json(
+          { success: false, error: 'Pitch score must be between 1 and 10' },
+          { status: 400 }
+        )
+      }
+      
       await dbConnect()
       
-      const { id } = await params
-      
-      console.log('Approval request for ID:', id)
+      console.log('Approval request for ID:', id, 'with score:', pitchScore)
       
       const verificationRequest = await VerificationRequest.findById(id)
       
@@ -42,8 +50,6 @@ export async function POST(
           { status: 404 }
         )
       }
-      
-      console.log('Found verification request:', verificationRequest._id)
       
       // Find existing user by email
       const existingUser = await User.findOne({ 
@@ -57,9 +63,7 @@ export async function POST(
         )
       }
       
-      console.log('Found existing user:', existingUser._id)
-      
-      // Update or create user profile with the existing User's ObjectId
+      // Update or create user profile
       let userProfile = await UserProfile.findOne({ userId: existingUser._id })
       
       if (!userProfile) {
@@ -74,9 +78,7 @@ export async function POST(
           industry: verificationRequest.personalInfo.industryType,
           businessRegistrationNumber: verificationRequest.personalInfo.businessRegistrationNumber,
         })
-        console.log('User profile created:', userProfile._id)
       } else {
-        // Update existing profile
         userProfile.firstName = verificationRequest.personalInfo.fullName.split(' ')[0]
         userProfile.lastName = verificationRequest.personalInfo.fullName.split(' ').slice(1).join(' ') || ''
         userProfile.company = verificationRequest.personalInfo.businessName
@@ -85,20 +87,17 @@ export async function POST(
         userProfile.industry = verificationRequest.personalInfo.industryType
         userProfile.businessRegistrationNumber = verificationRequest.personalInfo.businessRegistrationNumber
         await userProfile.save()
-        console.log('User profile updated:', userProfile._id)
       }
       
-      // Update verification request
+      // Update verification request with pitch score
       verificationRequest.verificationStatus = 'approved'
+      verificationRequest.pitchScore = pitchScore // Store the pitch score
       verificationRequest.reviewedAt = new Date()
       verificationRequest.reviewedBy = 'admin'
       verificationRequest.userProfileId = userProfile._id
       await verificationRequest.save()
       
-      console.log('Verification request updated to approved')
-      
       // Send approval email
-      console.log('Sending approval email...')
       const emailResult = await sendApprovalEmail(
         verificationRequest.personalInfo.email,
         verificationRequest.personalInfo.fullName
@@ -106,36 +105,24 @@ export async function POST(
       
       if (!emailResult.success) {
         console.error('Failed to send approval email:', emailResult.error)
-        return NextResponse.json({
-          success: true,
-          message: 'Verification request approved, but email notification failed',
-          userProfileId: userProfile._id,
-          emailError: emailResult.error,
-          warning: 'User was approved but may not have received email notification'
-        })
       }
-      
-      console.log('Approval email sent successfully')
       
       return NextResponse.json({
         success: true,
-        message: 'Verification request approved and email sent',
+        message: 'Verification request approved and pitch scored',
         userProfileId: userProfile._id,
-        userId: existingUser._id
+        userId: existingUser._id,
+        pitchScore: pitchScore
       })
     } catch (error: any) {
-    console.error('DETAILED Error approving request:', error)
-    console.error('Error name:', error.name)
-    console.error('Error message:', error.message)
-    console.error('Error stack:', error.stack)
-    
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Failed to approve request',
-        details: error.message
-      },
-      { status: 500 }
-    )
+      console.error('Error approving request:', error)
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Failed to approve request',
+          details: error.message
+        },
+        { status: 500 }
+      )
+    }
   }
-}

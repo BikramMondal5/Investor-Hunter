@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Switch } from "@/components/ui/switch"
 import { useRouter } from "next/navigation"
 import { useAppSession } from "@/hooks/use-app-session"
+import { Trash2 } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -37,7 +38,7 @@ interface Profile {
   firstName: string;
   lastName: string;
   email: string;
-  company: string;
+
   profilePhoto?: string;
   notifications: {
     investorInterest: boolean;
@@ -54,6 +55,20 @@ interface SidebarItem {
 }
 
 export default function Dashboard() {
+  const [stats, setStats] = useState({
+    pitchesSubmitted: 0,
+    pitchesApproved: 0,
+    unreadMessages: 0
+  })
+  const [isLoadingStats, setIsLoadingStats] = useState(true)
+  const [unreadCount, setUnreadCount] = useState(0)
+  const [conversations, setConversations] = useState<any[]>([])
+  const [isLoadingConversations, setIsLoadingConversations] = useState(false)
+  const [selectedConversation, setSelectedConversation] = useState<any | null>(null)
+  const [conversationMessages, setConversationMessages] = useState<any[]>([])
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false)
+  const [messageInput, setMessageInput] = useState('')
+  const [isSendingInConversation, setIsSendingInConversation] = useState(false)
   const [approvedPitches, setApprovedPitches] = useState<any[]>([])
   const [isLoadingPitches, setIsLoadingPitches] = useState(true)
   const [hasPitches, setHasPitches] = useState(false)
@@ -111,6 +126,45 @@ export default function Dashboard() {
   const [editedProfile, setEditedProfile] = useState<Profile | null>(null)
 
   useEffect(() => {
+    if (activeTab === 'messages') {
+      fetchConversations()
+    }
+  }, [activeTab])
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await fetch('/api/dashboard-stats')
+        if (res.ok) {
+          const data = await res.json()
+          setStats({
+            pitchesSubmitted: data.pitchesSubmitted || 0,
+            pitchesApproved: data.pitchesApproved || 0,
+            unreadMessages: data.unreadMessages || 0
+          })
+        }
+      } catch (error) {
+        console.error('Failed to fetch stats:', error)
+      } finally {
+        setIsLoadingStats(false)
+      }
+    }
+
+    if (session?.user) {
+      fetchStats()
+    }
+  }, [session])
+
+  useEffect(() => {
+    if (session?.user) {
+      fetchUnreadCount()
+      // Poll every 30 seconds for new messages
+      const interval = setInterval(fetchUnreadCount, 30000)
+      return () => clearInterval(interval)
+    }
+  }, [session])
+
+  useEffect(() => {
     const fetchApprovedPitches = async () => {
       try {
         const res = await fetch('/api/my-pitches')
@@ -154,53 +208,6 @@ export default function Dashboard() {
       router.push('/');
     }
   }, [session, isSessionLoading, router])
-
-  const handleLike = (feedbackId: number) => {
-    setCommunityFeedback(prev => 
-      prev.map(feedback => 
-        feedback.id === feedbackId 
-          ? { ...feedback, likes: feedback.likes + 1 } 
-          : feedback
-      )
-    )
-  }
-
-  const handleReply = (feedbackId: number) => {
-    setReplyingTo(feedbackId)
-    setReplyText("")
-  }
-
-  const submitReply = () => {
-    if (!replyingTo || !replyText.trim()) return
-
-    setCommunityFeedback(prev => 
-      prev.map(feedback => 
-        feedback.id === replyingTo 
-          ? { 
-              ...feedback, 
-              replies: [
-                ...feedback.replies, 
-                {
-                  id: Date.now(),
-                  user: "You",
-                  avatar: "BM",
-                  comment: replyText,
-                  timestamp: "Just now"
-                }
-              ] 
-            } 
-          : feedback
-      )
-    )
-
-    setReplyingTo(null)
-    setReplyText("")
-  }
-
-  const cancelReply = () => {
-    setReplyingTo(null)
-    setReplyText("")
-  }
 
   // Add function to handle photo upload
   const handlePhotoUpload = async (e: ChangeEvent<HTMLInputElement>) => {
@@ -262,6 +269,90 @@ export default function Dashboard() {
     }
   }
 
+  const fetchConversations = async () => {
+    setIsLoadingConversations(true)
+    try {
+      const res = await fetch('/api/messages?type=list')
+      if (res.ok) {
+        const data = await res.json()
+        setConversations(data.conversations || [])
+      }
+    } catch (error) {
+      console.error('Failed to fetch conversations:', error)
+    } finally {
+      setIsLoadingConversations(false)
+    }
+  }
+
+ const fetchConversationMessages = async (conversationId: string) => {
+    try {
+      const res = await fetch(`/api/messages?type=detail&conversationId=${conversationId}`)
+      if (res.ok) {
+        const data = await res.json()
+        setConversationMessages(data.messages || [])
+        
+        // Refresh counts in background
+        setTimeout(() => {
+          fetchUnreadCount()
+          fetchConversations()
+        }, 100)
+      }
+    } catch (error) {
+      console.error('Failed to fetch messages:', error)
+    }
+  }
+  // Add this helper function:
+  const fetchUnreadCount = async () => {
+    try {
+      const res = await fetch('/api/messages?type=unread-count')
+      if (res.ok) {
+        const data = await res.json()
+        setUnreadCount(data.unreadCount || 0)
+      }
+    } catch (error) {
+      console.error('Failed to fetch unread count:', error)
+    }
+  }
+  const handleSendMessageInConversation = async () => {
+    if (!messageInput.trim() || !selectedConversation) return
+
+    setIsSendingInConversation(true)
+    const tempMessage = messageInput
+    
+    try {
+      const res = await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          recipientId: selectedConversation.otherUser.id,
+          pitchId: selectedConversation.pitch.id,
+          content: messageInput,
+          senderRole: 'entrepreneur'
+        })
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        
+        // Optimistically add the message to the UI immediately
+        setConversationMessages(prev => [...prev, data.message])
+        setMessageInput('')
+        
+        // Refresh in the background without blocking UI
+        setTimeout(() => {
+          fetchUnreadCount()
+          fetchConversations()
+        }, 100)
+      }
+    } catch (error) {
+      console.error('Failed to send message:', error)
+      // Restore the message on error
+      setMessageInput(tempMessage)
+    } finally {
+      setIsSendingInConversation(false)
+    }
+  }
+
   // Add function to handle profile updates
   const handleProfileUpdate = async (e: FormEvent) => {
     e.preventDefault()
@@ -275,7 +366,6 @@ export default function Dashboard() {
           firstName: editedProfile.firstName,
           lastName: editedProfile.lastName,
           email: editedProfile.email,
-          company: editedProfile.company
         })
       })
 
@@ -366,23 +456,29 @@ export default function Dashboard() {
         {/* Sidebar */}
         <aside className="w-64 border-r bg-muted/30 min-h-[calc(100vh-4rem)]">
           <nav className="p-4 space-y-2">
-            {sidebarItems.map((item) => (
-              <Button
-                key={item.id}
-                variant={activeTab === item.id ? "default" : "ghost"}
-                className="w-full justify-start"
-                onClick={() => {
-                  if (item.link) {
-                    router.push(item.link);
-                  } else {
-                    setActiveTab(item.id);
-                  }
-                }}
-              >
-                <item.icon className="mr-2 h-4 w-4" />
-                {item.label}
-              </Button>
-            ))}
+              {sidebarItems.map((item) => (
+                <Button
+                  key={item.id}
+                  variant={activeTab === item.id ? "default" : "ghost"}
+                  className="w-full justify-start relative"
+                  onClick={() => {
+                    if (item.link) {
+                      router.push(item.link);
+                    } else {
+                      setActiveTab(item.id);
+                    }
+                  }}
+                >
+                  <item.icon className="mr-2 h-4 w-4" />
+                  {item.label}
+                  {item.id === "messages" && unreadCount > 0 && (
+                    <span className="absolute right-2 top-1/2 -translate-y-1/2 bg-red-500 text-white text-xs font-bold rounded-full h-5 min-w-[20px] flex items-center justify-center px-1">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
+                </Button>
+              ))}
+            
             <div className="pt-6 mt-4 border-t">
               <Button 
                 variant="ghost" 
@@ -412,17 +508,17 @@ export default function Dashboard() {
                   <CardContent className="p-4">
                     <div className="flex justify-between items-center">
                       <div>
-                        <p className="text-sm text-muted-foreground">Pitch Views</p>
-                        <h3 className="text-2xl font-bold mt-1">47</h3>
+                        <p className="text-sm text-muted-foreground">Pitches Submitted</p>
+                        <h3 className="text-2xl font-bold mt-1">{stats.pitchesSubmitted}</h3>
                       </div>
                       <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center">
-                        <Eye className="h-5 w-5 text-primary" />
+                        <Play className="h-5 w-5 text-primary" />
                       </div>
                     </div>
                     <div className="mt-2">
                       <div className="flex items-center text-xs text-green-600">
                         <TrendingUp className="h-3 w-3 mr-1" />
-                        <span>+12% from last week</span>
+                        <span>Total submissions</span>
                       </div>
                     </div>
                   </CardContent>
@@ -432,17 +528,17 @@ export default function Dashboard() {
                   <CardContent className="p-4">
                     <div className="flex justify-between items-center">
                       <div>
-                        <p className="text-sm text-muted-foreground">Investor Interest</p>
-                        <h3 className="text-2xl font-bold mt-1">8</h3>
+                        <p className="text-sm text-muted-foreground">Pitches Approved</p>
+                        <h3 className="text-2xl font-bold mt-1">{stats.pitchesApproved}</h3>
                       </div>
                       <div className="h-12 w-12 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center">
-                        <Users className="h-5 w-5 text-green-600 dark:text-green-500" />
+                        <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-500" />
                       </div>
                     </div>
                     <div className="mt-2">
                       <div className="flex items-center text-xs text-green-600">
                         <TrendingUp className="h-3 w-3 mr-1" />
-                        <span>+3 this week</span>
+                        <span>Approved by platform</span>
                       </div>
                     </div>
                   </CardContent>
@@ -452,8 +548,8 @@ export default function Dashboard() {
                   <CardContent className="p-4">
                     <div className="flex justify-between items-center">
                       <div>
-                        <p className="text-sm text-muted-foreground">Messages</p>
-                        <h3 className="text-2xl font-bold mt-1">5</h3>
+                        <p className="text-sm text-muted-foreground">Unread Messages</p>
+                        <h3 className="text-2xl font-bold mt-1">{stats.unreadMessages}</h3>
                       </div>
                       <div className="h-12 w-12 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
                         <MessageCircle className="h-5 w-5 text-blue-600 dark:text-blue-500" />
@@ -461,113 +557,12 @@ export default function Dashboard() {
                     </div>
                     <div className="mt-2">
                       <div className="flex items-center text-xs text-amber-600">
-                        <span>2 unread messages</span>
+                        <span>From investors</span>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
               </div>
-
-              {/* Pitch Score Card */}
-              <Card className="shadow-sm">
-                <CardHeader className="pb-3">
-                  <CardTitle>Pitch Performance Score</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">Overall Score</span>
-                        <span className="text-sm font-medium">8.7/10</span>
-                      </div>
-                      <Progress value={87} className="h-2" />
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm">Clarity</span>
-                          <span className="text-sm font-medium">8.9/10</span>
-                        </div>
-                        <Progress value={89} className="h-1.5" />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm">Uniqueness</span>
-                          <span className="text-sm font-medium">9.1/10</span>
-                        </div>
-                        <Progress value={91} className="h-1.5" />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm">Market Fit</span>
-                          <span className="text-sm font-medium">8.5/10</span>
-                        </div>
-                        <Progress value={85} className="h-1.5" />
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              {/* Recent Activity */}
-              <Card className="shadow-sm">
-                <CardHeader className="pb-3">
-                  <CardTitle>Recent Activity</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {[
-                      {
-                        type: "view",
-                        entity: "Sequoia Capital",
-                        time: "2 hours ago",
-                        message: "viewed your pitch",
-                        icon: Eye,
-                      },
-                      {
-                        type: "message",
-                        entity: "Accel Partners",
-                        time: "5 hours ago",
-                        message: "sent you a message",
-                        icon: MessageCircle,
-                      },
-                      {
-                        type: "feedback",
-                        entity: "Community Member",
-                        time: "1 day ago",
-                        message: "left feedback on your pitch",
-                        icon: ThumbsUp,
-                      },
-                      {
-                        type: "view",
-                        entity: "Andreessen Horowitz",
-                        time: "2 days ago",
-                        message: "viewed your pitch",
-                        icon: Eye,
-                      },
-                    ].map((activity, index) => (
-                      <div key={index} className="flex items-start space-x-3 py-2">
-                        <div className={`mt-0.5 rounded-full p-1.5 ${
-                          activity.type === "view" ? "bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:text-blue-500" :
-                          activity.type === "message" ? "bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-500" :
-                          "bg-amber-100 text-amber-600 dark:bg-amber-900/20 dark:text-amber-500"
-                        }`}>
-                          <activity.icon className="h-4 w-4" />
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-sm font-medium">
-                            {activity.entity} {activity.message}
-                          </p>
-                          <p className="text-xs text-muted-foreground">{activity.time}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
 
               {/* Quick Actions */}
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
@@ -668,36 +663,39 @@ export default function Dashboard() {
                           </div>
 
                           <div className="space-y-3">
-                            <div>
-                              <h3 className="font-semibold">AI Evaluation Summary</h3>
-                              <div className="space-y-2 mt-1">
-                                <div className="flex justify-between items-center">
-                                  <span className="text-sm">Clarity</span>
-                                  <div className="flex items-center space-x-2">
-                                    <Progress value={89} className="w-20" />
-                                    <span className="text-sm font-medium">8.9/10</span>
-                                  </div>
+                            <h3 className="font-semibold">Admin Evaluation Score</h3>
+                            <div className="p-6 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20">
+                              <div className="flex flex-col items-center space-y-3">
+                                <div className="text-6xl font-bold text-primary">
+                                  {pitch.pitchScore || 'N/A'}
+                                  <span className="text-2xl text-muted-foreground">/10</span>
                                 </div>
-
-                                <div className="flex justify-between items-center">
-                                  <span className="text-sm">Uniqueness</span>
-                                  <div className="flex items-center space-x-2">
-                                    <Progress value={91} className="w-20" />
-                                    <span className="text-sm font-medium">9.1/10</span>
+                                <p className="text-sm text-center text-muted-foreground">
+                                  {pitch.pitchScore 
+                                    ? `Your pitch scored ${pitch.pitchScore} out of 10 by our admin team`
+                                    : 'Score pending evaluation'}
+                                </p>
+                                {pitch.pitchScore && (
+                                  <div className="w-full mt-2">
+                                    <Progress 
+                                      value={pitch.pitchScore * 10} 
+                                      className="h-3"
+                                    />
                                   </div>
-                                </div>
-
-                                <div className="flex justify-between items-center">
-                                  <span className="text-sm">Market Fit</span>
-                                  <div className="flex items-center space-x-2">
-                                    <Progress value={85} className="w-20" />
-                                    <span className="text-sm font-medium">8.5/10</span>
-                                  </div>
-                                </div>
+                                )}
                               </div>
                             </div>
-
-                            <Button className="w-full">View Full Report</Button>
+                            
+                            {pitch.pitchScore && (
+                              <div className="mt-4 p-4 rounded-lg bg-muted/30">
+                                <p className="text-xs font-semibold mb-2">Score Interpretation:</p>
+                                <ul className="text-xs space-y-1 text-muted-foreground">
+                                  {pitch.pitchScore >= 8 && <li>• Excellent pitch with strong potential</li>}
+                                  {pitch.pitchScore >= 6 && pitch.pitchScore < 8 && <li>• Good pitch with room for improvement</li>}
+                                  {pitch.pitchScore < 6 && <li>• Needs significant improvement</li>}
+                                </ul>
+                              </div>
+                            )}
                           </div>
                         </div>
 
@@ -730,178 +728,12 @@ export default function Dashboard() {
                         </div>
                       </CardContent>
                     </Card>
-
-                    {/* Community Feedback */}
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center space-x-2">
-                          <MessageCircle className="h-5 w-5" />
-                          <span>Community Feedback</span>
-                        </CardTitle>
-                      </CardHeader>
-
-                      <CardContent className="space-y-4">
-                        {communityFeedback.map((feedback) => (
-                          <div key={feedback.id} className="flex flex-col space-y-2">
-                            <div className="flex space-x-3 p-4 rounded-lg bg-muted/30">
-                              <Avatar className="h-8 w-8">
-                                <AvatarFallback className="text-xs">
-                                  {feedback.avatar}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div className="flex-1 space-y-2">
-                                <div className="flex items-center justify-between">
-                                  <span className="font-medium text-sm">{feedback.user}</span>
-                                  <Badge
-                                    variant={
-                                      feedback.type === "positive" ? "default" : "secondary"
-                                    }
-                                    className="text-xs"
-                                  >
-                                    {feedback.type}
-                                  </Badge>
-                                </div>
-                                <p className="text-sm text-muted-foreground">
-                                  {feedback.comment}
-                                </p>
-                                <div className="flex items-center space-x-2">
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-6 px-2"
-                                    onClick={() => handleLike(feedback.id)}
-                                  >
-                                    <ThumbsUp className="h-3 w-3 mr-1" />
-                                    {feedback.likes}
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-6 px-2"
-                                    onClick={() => handleReply(feedback.id)}
-                                  >
-                                    <MessageCircle className="h-3 w-3 mr-1" />
-                                    Reply
-                                  </Button>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Replies section */}
-                            {feedback.replies && feedback.replies.length > 0 && (
-                              <div className="pl-11">
-                                {feedback.replies.map((reply) => (
-                                  <div
-                                    key={reply.id}
-                                    className="flex items-start space-x-3 p-3 rounded-lg bg-muted/20 mb-2"
-                                  >
-                                    <Avatar className="h-7 w-7">
-                                      <AvatarFallback className="text-xs">
-                                        {reply.avatar}
-                                      </AvatarFallback>
-                                    </Avatar>
-                                    <div className="flex-1">
-                                      <div className="flex items-center justify-between">
-                                        <span className="font-medium text-sm">
-                                          {reply.user}
-                                        </span>
-                                        <span className="text-xs text-muted-foreground">
-                                          {reply.timestamp}
-                                        </span>
-                                      </div>
-                                      <p className="text-sm text-muted-foreground mt-1">
-                                        {reply.comment}
-                                      </p>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-
-                            {/* Reply form */}
-                            {replyingTo === feedback.id && (
-                              <div className="pl-11 pt-1">
-                                <Textarea
-                                  value={replyText}
-                                  onChange={(e) => setReplyText(e.target.value)}
-                                  placeholder="Write your reply..."
-                                  className="resize-none min-h-[80px]"
-                                />
-                                <div className="flex space-x-2 mt-2">
-                                  <Button
-                                    onClick={submitReply}
-                                    className="flex-1"
-                                    disabled={!replyText.trim()}
-                                  >
-                                    Post Reply
-                                  </Button>
-                                  <Button
-                                    onClick={cancelReply}
-                                    variant="outline"
-                                    className="flex-1"
-                                  >
-                                    Cancel
-                                  </Button>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </CardContent>
-                    </Card>
                   </React.Fragment>
                 ))
               )}
-              {/* Investor Views */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Eye className="h-5 w-5" />
-                    <span>Investor Interest</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div className="text-center p-6 bg-muted/30 rounded-lg">
-                      <div className="text-3xl font-bold text-primary">47</div>
-                      <p className="text-sm text-muted-foreground">Total Views</p>
-                    </div>
-                    <div className="text-center p-6 bg-muted/30 rounded-lg">
-                      <div className="text-3xl font-bold text-green-600">8</div>
-                      <p className="text-sm text-muted-foreground">Interested Investors</p>
-                    </div>
-                  </div>
-
-                  <div className="mt-6 space-y-3">
-                    <h4 className="font-semibold">Recent Investor Activity</h4>
-                    {[
-                      { name: "Sequoia Capital", interest: "High", status: "Pending" },
-                      { name: "Andreessen Horowitz", interest: "Moderate", status: "Viewed" },
-                      { name: "Accel Partners", interest: "High", status: "Message Sent" },
-                    ].map((investor, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div>
-                          <p className="font-medium">{investor.name}</p>
-                          <p className="text-sm text-muted-foreground">Interest: {investor.interest}</p>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Badge variant={investor.status === "Message Sent" ? "default" : "secondary"}>
-                            {investor.status}
-                          </Badge>
-                          {investor.status === "Message Sent" && <Button size="sm">Reply</Button>}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
 
               {/* Call to Action */}
               <div className="flex space-x-4">
-                <Button variant="outline" className="flex-1 bg-transparent">
-                  <TrendingUp className="mr-2 h-4 w-4" />
-                  Improve Pitch
-                </Button>
                 <Button 
                   className="flex-1"
                   onClick={() => router.push('/submit')}
@@ -922,29 +754,184 @@ export default function Dashboard() {
 
               {/* Analytics Overview */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Pitch Views Chart */}
                 <Card className="shadow-sm">
                   <CardHeader>
-                    <CardTitle>Pitch Views Over Time</CardTitle>
+                    <CardTitle className="flex items-center justify-between">
+                      <span>Pitch Views Over Time</span>
+                      <TrendingUp className="h-5 w-5 text-primary" />
+                    </CardTitle>
                   </CardHeader>
-                  <CardContent className="h-64 relative">
-                    <img 
-                      src="/pitch_views_over_time.png" 
-                      alt="Line graph showing pitch views over time increasing from 120 to over 550 views" 
-                      className="w-full h-full object-contain"
-                    />
+                  <CardContent className="h-64">
+                    <div className="w-full h-full relative">
+                      <svg viewBox="0 0 400 200" className="w-full h-full">
+                        {/* Grid lines */}
+                        <line x1="40" y1="20" x2="40" y2="180" stroke="currentColor" strokeWidth="1" className="text-muted-foreground/20" />
+                        <line x1="40" y1="180" x2="380" y2="180" stroke="currentColor" strokeWidth="1" className="text-muted-foreground/20" />
+                        
+                        {/* Y-axis labels */}
+                        <text x="30" y="25" fontSize="10" fill="currentColor" className="text-muted-foreground" textAnchor="end">550</text>
+                        <text x="30" y="70" fontSize="10" fill="currentColor" className="text-muted-foreground" textAnchor="end">450</text>
+                        <text x="30" y="115" fontSize="10" fill="currentColor" className="text-muted-foreground" textAnchor="end">300</text>
+                        <text x="30" y="160" fontSize="10" fill="currentColor" className="text-muted-foreground" textAnchor="end">150</text>
+                        
+                        {/* X-axis labels */}
+                        <text x="60" y="195" fontSize="9" fill="currentColor" className="text-muted-foreground">Sept 10</text>
+                        <text x="120" y="195" fontSize="9" fill="currentColor" className="text-muted-foreground">Sept 20</text>
+                        <text x="180" y="195" fontSize="9" fill="currentColor" className="text-muted-foreground">Sept 30</text>
+                        <text x="240" y="195" fontSize="9" fill="currentColor" className="text-muted-foreground">Oct 10</text>
+                        <text x="300" y="195" fontSize="9" fill="currentColor" className="text-muted-foreground">Oct 20</text>
+                        
+                        {/* Animated line path */}
+                        <path
+                          d="M 50,165 L 80,158 L 110,160 L 140,148 L 170,142 L 200,136 L 230,120 L 260,110 L 290,90 L 320,68 L 350,50 L 370,25"
+                          fill="none"
+                          stroke="url(#gradient)"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="animate-draw-line"
+                          style={{
+                            strokeDasharray: 1000,
+                            strokeDashoffset: 1000,
+                            animation: 'drawLine 2s ease-out forwards'
+                          }}
+                        />
+                        
+                        {/* Gradient definition */}
+                        <defs>
+                          <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stopColor="#3b82f6" />
+                            <stop offset="100%" stopColor="#8b5cf6" />
+                          </linearGradient>
+                          
+                          <filter id="glow">
+                            <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                            <feMerge>
+                              <feMergeNode in="coloredBlur"/>
+                              <feMergeNode in="SourceGraphic"/>
+                            </feMerge>
+                          </filter>
+                        </defs>
+                        
+                        {/* Animated data points */}
+                        {[
+                          {x: 50, y: 165, delay: 0},
+                          {x: 80, y: 158, delay: 0.2},
+                          {x: 110, y: 160, delay: 0.4},
+                          {x: 140, y: 148, delay: 0.6},
+                          {x: 170, y: 142, delay: 0.8},
+                          {x: 200, y: 136, delay: 1},
+                          {x: 230, y: 120, delay: 1.2},
+                          {x: 260, y: 110, delay: 1.4},
+                          {x: 290, y: 90, delay: 1.6},
+                          {x: 320, y: 68, delay: 1.8},
+                          {x: 350, y: 50, delay: 2},
+                          {x: 370, y: 25, delay: 2.2}
+                        ].map((point, i) => (
+                          <circle
+                            key={i}
+                            cx={point.x}
+                            cy={point.y}
+                            r="4"
+                            fill="#3b82f6"
+                            filter="url(#glow)"
+                            className="animate-fade-in"
+                            style={{
+                              opacity: 0,
+                              animation: `fadeIn 0.5s ease-out ${point.delay}s forwards`
+                            }}
+                          />
+                        ))}
+                      </svg>
+                      
+                      <style jsx>{`
+                        @keyframes drawLine {
+                          to {
+                            stroke-dashoffset: 0;
+                          }
+                        }
+                        
+                        @keyframes fadeIn {
+                          to {
+                            opacity: 1;
+                          }
+                        }
+                      `}</style>
+                    </div>
                   </CardContent>
                 </Card>
 
+                {/* Investor Demographics Chart */}
                 <Card className="shadow-sm">
                   <CardHeader>
-                    <CardTitle>Investor Demographics</CardTitle>
+                    <CardTitle className="flex items-center justify-between">
+                      <span>Investor Demographics</span>
+                      <Users className="h-5 w-5 text-primary" />
+                    </CardTitle>
                   </CardHeader>
-                  <CardContent className="h-64 relative">
-                    <img 
-                      src="/investor_demographics.png" 
-                      alt="Bar chart showing investor demographics: VC Firms 35%, Angel Investors 25%, Corporate Investors 20%, Accelerators 10%, Crowdfunders 10%" 
-                      className="w-full h-full object-contain"
-                    />
+                  <CardContent className="h-64">
+                    <div className="w-full h-full flex flex-col justify-around py-2">
+                      {[
+                        {label: 'VC Firms', percentage: 35, color: 'bg-gradient-to-r from-blue-500 to-blue-600', delay: 0},
+                        {label: 'Angel Investors', percentage: 25, color: 'bg-gradient-to-r from-purple-500 to-purple-600', delay: 0.2},
+                        {label: 'Corporate Investors', percentage: 20, color: 'bg-gradient-to-r from-pink-500 to-pink-600', delay: 0.4},
+                        {label: 'Accelerators', percentage: 10, color: 'bg-gradient-to-r from-orange-500 to-orange-600', delay: 0.6},
+                        {label: 'Crowdfunders', percentage: 10, color: 'bg-gradient-to-r from-green-500 to-green-600', delay: 0.8}
+                      ].map((item, i) => (
+                        <div key={i} className="space-y-1">
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="font-medium">{item.label}</span>
+                            <span className="text-muted-foreground font-semibold">{item.percentage}%</span>
+                          </div>
+                          <div className="relative h-8 bg-muted rounded-lg overflow-hidden">
+                            <div 
+                              className={`h-full ${item.color} rounded-lg transition-all duration-1000 ease-out flex items-center justify-end pr-3`}
+                              style={{
+                                width: '0%',
+                                animation: `expandBar 1s ease-out ${item.delay}s forwards`
+                              }}
+                            >
+                              <span className="text-white text-xs font-bold opacity-0" style={{
+                                animation: `fadeIn 0.5s ease-out ${item.delay + 0.8}s forwards`
+                              }}>
+                                {item.percentage}%
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      
+                      <style jsx>{`
+                        @keyframes expandBar {
+                          to {
+                            width: ${35}%;
+                          }
+                        }
+                        
+                        div:nth-child(1) .${''} {
+                          animation: expandBar-35 1s ease-out 0s forwards;
+                        }
+                        div:nth-child(2) .${''} {
+                          animation: expandBar-25 1s ease-out 0.2s forwards;
+                        }
+                        div:nth-child(3) .${''} {
+                          animation: expandBar-20 1s ease-out 0.4s forwards;
+                        }
+                        div:nth-child(4) .${''} {
+                          animation: expandBar-10 1s ease-out 0.6s forwards;
+                        }
+                        div:nth-child(5) .${''} {
+                          animation: expandBar-10-2 1s ease-out 0.8s forwards;
+                        }
+                        
+                        @keyframes expandBar-35 { to { width: 35%; } }
+                        @keyframes expandBar-25 { to { width: 25%; } }
+                        @keyframes expandBar-20 { to { width: 20%; } }
+                        @keyframes expandBar-10 { to { width: 10%; } }
+                        @keyframes expandBar-10-2 { to { width: 10%; } }
+                      `}</style>
+                    </div>
                   </CardContent>
                 </Card>
               </div>
@@ -952,11 +939,14 @@ export default function Dashboard() {
               {/* Feedback Analysis */}
               <Card className="shadow-sm">
                 <CardHeader>
-                  <CardTitle>AI-Generated Feedback Analysis</CardTitle>
+                  <CardTitle>Admin Evaluation Feedback</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="p-4 rounded-lg bg-muted/30">
-                    <h4 className="font-semibold mb-2">Key Strengths</h4>
+                  <div className="p-4 rounded-lg bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/10 dark:to-emerald-900/10 border border-green-200 dark:border-green-800">
+                    <h4 className="font-semibold mb-2 flex items-center text-green-700 dark:text-green-400">
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Key Strengths
+                    </h4>
                     <ul className="list-disc pl-5 space-y-1">
                       <li className="text-sm">Clear value proposition for target market</li>
                       <li className="text-sm">Strong technical demonstration with practical use cases</li>
@@ -964,18 +954,17 @@ export default function Dashboard() {
                     </ul>
                   </div>
 
-                  <div className="p-4 rounded-lg bg-muted/30">
-                    <h4 className="font-semibold mb-2">Areas for Improvement</h4>
+                  <div className="p-4 rounded-lg bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/10 dark:to-orange-900/10 border border-amber-200 dark:border-amber-800">
+                    <h4 className="font-semibold mb-2 flex items-center text-amber-700 dark:text-amber-400">
+                      <TrendingUp className="h-4 w-4 mr-2" />
+                      Areas for Improvement
+                    </h4>
                     <ul className="list-disc pl-5 space-y-1">
                       <li className="text-sm">Consider elaborating more on go-to-market strategy</li>
                       <li className="text-sm">Add more specific details about revenue projections</li>
                       <li className="text-sm">Provide clearer explanation of technical scalability</li>
                     </ul>
                   </div>
-
-                  <Button className="w-full md:w-auto">
-                    Generate Detailed Report
-                  </Button>
                 </CardContent>
               </Card>
 
@@ -986,121 +975,260 @@ export default function Dashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-1">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm font-medium">Positive Sentiment</span>
-                          <Badge className="bg-green-100 text-green-700 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-500">76%</Badge>
+                    {[
+                      {label: 'Positive Sentiment', value: 76, color: 'bg-green-600', badgeColor: 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-500', delay: 0},
+                      {label: 'Neutral Sentiment', value: 18, color: 'bg-gray-400', badgeColor: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400', delay: 0.3},
+                      {label: 'Areas for Improvement', value: 6, color: 'bg-red-500', badgeColor: 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-500', delay: 0.6}
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-center justify-between">
+                        <div className="space-y-1 flex-1">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-sm font-medium">{item.label}</span>
+                            <Badge className={`${item.badgeColor} hover:${item.badgeColor}`}>{item.value}%</Badge>
+                          </div>
+                          <div className="relative h-2 bg-muted rounded-full overflow-hidden">
+                            <div 
+                              className={`h-full ${item.color} rounded-full transition-all duration-1000 ease-out`}
+                              style={{
+                                width: '0%',
+                                animation: `expandProgress-${item.value} 1.5s ease-out ${item.delay}s forwards`
+                              }}
+                            />
+                          </div>
                         </div>
-                        <Progress value={76} className="h-2 bg-muted [&>div]:bg-green-600" />
                       </div>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-1">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm font-medium">Neutral Sentiment</span>
-                          <Badge variant="outline">18%</Badge>
-                        </div>
-                        <Progress value={18} className="h-2 bg-muted [&>div]:bg-gray-400" />
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-1">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm font-medium">Areas for Improvement</span>
-                          <Badge variant="destructive">6%</Badge>
-                        </div>
-                        <Progress value={6} className="h-2 bg-muted [&>div]:bg-red-500" />
-                      </div>
-                    </div>
+                    ))}
+                    
+                    <style jsx>{`
+                      @keyframes expandProgress-76 { to { width: 76%; } }
+                      @keyframes expandProgress-18 { to { width: 18%; } }
+                      @keyframes expandProgress-6 { to { width: 6%; } }
+                    `}</style>
                   </div>
                 </CardContent>
               </Card>
             </div>
           )}
-
           {/* Messages Tab */}
           {activeTab === "messages" && (
-            <div className="space-y-4 max-w-5xl mx-auto">
-              <div className="mb-3 mt-0">
-                <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Investor Messages</h1>
-                <p className="text-muted-foreground">Communicate with interested investors</p>
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-2xl font-bold">Messages</h2>
+                <p className="text-muted-foreground">Connect with interested investors</p>
               </div>
 
-              {/* Messages List */}
-              <Card className="shadow-sm">
-                <CardHeader className="pb-3">
-                  <CardTitle>Inbox (5)</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {[
-                      {
-                        investor: "Sequoia Capital",
-                        avatar: "SC",
-                        message: "We'd like to schedule a call to discuss your pitch in more detail.",
-                        time: "2 hours ago",
-                        unread: true,
-                      },
-                      {
-                        investor: "Accel Partners",
-                        avatar: "AP",
-                        message: "Your AI-powered solution seems interesting. Can you share more information about your tech stack?",
-                        time: "5 hours ago",
-                        unread: true,
-                      },
-                      {
-                        investor: "Andreessen Horowitz",
-                        avatar: "AH",
-                        message: "We're interested in learning more about your customer acquisition strategy and current traction.",
-                        time: "Yesterday",
-                        unread: false,
-                      },
-                      {
-                        investor: "Y Combinator",
-                        avatar: "YC",
-                        message: "Thanks for your detailed response. Let's set up a meeting next week.",
-                        time: "2 days ago",
-                        unread: false,
-                      },
-                      {
-                        investor: "Kleiner Perkins",
-                        avatar: "KP",
-                        message: "Your approach to solving this problem is unique. We'd like to discuss potential market sizes.",
-                        time: "3 days ago",
-                        unread: false,
-                      },
-                    ].map((message, index) => (
-                      <div 
-                        key={index} 
-                        className={`p-3 rounded-lg flex items-start space-x-3 cursor-pointer transition-colors ${
-                          message.unread 
-                            ? "bg-blue-50 dark:bg-blue-900/10 hover:bg-blue-100 dark:hover:bg-blue-900/20" 
-                            : "hover:bg-muted/50"
-                        }`}
-                      >
-                        <Avatar className="h-10 w-10 mt-0.5">
-                          <AvatarFallback className="text-xs">{message.avatar}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <h4 className={`font-medium text-sm ${message.unread ? "text-blue-700 dark:text-blue-400" : ""}`}>
-                              {message.investor}
-                              {message.unread && <span className="ml-2 h-2 w-2 bg-blue-600 rounded-full inline-block"></span>}
-                            </h4>
-                            <span className="text-xs text-muted-foreground">{message.time}</span>
-                          </div>
-                          <p className={`text-sm mt-1 ${message.unread ? "font-medium" : "text-muted-foreground"}`}>
-                            {message.message}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 h-[650px]">
+                {/* Conversations List - Left Sidebar */}
+                <Card className="md:col-span-1 overflow-hidden flex flex-col">
+                  <CardHeader className="pb-4 border-b">
+                    <h3 className="font-semibold text-lg">Inbox</h3>
+                  </CardHeader>
+                  <CardContent className="flex-1 overflow-y-auto p-0">
+                    {isLoadingConversations ? (
+                      <div className="p-4 text-center text-sm text-muted-foreground">Loading...</div>
+                    ) : conversations.length === 0 ? (
+                      <div className="p-6 text-center space-y-3">
+                        <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto opacity-50" />
+                        <div>
+                          <h4 className="text-sm font-semibold mb-1">No conversations yet</h4>
+                          <p className="text-xs text-muted-foreground">
+                            Wait for investors to reach out
                           </p>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+                    ) : (
+                      <div className="divide-y">
+                        {conversations.map((conv) => (
+                          <button
+                            key={conv.conversationId}
+                            onClick={() => {
+                              setSelectedConversation(conv)
+                              fetchConversationMessages(conv.conversationId)
+                            }}
+                            className={`w-full text-left p-4 hover:bg-muted/50 transition-colors border-l-4 ${
+                              selectedConversation?.conversationId === conv.conversationId
+                                ? 'border-primary bg-muted/30'
+                                : 'border-transparent hover:border-muted'
+                            }`}
+                          >
+                            <div className="space-y-1">
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2">
+                                    <p className="font-semibold text-sm">
+                                      {conv.otherUser.name}
+                                    </p>
+                                    {conv.unreadCount > 0 && (
+                                      <span className="h-2 w-2 bg-blue-600 rounded-full"></span>
+                                    )}
+                                  </div>
+                                  {/* Don't show company for investors - they are individuals */}
+                                  {conv.otherUser.role === 'investor' && (
+                                    <p className="text-xs text-muted-foreground">
+                                      Investor
+                                    </p>
+                                  )}
+                                </div>
+                                {conv.unreadCount > 0 && (
+                                  <Badge className="h-5 px-2 text-xs">
+                                    {conv.unreadCount}
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-xs text-muted-foreground truncate line-clamp-2 mt-1">
+                                {conv.lastMessage}
+                              </p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Messages Detail Area - Right Side */}
+                {selectedConversation ? (
+                  <Card className="md:col-span-3 overflow-hidden flex flex-col border-l">
+                    {/* Header */}
+                    <CardHeader className="pb-4 border-b bg-muted/30">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-semibold text-base">
+                            {selectedConversation.otherUser.name}
+                          </h3>
+                          {/* Show "Investor" label instead of company */}
+                          {selectedConversation.otherUser.role === 'investor' && (
+                            <p className="text-xs text-muted-foreground">
+                              Investor
+                            </p>
+                          )}
+                        </div>
+                        <Avatar className="h-10 w-10">
+                          <AvatarFallback className="text-xs">
+                            {selectedConversation.otherUser.name
+                              ?.split(' ')
+                              .map((n: string) => n[0])
+                              .join('')}
+                          </AvatarFallback>
+                        </Avatar>
+                      </div>
+                    </CardHeader>
+
+                    {/* Messages Container */}
+                    <CardContent className="flex-1 overflow-y-auto p-6 space-y-4 bg-background">
+                      {isLoadingMessages ? (
+                        <div className="text-center text-sm text-muted-foreground">
+                          Loading messages...
+                        </div>
+                      ) : conversationMessages.length === 0 ? (
+                        <div className="h-full flex items-center justify-center">
+                          <div className="text-center">
+                            <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-3 opacity-50" />
+                            <p className="text-sm text-muted-foreground">
+                              No messages yet. Start the conversation!
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        conversationMessages.map((msg) => (
+                          <div
+                            key={msg._id}
+                            className={`flex ${
+                              msg.senderRole === 'entrepreneur'
+                                ? 'justify-end'
+                                : 'justify-start'
+                            }`}
+                          >
+                            {msg.senderRole === 'entrepreneur' ? (
+                              // Entrepreneur's message (can delete)
+                              <div className="flex items-start gap-2 group">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity self-end mb-1"
+                                  onClick={async () => {
+                                    try {
+                                      const res = await fetch(`/api/messages?messageId=${msg._id}`, {
+                                        method: 'DELETE'
+                                      })
+                                      if (res.ok) {
+                                        setConversationMessages(prev => prev.filter(m => m._id !== msg._id))
+                                      }
+                                    } catch (error) {
+                                      console.error('Failed to delete message:', error)
+                                    }
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                                </Button>
+                                <div className="max-w-xs lg:max-w-md px-4 py-2 rounded-2xl bg-primary text-primary-foreground rounded-br-none">
+                                  <p className="text-sm">{msg.content}</p>
+                                  <p className="text-xs mt-1 opacity-70">
+                                    {new Date(msg.createdAt).toLocaleTimeString([], {
+                                      hour: '2-digit',
+                                      minute: '2-digit'
+                                    })}
+                                  </p>
+                                </div>
+                              </div>
+                            ) : (
+                              // Investor's message (cannot delete)
+                              <div className="max-w-xs lg:max-w-md px-4 py-2 rounded-2xl bg-muted rounded-bl-none">
+                                <p className="text-sm">{msg.content}</p>
+                                <p className="text-xs mt-1 text-muted-foreground">
+                                  {new Date(msg.createdAt).toLocaleTimeString([], {
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        ))
+                      )}
+                    </CardContent>
+
+                    {/* Message Input */}
+                    <div className="border-t p-4 bg-muted/20 space-y-2">
+                      <div className="flex space-x-2">
+                        <Textarea
+                          placeholder="Type your reply..."
+                          value={messageInput}
+                          onChange={(e) => setMessageInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault()
+                              handleSendMessageInConversation()
+                            }
+                          }}
+                          className="min-h-[44px] max-h-[120px] resize-none"
+                        />
+                        <Button
+                          onClick={handleSendMessageInConversation}
+                          disabled={isSendingInConversation || !messageInput.trim()}
+                          className="self-end"
+                          size="sm"
+                        >
+                          {isSendingInConversation ? '...' : 'Send'}
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Press Shift + Enter for new line
+                      </p>
+                    </div>
+                  </Card>
+                ) : (
+                  <Card className="md:col-span-3 flex items-center justify-center border-l bg-gradient-to-br from-muted/30 to-muted/10">
+                    <CardContent className="text-center">
+                      <MessageSquare className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-40" />
+                      <h3 className="text-lg font-semibold mb-2">Select a conversation</h3>
+                      <p className="text-muted-foreground mb-4 max-w-xs">
+                        Choose a conversation from your inbox to start chatting
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
             </div>
           )}
 
@@ -1199,14 +1327,6 @@ export default function Dashboard() {
                                 className="w-full p-2 rounded-md border" 
                                 value={editedProfile?.email || ''}
                                 onChange={(e) => setEditedProfile(prev => prev ? ({ ...prev, email: e.target.value }) : null)}
-                              />
-
-                              <input 
-                                type="text" 
-                                id="company" 
-                                className="w-full p-2 rounded-md border" 
-                                value={editedProfile?.company || ''}
-                                onChange={(e) => setEditedProfile(prev => prev ? ({ ...prev, company: e.target.value }) : null)}
                               />
                             </div>
                           </div>

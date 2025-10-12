@@ -29,13 +29,14 @@ export default function AdminVerificationPage() {
     setLoading(false)
   }
 
-  const handleApprove = async (id: string) => {
+  const handleApprove = async (id: string, pitchScore: number) => {
     const res = await fetch(`/api/verification-requests/${id}/approve`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pitchScore })
     })
     if (res.ok) {
-      setNotification({ type: 'success', message: 'Request approved successfully!' })
+      setNotification({ type: 'success', message: `Request approved with score ${pitchScore}/10!` })
       fetchRequests()
       setSelectedRequest(null)
       setTimeout(() => setNotification(null), 3000)
@@ -516,19 +517,46 @@ export default function AdminVerificationPage() {
       <Dialog open={!!selectedRequest && showApproveDialog} onOpenChange={setShowApproveDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirm Approval</DialogTitle>
+            <DialogTitle>Approve Verification Request</DialogTitle>
           </DialogHeader>
-          <p className="text-gray-400">Are you sure you want to approve this verification request?</p>
-          <div className="flex gap-2 mt-4">
-            <Button variant="outline" className="flex-1" onClick={() => setShowApproveDialog(false)}>
-              Cancel
-            </Button>
-            <Button className="flex-1 bg-green-600 hover:bg-green-700" onClick={() => {
-              selectedRequest && handleApprove(selectedRequest._id)
-              setShowApproveDialog(false)
-            }}>
-              Confirm Approval
-            </Button>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Pitch Score (1-10)</label>
+              <div className="flex items-center gap-2">
+                <input 
+                  type="number" 
+                  min="1" 
+                  max="10" 
+                  step="0.1"
+                  defaultValue="7"
+                  id="pitchScoreInput"
+                  className="flex-1 px-3 py-2 border rounded-md"
+                  placeholder="Enter score"
+                />
+                <span className="text-sm text-muted-foreground">/10</span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">This score will be visible to investors in search filters</p>
+            </div>
+            <div className="flex gap-2 mt-4">
+              <Button variant="outline" className="flex-1" onClick={() => setShowApproveDialog(false)}>
+                Cancel
+              </Button>
+              <Button className="flex-1 bg-green-600 hover:bg-green-700" onClick={() => {
+                const scoreInput = document.getElementById('pitchScoreInput') as HTMLInputElement
+                const score = parseFloat(scoreInput?.value || '7')
+                
+                if (score < 1 || score > 10) {
+                  setNotification({ type: 'error', message: 'Score must be between 1 and 10' })
+                  setTimeout(() => setNotification(null), 3000)
+                  return
+                }
+                
+                selectedRequest && handleApprove(selectedRequest._id, score)
+                setShowApproveDialog(false)
+              }}>
+                Confirm Approval
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

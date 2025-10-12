@@ -28,78 +28,103 @@ export async function GET(request: NextRequest) {
 
     await connectDB()
 
+     if (type === 'unread-count') {
+    const unreadConversations = await Message.aggregate([
+      {
+        $match: {
+          recipientId: new mongoose.Types.ObjectId(sessionData.userId),
+          isRead: false
+        }
+      },
+      {
+        $group: {
+          _id: '$conversationId'
+        }
+      },
+      {
+        $count: 'total'
+      }
+    ])
+
+    const unreadCount = unreadConversations.length > 0 ? unreadConversations[0].total : 0
+
+    return NextResponse.json({
+      success: true,
+      unreadCount
+    }, { status: 200 })
+  }
+
     if (type === 'list') {
-      // Get unique conversations for this user
-      const messages = await Message.aggregate([
-        {
-          $match: {
-            $or: [
-              { senderId: new mongoose.Types.ObjectId(sessionData.userId) },
-              { recipientId: new mongoose.Types.ObjectId(sessionData.userId) }
-            ]
-          }
-        },
-        { $sort: { createdAt: -1 } },
-        {
-          $group: {
-            _id: '$conversationId',
-            lastMessage: { $first: '$content' },
-            lastMessageTime: { $first: '$createdAt' },
-            senderId: { $first: '$senderId' },
-            recipientId: { $first: '$recipientId' },
-            senderRole: { $first: '$senderRole' },
-            pitchId: { $first: '$pitchId' },
-            unreadCount: {
-              $sum: {
-                $cond: [
-                  {
-                    $and: [
-                      { $eq: ['$recipientId', new mongoose.Types.ObjectId(sessionData.userId)] },
-                      { $eq: ['$isRead', false] }
-                    ]
-                  },
-                  1,
-                  0
-                ]
-              }
+    const messages = await Message.aggregate([
+      {
+        $match: {
+          $or: [
+            { senderId: new mongoose.Types.ObjectId(sessionData.userId) },
+            { recipientId: new mongoose.Types.ObjectId(sessionData.userId) }
+          ]
+        }
+      },
+      { $sort: { createdAt: -1 } },
+      {
+        $group: {
+          _id: '$conversationId',
+          lastMessage: { $first: '$content' },
+          lastMessageTime: { $first: '$createdAt' },
+          senderId: { $first: '$senderId' },
+          recipientId: { $first: '$recipientId' },
+          senderRole: { $first: '$senderRole' },
+          pitchId: { $first: '$pitchId' },
+          unreadCount: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    { $eq: ['$recipientId', new mongoose.Types.ObjectId(sessionData.userId)] },
+                    { $eq: ['$isRead', false] }
+                  ]
+                },
+                1,
+                0
+              ]
             }
           }
-        },
-        { $sort: { lastMessageTime: -1 } }
-      ])
+        }
+      },
+      { $sort: { lastMessageTime: -1 } }
+    ])
 
-      // Populate sender/recipient details
-      const enrichedMessages = await Promise.all(
-        messages.map(async (msg) => {
-          const otherUserId = msg.senderId.toString() === sessionData.userId ? msg.recipientId : msg.senderId
-          const otherUser = await User.findById(otherUserId).select('firstName lastName email avatar')
-          const pitch = await VerificationRequest.findById(msg.pitchId).select('pitchData')
+    const enrichedMessages = await Promise.all(
+      messages.map(async (msg) => {
+        const otherUserId = msg.senderId.toString() === sessionData.userId ? msg.recipientId : msg.senderId
+        const otherUser = await User.findById(otherUserId).select('firstName lastName email avatar role company')
+        const pitch = await VerificationRequest.findById(msg.pitchId).select('pitchData')
 
-          return {
-            conversationId: msg._id,
-            otherUser: {
-              id: otherUserId,
-              name: otherUser?.firstName + ' ' + otherUser?.lastName || 'Unknown',
-              email: otherUser?.email,
-              avatar: otherUser?.avatar
-            },
-            pitch: {
-              id: msg.pitchId,
-              name: pitch?.pitchData?.startupName || 'Unnamed Pitch'
-            },
-            lastMessage: msg.lastMessage,
-            lastMessageTime: msg.lastMessageTime,
-            unreadCount: msg.unreadCount
-          }
-        })
-      )
+        return {
+          conversationId: msg._id,
+          otherUser: {
+            id: otherUserId,
+            name: otherUser?.firstName + ' ' + otherUser?.lastName || 'Unknown',
+            email: otherUser?.email,
+            avatar: otherUser?.avatar,
+            role: otherUser?.role,
+             ...(otherUser?.role === 'entrepreneur' && { company: otherUser?.company })
+          },
+          pitch: {
+            id: msg.pitchId,
+            name: pitch?.pitchData?.startupName || 'Unnamed Pitch'
+          },
+          lastMessage: msg.lastMessage,
+          lastMessageTime: msg.lastMessageTime,
+          unreadCount: msg.unreadCount
+        }
+      })
+    )
 
-      return NextResponse.json({
-        success: true,
-        conversations: enrichedMessages
-      }, { status: 200 })
-
-    } else if (type === 'detail') {
+    return NextResponse.json({
+      success: true,
+      conversations: enrichedMessages
+    }, { status: 200 })
+  } else if (type === 'detail') {
       // Get detailed conversation
       const conversationId = searchParams.get('conversationId')
       
@@ -192,6 +217,63 @@ export async function POST(request: NextRequest) {
     console.error('Error sending message:', error)
     return NextResponse.json(
       { success: false, error: 'Failed to send message' },
+      { status: 500 }
+    )
+  }
+}
+export async function DELETE(request: NextRequest) {
+  try {
+    const sessionCookie = request.cookies.get('user_session')?.value
+    
+    if (!sessionCookie) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const sessionData = JSON.parse(sessionCookie)
+    const { searchParams } = new URL(request.url)
+    const messageId = searchParams.get('messageId')
+
+    if (!messageId) {
+      return NextResponse.json(
+        { success: false, error: 'Missing messageId' },
+        { status: 400 }
+      )
+    }
+
+    await connectDB()
+
+    const message = await Message.findById(messageId)
+
+    if (!message) {
+      return NextResponse.json(
+        { success: false, error: 'Message not found' },
+        { status: 404 }
+      )
+    }
+
+    // Only sender can delete their own message
+    if (message.senderId.toString() !== sessionData.userId) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized to delete this message' },
+        { status: 403 }
+      )
+    }
+
+    // Permanently delete the message
+    await Message.findByIdAndDelete(messageId)
+
+    return NextResponse.json({
+      success: true,
+      message: 'Message deleted successfully'
+    }, { status: 200 })
+
+  } catch (error: any) {
+    console.error('Error deleting message:', error)
+    return NextResponse.json(
+      { success: false, error: 'Failed to delete message' },
       { status: 500 }
     )
   }

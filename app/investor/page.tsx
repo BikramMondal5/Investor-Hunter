@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation"
 import { LogOut } from "lucide-react"
 import { AvatarImage } from "@/components/ui/avatar"
 import {User, Settings} from "lucide-react"
+import { Trash2 } from "lucide-react"
 import {
   Search,
   Filter,
@@ -33,6 +34,7 @@ import {
   DialogTitle,
   DialogDescription
 } from "@/components/ui/dialog"
+import { set } from "mongoose"
 
 interface Profile {
   firstName: string;
@@ -55,10 +57,12 @@ interface StartupPitch {
     stage?: string;
     industry?: string;
     videoUrl?: string;
+    pitchScore?: number|null;
   };
 }
 
 export default function InvestorPortal() {
+  const [unreadCount, setUnreadCount] = useState(0)
   const [savedPitchDetails, setSavedPitchDetails] = useState<StartupPitch[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedIndustry, setSelectedIndustry] = useState("all")
@@ -103,6 +107,24 @@ const handleMessage = (startup: StartupPitch) => {
   const [isLoadingStartups, setIsLoadingStartups] = useState(true)
   const [showAll, setShowAll] = useState(false)
   const [savedPitches, setSavedPitches] = useState(new Set<string>())
+
+  const fetchUnreadCount = async () => {
+    try {
+      const res = await fetch('/api/messages?type=unread-count')
+      if (res.ok) {
+        const data = await res.json()
+        setUnreadCount(data.unreadCount || 0)
+      }
+    } catch (error) {
+      console.error('Failed to fetch unread count:', error)
+    }
+  }
+
+  useEffect(() => {
+    fetchUnreadCount()
+    const interval = setInterval(fetchUnreadCount, 30000)
+    return () => clearInterval(interval)
+  }, [])
 
   useEffect(() => {
     setIsMounted(true)
@@ -347,9 +369,16 @@ const handleMessage = (startup: StartupPitch) => {
       )
     }
 
+    // Apply pitch score filter (NEW)
+    filtered = filtered.filter(startup => {
+      const score = startup.pitchData?.pitchScore
+      // Only show pitches that have been scored
+      return score && score >= aiScoreRange[0]
+    })
+
     setFilteredStartups(filtered)
     setFiltersApplied(true)
-    console.log('Filters applied:', { selectedIndustry, selectedLocation, selectedStage, aiScoreRange })
+    console.log('Filters applied:', { selectedIndustry, selectedLocation, selectedStage, pitchScore: aiScoreRange[0] })
   }
 
   // ADD this new function:
@@ -358,7 +387,7 @@ const handleMessage = (startup: StartupPitch) => {
     setSelectedIndustry("all")
     setSelectedLocation("")
     setSelectedStage("all")
-    setAiScoreRange([7])
+    setAiScoreRange([1])
     setFiltersApplied(false)
     setFilteredStartups(startups)
   }
@@ -471,7 +500,9 @@ const handleMessage = (startup: StartupPitch) => {
       if (res.ok) {
         setMessageModalOpen(false)
         setMessageContent('')
+        // Only refresh conversations in the background, don't wait for it
         fetchConversations()
+        fetchUnreadCount()
       } else {
         console.error('Failed to send message')
       }
@@ -496,23 +527,28 @@ const handleMessage = (startup: StartupPitch) => {
     }
   }
   const fetchConversationMessages = async (conversationId: string) => {
-    setIsLoadingMessages(true)
     try {
       const res = await fetch(`/api/messages?type=detail&conversationId=${conversationId}`)
       if (res.ok) {
         const data = await res.json()
         setConversationMessages(data.messages || [])
+        
+        // Refresh counts in background
+        setTimeout(() => {
+          fetchUnreadCount()
+          fetchConversations()
+        }, 100)
       }
     } catch (error) {
       console.error('Failed to fetch messages:', error)
-    } finally {
-      setIsLoadingMessages(false)
     }
   }
   const handleSendMessageInConversation = async () => {
     if (!messageInput.trim() || !selectedConversation) return
 
     setIsSendingInConversation(true)
+    const tempMessage = messageInput
+    
     try {
       const res = await fetch('/api/messages', {
         method: 'POST',
@@ -526,12 +562,22 @@ const handleMessage = (startup: StartupPitch) => {
       })
 
       if (res.ok) {
+        const data = await res.json()
+        
+        // Optimistically add the message to the UI immediately
+        setConversationMessages(prev => [...prev, data.message])
         setMessageInput('')
-        // Refetch messages to show the new message
-        fetchConversationMessages(selectedConversation.conversationId)
+        
+        // Refresh in the background without blocking UI
+        setTimeout(() => {
+          fetchUnreadCount()
+          fetchConversations()
+        }, 100)
       }
     } catch (error) {
       console.error('Failed to send message:', error)
+      // Restore the message on error
+      setMessageInput(tempMessage)
     } finally {
       setIsSendingInConversation(false)
     }
@@ -601,13 +647,18 @@ const handleMessage = (startup: StartupPitch) => {
               My Saved Pitches
             </Button>
             <Button
-              variant={activeTab === "messages" ? "default" : "ghost"}
-              className="w-full justify-start"
-              onClick={() => setActiveTab("messages")}
-            >
-              <MessageSquare className="mr-2 h-4 w-4" />
-              Messaging
-            </Button>
+                variant={activeTab === "messages" ? "default" : "ghost"}
+                className="w-full justify-start relative"
+                onClick={() => setActiveTab("messages")}
+              >
+                <MessageSquare className="mr-2 h-4 w-4" />
+                Messaging
+                {unreadCount > 0 && (
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 bg-red-500 text-white text-xs font-bold rounded-full h-5 min-w-[20px] flex items-center justify-center px-1">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
+              </Button>
             <Button
               variant={activeTab === "settings" ? "default" : "ghost"}
               className="w-full justify-start"
@@ -698,7 +749,7 @@ const handleMessage = (startup: StartupPitch) => {
                       </div>
 
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">AI Score: {aiScoreRange[0]}+</label>
+                        <label className="text-sm font-medium">Pitch Score: {aiScoreRange[0]}+</label>
                         <Slider
                           value={aiScoreRange}
                           onValueChange={setAiScoreRange}
@@ -708,7 +759,6 @@ const handleMessage = (startup: StartupPitch) => {
                           className="w-full"
                         />
                       </div>
-
                       <Button onClick={handleApplyFilters}>
                         <Filter className="mr-2 h-4 w-4" />
                         Apply Filters
@@ -828,15 +878,13 @@ const handleMessage = (startup: StartupPitch) => {
                               </div>
 
                               <div className="flex items-center justify-between">
-                                <div className="flex items-center space-x-2">
-                                  <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                                  <span className="font-semibold">8.7</span>
-                                  <span className="text-xs text-muted-foreground">AI Score</span>
-                                </div>
-                                <div className="flex items-center space-x-1 text-xs text-muted-foreground">
-                                  <Eye className="h-3 w-3" />
-                                  <span>47 views</span>
-                                </div>
+                                {startup.pitchData?.pitchScore && (
+                                  <div className="flex items-center space-x-2">
+                                    <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                                    <span className="font-semibold">{startup.pitchData.pitchScore}</span>
+                                    <span className="text-xs text-muted-foreground">Pitch Score</span>
+                                  </div>
+                                )}
                               </div>
 
                               <div className="flex space-x-2">
@@ -958,15 +1006,13 @@ const handleMessage = (startup: StartupPitch) => {
                           </div>
 
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-2">
-                              <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                              <span className="font-semibold">8.7</span>
-                              <span className="text-xs text-muted-foreground">AI Score</span>
-                            </div>
-                            <div className="flex items-center space-x-1 text-xs text-muted-foreground">
-                              <Eye className="h-3 w-3" />
-                              <span>47 views</span>
-                            </div>
+                            {startup.pitchData?.pitchScore && (
+                              <div className="flex items-center space-x-2">
+                                <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                                <span className="font-semibold">{startup.pitchData.pitchScore}</span>
+                                <span className="text-xs text-muted-foreground">Pitch Score</span>
+                              </div>
+                            )}
                           </div>
 
                           <div className="flex space-x-2">
@@ -1028,6 +1074,7 @@ const handleMessage = (startup: StartupPitch) => {
                             key={conv.conversationId}
                             onClick={() => {
                               setSelectedConversation(conv)
+                              setConversationMessages([])
                               fetchConversationMessages(conv.conversationId)
                             }}
                             className={`w-full text-left p-4 hover:bg-muted/50 transition-colors border-l-4 ${
@@ -1038,9 +1085,16 @@ const handleMessage = (startup: StartupPitch) => {
                           >
                             <div className="space-y-1">
                               <div className="flex items-start justify-between">
-                                <p className="font-semibold text-sm">
-                                  {conv.otherUser.name}
-                                </p>
+                                <div className="flex-1">
+                                  <p className="font-semibold text-sm">
+                                    {conv.otherUser.name}
+                                  </p>
+                                  {conv.otherUser.role === 'entrepreneur' && conv.otherUser.company && (
+                                    <p className="text-xs text-muted-foreground">
+                                      {conv.otherUser.company}
+                                    </p>
+                                  )}
+                                </div>
                                 {conv.unreadCount > 0 && (
                                   <Badge className="h-5 px-2 text-xs">
                                     {conv.unreadCount}
@@ -1069,15 +1123,20 @@ const handleMessage = (startup: StartupPitch) => {
                       <div className="flex items-center justify-between">
                         <div>
                           <h3 className="font-semibold text-base">
-                            {selectedConversation.otherUser.name}
+                            {selectedConversation?.otherUser?.name || 'Loading...'}
                           </h3>
+                          {selectedConversation?.otherUser?.role === 'entrepreneur' && selectedConversation?.otherUser?.company && (
+                            <p className="text-xs text-muted-foreground">
+                              {selectedConversation.otherUser.company}
+                            </p>
+                          )}
                           <p className="text-xs text-muted-foreground">
-                            {selectedConversation.pitch.name}
+                            {selectedConversation?.pitch?.name || ''}
                           </p>
                         </div>
                         <Avatar className="h-10 w-10">
                           <AvatarFallback className="text-xs">
-                            {selectedConversation.otherUser.name
+                            {selectedConversation?.otherUser?.name
                               ?.split(' ')
                               .map((n: string) => n[0])
                               .join('')}
@@ -1088,11 +1147,7 @@ const handleMessage = (startup: StartupPitch) => {
 
                     {/* Messages Container */}
                     <CardContent className="flex-1 overflow-y-auto p-6 space-y-4 bg-background">
-                      {isLoadingMessages ? (
-                        <div className="text-center text-sm text-muted-foreground">
-                          Loading messages...
-                        </div>
-                      ) : conversationMessages.length === 0 ? (
+                      {conversationMessages.length === 0 ? (
                         <div className="h-full flex items-center justify-center">
                           <div className="text-center">
                             <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-3 opacity-50" />
@@ -1111,25 +1166,50 @@ const handleMessage = (startup: StartupPitch) => {
                                 : 'justify-start'
                             }`}
                           >
-                            <div
-                              className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl ${
-                                msg.senderRole === 'investor'
-                                  ? 'bg-primary text-primary-foreground rounded-br-none'
-                                  : 'bg-muted rounded-bl-none'
-                              }`}
-                            >
-                              <p className="text-sm">{msg.content}</p>
-                              <p className={`text-xs mt-1 ${
-                                msg.senderRole === 'investor'
-                                  ? 'opacity-70'
-                                  : 'text-muted-foreground'
-                              }`}>
-                                {new Date(msg.createdAt).toLocaleTimeString([], {
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                })}
-                              </p>
-                            </div>
+                            {msg.senderRole === 'investor' ? (
+                              // Investor's message (can delete)
+                              <div className="flex items-start gap-2 group">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity self-end mb-1"
+                                  onClick={async () => {
+                                    try {
+                                      const res = await fetch(`/api/messages?messageId=${msg._id}`, {
+                                        method: 'DELETE'
+                                      })
+                                      if (res.ok) {
+                                        setConversationMessages(prev => prev.filter(m => m._id !== msg._id))
+                                      }
+                                    } catch (error) {
+                                      console.error('Failed to delete message:', error)
+                                    }
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                                </Button>
+                                <div className="max-w-xs lg:max-w-md px-4 py-2 rounded-2xl bg-primary text-primary-foreground rounded-br-none">
+                                  <p className="text-sm">{msg.content}</p>
+                                  <p className="text-xs mt-1 opacity-70">
+                                    {new Date(msg.createdAt).toLocaleTimeString([], {
+                                      hour: '2-digit',
+                                      minute: '2-digit'
+                                    })}
+                                  </p>
+                                </div>
+                              </div>
+                            ) : (
+                              // Entrepreneur's message (cannot delete)
+                              <div className="max-w-xs lg:max-w-md px-4 py-2 rounded-2xl bg-muted rounded-bl-none">
+                                <p className="text-sm">{msg.content}</p>
+                                <p className="text-xs mt-1 text-muted-foreground">
+                                  {new Date(msg.createdAt).toLocaleTimeString([], {
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </p>
+                              </div>
+                            )}
                           </div>
                         ))
                       )}
@@ -1273,15 +1353,6 @@ const handleMessage = (startup: StartupPitch) => {
                             id="email"
                             value={editedProfile?.email || ''}
                             onChange={(e) => setEditedProfile(prev => prev ? ({ ...prev, email: e.target.value }) : null)}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium" htmlFor="company">Company</label>
-                          <Input 
-                            type="text" 
-                            id="company"
-                            value={editedProfile?.company || ''}
-                            onChange={(e) => setEditedProfile(prev => prev ? ({ ...prev, company: e.target.value }) : null)}
                           />
                         </div>
                         <Button type="submit" className="w-full md:w-auto">Save Changes</Button>

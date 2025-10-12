@@ -135,7 +135,7 @@ export function SubmitPageContent() {
         // Reset button
         if (submitButton) {
           submitButton.disabled = false
-          submitButton.innerHTML = 'Analyze & Submit Pitch'
+          submitButton.innerHTML = 'Submit Pitch'
         }
       }
     } catch (error: any) {
@@ -144,7 +144,7 @@ export function SubmitPageContent() {
       // Reset button
       if (submitButton) {
         submitButton.disabled = false
-        submitButton.innerHTML = 'Analyze & Submit Pitch'
+        submitButton.innerHTML = 'Submit Pitch'
       }
     }
   }
@@ -217,16 +217,6 @@ export function SubmitPageContent() {
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <Label>Pitch Video (Max 3 minutes)</Label>
-                        {hasReceivedFeedback && (
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => setShowAIFeedback(true)}
-                            className="text-xs flex items-center gap-1"
-                          >
-                            <Brain className="h-3 w-3" /> View AI feedback
-                          </Button>
-                        )}
                       </div>
                       
                       {videoPreviewUrl ? (
@@ -244,18 +234,6 @@ export function SubmitPageContent() {
                               className="absolute top-2 right-2 flex items-center gap-1 bg-background/80 backdrop-blur-sm"
                             >
                               <RefreshCw className="h-3 w-3" /> Re-record
-                            </Button>
-                          </div>
-                          {/* Adding Analyze Button below video preview */}
-                          <div className="mt-2">
-                            <Button
-                              type="button"
-                              onClick={() => setShowAIFeedback(true)}
-                              className="w-full"
-                              variant="outline"
-                            >
-                              <Brain className="mr-2 h-4 w-4" />
-                              Analyze My Pitch
                             </Button>
                           </div>
                         </div>
@@ -280,18 +258,6 @@ export function SubmitPageContent() {
                           <Progress value={uploadProgress} />
                           <p className="text-xs text-muted-foreground text-center">Uploading... {uploadProgress}%</p>
                         </div>
-                      )}
-                      
-                      {/* Adding Analyze Button directly under file upload area when file is uploaded but not yet analyzed */}
-                      {videoFile && !isUploading && !videoPreviewUrl && (
-                        <Button
-                          type="button"
-                          onClick={() => setShowAIFeedback(true)}
-                          className="w-full mt-2"
-                        >
-                          <Brain className="mr-2 h-4 w-4" />
-                          Analyze My Pitch
-                        </Button>
                       )}
                     </div>
 
@@ -366,7 +332,7 @@ export function SubmitPageContent() {
                       disabled={!videoFile}
                     >
                       <Brain className="mr-2 h-4 w-4" />
-                      Analyze & Submit Pitch
+                       Submit Pitch
                     </Button>
                   </form>
                 </CardContent>
@@ -379,29 +345,24 @@ export function SubmitPageContent() {
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <Brain className="h-5 w-5 text-primary" />
-                    <span>How AI Evaluation Works</span>
+                    <span>How Admin Evaluation Works</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-start space-x-3">
                     <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0" />
-                    <p className="text-sm">Analyzes clarity & uniqueness</p>
+                    <p className="text-sm">Our admin team reviews each pitch for clarity and originality</p>
                   </div>
                   <div className="flex items-start space-x-3">
                     <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0" />
-                    <p className="text-sm">Multilingual speech-to-text supported</p>
+                    <p className="text-sm">Manual evaluation ensures fair and accurate assessment</p>
                   </div>
                   <div className="flex items-start space-x-3">
                     <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0" />
-                    <p className="text-sm">Feedback from early backers</p>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0" />
-                    <p className="text-sm">Get notified when investors view</p>
+                    <p className="text-sm">You’ll be notified once your pitch gets approved</p>
                   </div>
                 </CardContent>
               </Card>
-
               <Card>
                 <CardContent className="p-6 space-y-4">
                   <div className="flex items-center space-x-2">

@@ -87,6 +87,7 @@ export function AuthModal({ isOpen, onClose, initialError }: AuthModalProps) {
         title: "Sign In Successful",
         description: "Welcome back!",
         variant: "default",
+        className: "bg-green-800 border-green-700 text-white",
       })
       
       // Reset form
@@ -124,7 +125,6 @@ export function AuthModal({ isOpen, onClose, initialError }: AuthModalProps) {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
-    // ⭐ NEW: Use signUpError state
     setSignUpError(null)
 
     // Enhanced validation
@@ -170,44 +170,42 @@ export function AuthModal({ isOpen, onClose, initialError }: AuthModalProps) {
           lastName,
           email: signUpEmail,
           password: signUpPassword,
-          role: signUpRole
+          role: signUpRole  // ⭐ This sends the role (entrepreneur or investor)
         }),
       })
 
       const data = await response.json()
 
-     if (!response.ok || !data.success) {
-      throw new Error(data.message || "Registration failed")
-    }
-
-    // Show success toast
-    toast({
-      title: "Registration Successful",
-      description: "Welcome! Your account has been created.",
-      variant: "default",
-      className: "bg-green-800 border-green-700 text-white",
-    })
-
-    // Reset form
-    setSignUpName("")
-    setSignUpEmail("")
-    setSignUpPassword("")
-    setSignUpConfirmPassword("")
-
-    // Close modal first
-    onClose()
-
-    // Small delay before redirect to ensure modal closes smoothly
-    setTimeout(() => {
-      if (data.user.role === "entrepreneur") {
-        window.location.href = "/dashboard";
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Registration failed")
       }
-    }, 100)
+
+      // Show success toast
+      toast({
+        title: "Registration Successful",
+        description: "Welcome! Your account has been created.",
+        variant: "default",
+        className: "bg-green-800 border-green-700 text-white",
+      })
+
+      // Reset form
+      setSignUpName("")
+      setSignUpEmail("")
+      setSignUpPassword("")
+      setSignUpConfirmPassword("")
+
+      // Close modal first
+      onClose()
+
+      // ⭐ FIX: Redirect based on actual role from response
+      setTimeout(() => {
+        const redirectPath = data.user.role === "investor" ? "/investor" : "/dashboard"
+        window.location.href = redirectPath
+      }, 100)
 
     } catch (error) {
       console.error("Registration error:", error)
       const errorMessage = error instanceof Error ? error.message : "Registration failed"
-      // ⭐ NEW: Set signUpError state
       setSignUpError(errorMessage)
       toast({
         title: "Registration Failed",

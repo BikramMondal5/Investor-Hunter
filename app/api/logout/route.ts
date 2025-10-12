@@ -6,6 +6,13 @@ export async function POST() {
       { success: true, message: 'Logout successful' },
       { status: 200 }
     );
+    response.cookies.set('theme', 'dark', {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 365, // 1 year
+      path: '/',
+    });
 
     // Clear the session cookie by setting maxAge to -1
     response.cookies.set('user_session', '', {
