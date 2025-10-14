@@ -132,10 +132,9 @@ const handleMessage = (startup: StartupPitch) => {
   }, [])
   
   useEffect(() => {
-    if (activeTab === 'create-meeting') {
-      // Generate a unique meeting ID
-      const uniqueId = `meeting-${Math.random().toString(36).substring(2, 10)}-${Date.now().toString(36)}`
-      setMeetingId(uniqueId)
+    // Reset meeting ID when leaving create-meeting tab
+    if (activeTab !== 'create-meeting') {
+      setMeetingId('')
     }
   }, [activeTab])
   
@@ -1409,38 +1408,131 @@ const handleMessage = (startup: StartupPitch) => {
                   </p>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <Button
-                    onClick={() => {
-                      const uniqueId = `meeting-${Math.random().toString(36).substring(2, 10)}-${Date.now().toString(36)}`;
-                      setMeetingId(uniqueId);
-                      window.open('https://investo-streaming.vercel.app/', '_blank');
-                    }}
-                    className="w-full h-12 text-base font-semibold relative overflow-hidden
-                               bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500
-                               hover:from-blue-600 hover:via-purple-600 hover:to-pink-600
-                               shadow-lg hover:shadow-xl
-                               transition-all duration-300 transform hover:scale-[1.02]"
-                  >
-                    <div className="relative z-10 flex items-center justify-center gap-2">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
+                  {!meetingId ? (
+                    // Generate Meeting ID Button
+                    <Button
+                      onClick={() => {
+                        const uniqueId = `meeting-${Math.random().toString(36).substring(2, 10)}-${Date.now().toString(36)}`;
+                        setMeetingId(uniqueId);
+                      }}
+                      className="w-full h-12 text-base font-semibold relative overflow-hidden
+                                 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500
+                                 hover:from-blue-600 hover:via-purple-600 hover:to-pink-600
+                                 shadow-lg hover:shadow-xl
+                                 transition-all duration-300 transform hover:scale-[1.02]"
+                    >
+                      <div className="relative z-10 flex items-center justify-center gap-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                          <circle cx="9" cy="7" r="4" />
+                          <line x1="19" x2="19" y1="8" y2="14" />
+                          <line x1="22" x2="16" y1="11" y2="11" />
+                        </svg>
+                        <span>Generate Meeting ID</span>
+                      </div>
+                    </Button>
+                  ) : (
+                    // Show Meeting ID and Join Button
+                    <div className="space-y-4">
+                      {/* Meeting ID Display */}
+                      <div className="space-y-2">
+                        <label className="text-sm font-semibold">Your Meeting ID</label>
+                        <div className="relative group">
+                          <Input
+                            type="text"
+                            readOnly
+                            value={meetingId}
+                            className="text-center font-mono text-base font-bold pr-20 bg-white/70 dark:bg-gray-800/70 border-2 border-purple-200 dark:border-purple-800 transition-all"
+                            id="meetingIdInput"
+                          />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 hover:bg-purple-100 dark:hover:bg-purple-900/30"
+                            onClick={() => {
+                              navigator.clipboard.writeText(meetingId);
+                            }}
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                              <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                            </svg>
+                          </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground text-center">
+                          Share this ID with entrepreneurs to invite them
+                        </p>
+                      </div>
+
+                      {/* Join Meeting Button */}
+                      <Button
+                        onClick={() => {
+                          window.open('https://investo-streaming.vercel.app/', '_blank');
+                        }}
+                        className="w-full h-12 text-base font-semibold relative overflow-hidden
+                                   bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500
+                                   hover:from-blue-600 hover:via-purple-600 hover:to-pink-600
+                                   shadow-lg hover:shadow-xl
+                                   transition-all duration-300 transform hover:scale-[1.02]
+                                   before:absolute before:inset-0 
+                                   before:bg-gradient-to-r before:from-white/0 before:via-white/20 before:to-white/0
+                                   before:translate-x-[-200%] hover:before:translate-x-[200%]
+                                   before:transition-transform before:duration-700"
                       >
-                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                        <circle cx="9" cy="7" r="4" />
-                        <line x1="19" x2="19" y1="8" y2="14" />
-                        <line x1="22" x2="16" y1="11" y2="11" />
-                      </svg>
-                      <span>Generate Meeting ID</span>
+                        <div className="relative z-10 flex items-center justify-center gap-2">
+                          <Play className="h-5 w-5" />
+                          <span>Join Meeting</span>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="group-hover:translate-x-1 transition-transform"
+                          >
+                            <path d="M5 12h14" />
+                            <path d="m12 5 7 7-7 7" />
+                          </svg>
+                        </div>
+                      </Button>
+
+                      {/* Generate New ID Button */}
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          const uniqueId = `meeting-${Math.random().toString(36).substring(2, 10)}-${Date.now().toString(36)}`;
+                          setMeetingId(uniqueId);
+                        }}
+                        className="w-full text-sm"
+                      >
+                        Generate New ID
+                      </Button>
                     </div>
-                  </Button>
+                  )}
                 </CardContent>
               </Card>
 
