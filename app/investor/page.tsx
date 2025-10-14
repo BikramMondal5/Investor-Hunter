@@ -639,7 +639,7 @@ const handleMessage = (startup: StartupPitch) => {
 
       <div className="flex">
         {/* Sidebar */}
-        <aside className="w-64 border-r bg-muted/30 min-h-[calc(100vh-4rem)]">
+        <aside className="w-64 border-r bg-muted/30 h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto">
           <nav className="p-4 space-y-2">
             <Button
               variant={activeTab === "discover" ? "default" : "ghost"}

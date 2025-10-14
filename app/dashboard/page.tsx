@@ -123,8 +123,6 @@ export default function Dashboard() {
     { id: "analytics", label: "Feedback & Analytics", icon: TrendingUp },
     { id: "messages", label: "Investor Messages", icon: MessageSquare },
     { id: "join-meeting", label: "Join Meeting", icon: Users },
-    { id: "interview", label: "Internal Interview", icon: MessageCircle, link: "/internal-interview" },
-    { id: "investor-meeting", label: "Investor Meeting", icon: Users, link: "/investor-meeting" },
     { id: "settings", label: "Settings", icon: Settings },
   ]
   const [editedProfile, setEditedProfile] = useState<Profile | null>(null)
@@ -463,7 +461,7 @@ export default function Dashboard() {
 
       <div className="flex">
         {/* Sidebar */}
-        <aside className="w-64 border-r bg-muted/30 min-h-[calc(100vh-4rem)]">
+        <aside className="w-64 border-r bg-muted/30 h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto">
           <nav className="p-4 space-y-2">
               {sidebarItems.map((item) => (
                 <Button
