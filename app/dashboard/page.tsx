@@ -430,13 +430,35 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b bg-background/95 backdrop-blur">
+      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
         <div className="flex h-16 items-center justify-between px-6">
           <div className="flex items-center space-x-4">
             <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
               InvestorHunt
             </span>
           </div>
+
+          {/* Navigation Links */}
+          <nav className="hidden md:flex items-center space-x-6">
+            <a 
+              href="/" 
+              className="text-sm font-medium transition-colors hover:bg-gradient-to-r hover:from-purple-600 hover:to-purple-600 hover:bg-clip-text hover:text-transparent"
+            >
+              Home
+            </a>
+            <a 
+              href="/#how-it-works" 
+              className="text-sm font-medium transition-colors hover:bg-gradient-to-r hover:from-purple-600 hover:to-purple-600 hover:bg-clip-text hover:text-transparent"
+            >
+              How it Works
+            </a>
+            <a 
+              href="/#features" 
+              className="text-sm font-medium transition-colors hover:bg-gradient-to-r hover:from-purple-600 hover:to-purple-600 hover:bg-clip-text hover:text-transparent"
+            >
+              Features
+            </a>
+          </nav>
 
           <div className="flex items-center space-x-4">
             {profile && (
@@ -467,7 +489,11 @@ export default function Dashboard() {
                 <Button
                   key={item.id}
                   variant={activeTab === item.id ? "default" : "ghost"}
-                  className="w-full justify-start relative"
+                  className={`w-full justify-start relative ${
+                    activeTab === item.id 
+                      ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700" 
+                      : ""
+                  }`}
                   onClick={() => {
                     if (item.link) {
                       router.push(item.link);
