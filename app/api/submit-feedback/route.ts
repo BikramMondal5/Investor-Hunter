@@ -40,12 +40,19 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { feedback } = body
+    const { feedback, rating } = body
 
-    // Validate feedback
+    // Validate feedback and rating
     if (!feedback) {
       return NextResponse.json(
         { error: 'Feedback is required' },
+        { status: 400 }
+      )
+    }
+
+    if (!rating || rating < 1 || rating > 5) {
+      return NextResponse.json(
+        { error: 'Rating must be between 1 and 5' },
         { status: 400 }
       )
     }
@@ -60,6 +67,7 @@ export async function POST(req: NextRequest) {
       country: 'India', // Default country as requested
       type: user.role === 'investor' ? 'Investor' : 'Entrepreneur',
       feedback,
+      rating,
       avatar: userProfile?.profilePhoto || '/placeholder.svg',
       approved: true, // Auto-approve for now
     })

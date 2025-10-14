@@ -43,6 +43,8 @@ export function LandingPageContent() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false)
   const [feedbackText, setFeedbackText] = useState('')
+  const [rating, setRating] = useState(0)
+  const [hoverRating, setHoverRating] = useState(0)
 
   const [authError, setAuthError] = useState<string | null>(null);
 
@@ -111,6 +113,16 @@ export function LandingPageContent() {
       return
     }
 
+    // Validate rating
+    if (rating === 0) {
+      toast({
+        title: "Rating Required",
+        description: "Please select a rating before submitting.",
+        variant: "destructive",
+      })
+      return
+    }
+
     try {
       const response = await fetch('/api/submit-feedback', {
         method: 'POST',
@@ -119,6 +131,7 @@ export function LandingPageContent() {
         },
         body: JSON.stringify({
           feedback: feedbackText,
+          rating: rating,
         }),
       })
 
@@ -129,6 +142,7 @@ export function LandingPageContent() {
         })
         setFeedbackModalOpen(false)
         setFeedbackText('')
+        setRating(0)
         // Refresh the page to show new feedback
         window.location.reload()
       } else {
@@ -516,7 +530,7 @@ export function LandingPageContent() {
             <TestimonialCarousel />
             
             {/* Submit Feedback Button */}
-            <div className="absolute bottom-0 right-0 z-10">
+            <div className="relative bottom-0 left-300 z-10">
               <Button 
                 onClick={handleFeedbackButtonClick}
                 className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg"
@@ -625,6 +639,39 @@ export function LandingPageContent() {
                 </div>
               </div>
             )}
+            
+            {/* Star Rating */}
+            <div>
+              <label className="text-sm font-medium mb-3 block">
+                Rate Your Experience
+              </label>
+              <div className="flex gap-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setRating(star)}
+                    onMouseEnter={() => setHoverRating(star)}
+                    onMouseLeave={() => setHoverRating(0)}
+                    className="transition-all duration-200 hover:scale-110"
+                  >
+                    <Star
+                      className={`h-8 w-8 transition-colors ${
+                        star <= (hoverRating || rating)
+                          ? 'fill-yellow-400 text-yellow-400'
+                          : 'fill-none text-gray-400 stroke-2'
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+              {rating > 0 && (
+                <p className="text-sm text-muted-foreground mt-2">
+                  You rated: {rating} star{rating > 1 ? 's' : ''}
+                </p>
+              )}
+            </div>
+
             <div>
               <label htmlFor="feedback" className="text-sm font-medium mb-2 block">
                 Your Feedback
@@ -643,7 +690,11 @@ export function LandingPageContent() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setFeedbackModalOpen(false)}
+                onClick={() => {
+                  setFeedbackModalOpen(false)
+                  setRating(0)
+                  setHoverRating(0)
+                }}
                 className="flex-1"
               >
                 Cancel
