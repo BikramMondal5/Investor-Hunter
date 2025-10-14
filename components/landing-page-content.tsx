@@ -344,47 +344,67 @@ export function LandingPageContent() {
             {[
               {
                 icon: Brain,
+                iconColor: "text-purple-500",
+                iconBg: "bg-purple-500/10",
+                borderColor: "border-purple-500",
                 title: "AI Pitch Analyzer",
                 description: "Advanced AI evaluates your pitch for clarity, uniqueness, and market fit.",
               },
               {
                 icon: Globe,
+                iconColor: "text-blue-500",
+                iconBg: "bg-blue-500/10",
+                borderColor: "border-blue-500",
                 title: "Inclusive Global Access",
                 description: "Connect with investors worldwide, breaking geographical barriers.",
               },
               {
                 icon: Zap,
+                iconColor: "text-green-500",
+                iconBg: "bg-green-500/10",
+                borderColor: "border-green-500",
                 title: "Multilingual Support",
                 description: "Submit pitches in your native language with AI-powered translation.",
               },
               {
                 icon: MessageSquare,
+                iconColor: "text-cyan-500",
+                iconBg: "bg-cyan-500/10",
+                borderColor: "border-cyan-500",
                 title: "Real-Time Community Feedback",
                 description: "Get instant feedback from fellow entrepreneurs and early backers.",
               },
               {
                 icon: Shield,
+                iconColor: "text-red-500",
+                iconBg: "bg-red-500/10",
+                borderColor: "border-red-500",
                 title: "Transparent Evaluation",
                 description: "Clear scoring system helps you understand how investors see your idea.",
               },
               {
                 icon: Star,
+                iconColor: "text-yellow-500",
+                iconBg: "bg-yellow-500/10",
+                borderColor: "border-yellow-500",
                 title: "Investor Chat + Follow-up Scheduling",
                 description: "Direct messaging and meeting scheduling with interested investors.",
               },
             ].map((feature, index) => (
-              <Card key={index} className="relative group hover:shadow-lg transition-all duration-300 border border-transparent dark:border-purple-900/20" style={{
-                boxShadow: '0 0 0 1px rgba(139,92,246,0.05)',
-              }}>
+              <Card 
+                key={index} 
+                className={`relative group hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:${feature.borderColor} bg-zinc-900/50`}
+                style={{
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                }}
+              >
                 <CardContent className="p-6 space-y-4">
-                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <feature.icon className="h-6 w-6 text-primary" />
+                  <div className={`w-12 h-12 ${feature.iconBg} rounded-lg flex items-center justify-center`}>
+                    <feature.icon className={`h-6 w-6 ${feature.iconColor}`} />
                   </div>
                   <h3 className="text-lg font-semibold">{feature.title}</h3>
                   <p className="text-muted-foreground text-sm">{feature.description}</p>
                 </CardContent>
-                <div className="absolute inset-0 pointer-events-none border border-purple-500/40 dark:border-purple-400/30 rounded-xl transition-all duration-300 opacity-0 group-hover:opacity-100"></div>
-                <div className="absolute inset-0 pointer-events-none rounded-xl transition-all duration-300 group-hover:shadow-[0_8px_35px_-2px_rgba(139,92,246,0.6),0_0_15px_rgba(139,92,246,0.3)_inset] dark:group-hover:shadow-[0_10px_40px_-2px_rgba(139,92,246,0.7),0_0_20px_rgba(139,92,246,0.35)_inset]"></div>
               </Card>
             ))}
           </div>
