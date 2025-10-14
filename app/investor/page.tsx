@@ -1651,7 +1651,7 @@ const handleMessage = (startup: StartupPitch) => {
                           2
                         </div>
                         <p className="text-sm text-muted-foreground pt-1">
-                          Share the Meeting ID with entrepreneurs
+                          Share the Meeting ID with entrepreneurs via email or messaging
                         </p>
                       </div>
                       <div className="flex gap-3">
@@ -1659,38 +1659,38 @@ const handleMessage = (startup: StartupPitch) => {
                           3
                         </div>
                         <p className="text-sm text-muted-foreground pt-1">
-                          Click &quot;Start Meeting&quot; to enter the video conference
+                          Click &quot;Join Meeting&quot; to enter the video conference room
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  {/* For Joining Meetings */}
+                  {/* Best Practices for Investors */}
                   <div className="space-y-4">
-                    <h3 className="font-semibold text-lg">For Joining Meetings:</h3>
+                    <h3 className="font-semibold text-lg">Best Practices:</h3>
                     <div className="space-y-3">
                       <div className="flex gap-3">
-                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-green-500 text-white text-xs font-bold">
-                          1
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-purple-500 text-white text-xs font-bold">
+                          💡
                         </div>
                         <p className="text-sm text-muted-foreground pt-1">
-                          Get the Meeting ID from the host (investor or entrepreneur)
+                          Send the Meeting ID to entrepreneurs at least 15 minutes before
                         </p>
                       </div>
                       <div className="flex gap-3">
-                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-green-500 text-white text-xs font-bold">
-                          2
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-purple-500 text-white text-xs font-bold">
+                          💡
                         </div>
                         <p className="text-sm text-muted-foreground pt-1">
-                          Enter the Meeting ID in the &quot;Join a Meeting&quot; section
+                          Review the entrepreneur&apos;s pitch materials beforehand
                         </p>
                       </div>
                       <div className="flex gap-3">
-                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-green-500 text-white text-xs font-bold">
-                          3
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-purple-500 text-white text-xs font-bold">
+                          💡
                         </div>
                         <p className="text-sm text-muted-foreground pt-1">
-                          Click &quot;Join Meeting&quot; to connect to the video conference
+                          Prepare questions and talking points for a productive meeting
                         </p>
                       </div>
                     </div>

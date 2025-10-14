@@ -114,11 +114,15 @@ export default function Dashboard() {
   const [isLoadingProfile, setIsLoadingProfile] = useState(true)
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false)
+  const [joinMeetingId, setJoinMeetingId] = useState("")
+  const [isJoinCopied, setIsJoinCopied] = useState(false)
+  
   const sidebarItems: SidebarItem[] = [
     { id: "dashboard", label: "Dashboard", icon: BarChart3 },
     { id: "pitch", label: "My Pitch", icon: Play },
     { id: "analytics", label: "Feedback & Analytics", icon: TrendingUp },
     { id: "messages", label: "Investor Messages", icon: MessageSquare },
+    { id: "join-meeting", label: "Join Meeting", icon: Users },
     { id: "interview", label: "Internal Interview", icon: MessageCircle, link: "/internal-interview" },
     { id: "investor-meeting", label: "Investor Meeting", icon: Users, link: "/investor-meeting" },
     { id: "settings", label: "Settings", icon: Settings },
@@ -128,6 +132,11 @@ export default function Dashboard() {
   useEffect(() => {
     if (activeTab === 'messages') {
       fetchConversations()
+    }
+    // Reset join meeting state when leaving join-meeting tab
+    if (activeTab !== 'join-meeting') {
+      setJoinMeetingId('')
+      setIsJoinCopied(false)
     }
   }, [activeTab])
 
@@ -1383,6 +1392,213 @@ export default function Dashboard() {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {activeTab === "join-meeting" && (
+            <div className="space-y-6 px-4 md:px-6 py-6">
+              {/* Header */}
+              <div className="space-y-2">
+                <h1 className="text-3xl font-bold tracking-tight">Join Meeting</h1>
+                <p className="text-muted-foreground">
+                  Enter the meeting ID provided by investors to join video calls
+                </p>
+              </div>
+
+              {/* Bento Grid Layout */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Join Meeting Card - Left Side */}
+                <Card className="border-2 bg-card/50 backdrop-blur-sm hover:shadow-lg transition-all">
+                  <CardHeader className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-lg bg-green-500/10 flex items-center justify-center">
+                        <Users className="h-5 w-5 text-green-500" />
+                      </div>
+                      <CardTitle className="text-xl">Join Investor Meeting</CardTitle>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Click the button below to join a video conference with investors using the meeting ID they provided.
+                    </p>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {/* Join Meeting Button */}
+                    <Button
+                      onClick={() => {
+                        window.open('https://investo-streaming.vercel.app/', '_blank');
+                      }}
+                      className="w-full h-12 text-base font-semibold relative overflow-hidden
+                                 bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500
+                                 hover:from-green-600 hover:via-emerald-600 hover:to-teal-600
+                                 shadow-lg hover:shadow-xl
+                                 transition-all duration-300 transform hover:scale-[1.02]
+                                 before:absolute before:inset-0 
+                                 before:bg-gradient-to-r before:from-white/0 before:via-white/20 before:to-white/0
+                                 before:translate-x-[-200%] hover:before:translate-x-[200%]
+                                 before:transition-transform before:duration-700"
+                    >
+                      <div className="relative z-10 flex items-center justify-center gap-2">
+                        <Users className="h-5 w-5" />
+                        <span>Join Meeting</span>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="group-hover:translate-x-1 transition-transform"
+                        >
+                          <path d="M5 12h14" />
+                          <path d="m12 5 7 7-7 7" />
+                        </svg>
+                      </div>
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* How It Works Card - Right Side */}
+                <Card className="border-2 bg-card/50 backdrop-blur-sm hover:shadow-lg transition-all">
+                  <CardHeader className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="text-blue-500"
+                        >
+                          <circle cx="12" cy="12" r="10" />
+                          <path d="M12 16v-4" />
+                          <path d="M12 8h.01" />
+                        </svg>
+                      </div>
+                      <CardTitle className="text-xl">How It Works</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex gap-3">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-500 text-white text-sm font-bold">
+                        1
+                      </div>
+                      <div className="space-y-1 flex-1">
+                        <p className="font-semibold text-sm">Receive Meeting ID</p>
+                        <p className="text-xs text-muted-foreground">
+                          Get the unique Meeting ID from the investor
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex gap-3">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-500 text-white text-sm font-bold">
+                        2
+                      </div>
+                      <div className="space-y-1 flex-1">
+                        <p className="font-semibold text-sm">Enter Meeting ID</p>
+                        <p className="text-xs text-muted-foreground">
+                          Paste or type the Meeting ID in the input field
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex gap-3">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-purple-500 text-white text-sm font-bold">
+                        3
+                      </div>
+                      <div className="space-y-1 flex-1">
+                        <p className="font-semibold text-sm">Join the Call</p>
+                        <p className="text-xs text-muted-foreground">
+                          Click &quot;Join Meeting&quot; to connect with the investor
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-4 p-3 bg-green-500/10 border border-green-500/20 rounded-lg flex gap-2">
+                      <span className="text-sm">💡</span>
+                      <p className="text-xs text-muted-foreground">
+                        <span className="font-semibold">Tip:</span> Make sure you have your pitch materials ready before joining the meeting
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* How it works - Full Width Bottom Section */}
+              <Card className="border-2 bg-card/50 backdrop-blur-sm">
+                <CardHeader>
+                  <CardTitle className="text-xl">How it works</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid md:grid-cols-2 gap-8">
+                    {/* For Joining Meetings */}
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-lg">For Joining Meetings:</h3>
+                      <div className="space-y-3">
+                        <div className="flex gap-3">
+                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-green-500 text-white text-xs font-bold">
+                            1
+                          </div>
+                          <p className="text-sm text-muted-foreground pt-1">
+                            Get the Meeting ID from the investor (via email or message)
+                          </p>
+                        </div>
+                        <div className="flex gap-3">
+                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-green-500 text-white text-xs font-bold">
+                            2
+                          </div>
+                          <p className="text-sm text-muted-foreground pt-1">
+                            Click &quot;Join Meeting&quot; to open the meeting platform
+                          </p>
+                        </div>
+                        <div className="flex gap-3">
+                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-green-500 text-white text-xs font-bold">
+                            3
+                          </div>
+                          <p className="text-sm text-muted-foreground pt-1">
+                            Enter the Meeting ID when prompted to connect with the investor
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Tips for Entrepreneurs */}
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-lg">Tips for Success:</h3>
+                      <div className="space-y-3">
+                        <div className="flex gap-3">
+                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-500 text-white text-xs font-bold">
+                            💡
+                          </div>
+                          <p className="text-sm text-muted-foreground pt-1">
+                            Have your pitch deck and materials ready before joining
+                          </p>
+                        </div>
+                        <div className="flex gap-3">
+                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-500 text-white text-xs font-bold">
+                            💡
+                          </div>
+                          <p className="text-sm text-muted-foreground pt-1">
+                            Test your camera and microphone before the meeting starts
+                          </p>
+                        </div>
+                        <div className="flex gap-3">
+                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-500 text-white text-xs font-bold">
+                            💡
+                          </div>
+                          <p className="text-sm text-muted-foreground pt-1">
+                            Join a few minutes early to ensure everything is working
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           )}
            
