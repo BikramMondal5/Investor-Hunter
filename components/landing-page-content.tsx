@@ -135,7 +135,7 @@ export function LandingPageContent() {
       </section>
 
       {/* Trusted Investors Section */}
-      <section className="py-12 md:py-16 bg-black">
+      <section className="py-12 md:py-16" style={{ backgroundColor: '#0A0A0A' }}>
         <div className="overflow-hidden">
           <div className="text-center mb-8 md:mb-10 animate-fade-in">
             <p className="text-sm md:text-base font-medium text-gray-300/80 uppercase tracking-widest">
@@ -237,7 +237,7 @@ export function LandingPageContent() {
       </section>
 
       {/* How it Works Section */}
-      <section id="how-it-works" className="py-16 md:py-20">
+      <section id="how-it-works" className="py-16 md:py-20" style={{ backgroundColor: '#0A0A0A' }}>
         <div className="container mx-auto w-full max-w-[1400px] px-3 sm:px-4 md:px-6">
           <div className="text-center space-y-4 mb-12 md:mb-16">
             <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold">How it Works</h2>
@@ -251,42 +251,49 @@ export function LandingPageContent() {
               {
                 step: "01",
                 icon: Film,
+                iconColor: "text-blue-500",
                 title: "Upload Pitch",
                 description: "Upload a 3–4 minute video pitch, then run AI analysis before final submission.",
               },
               {
                 step: "02",
                 icon: BarChart3,
+                iconColor: "text-green-500",
                 title: "AI Scoring & Feedback",
                 description: "Receive objective feedback and parameter scores (confidence, creativity, clarity) from the AI.",
               },
               {
                 step: "03",
                 icon: ClipboardCheck,
+                iconColor: "text-purple-500",
                 title: "Submission & Final Scorecard",
                 description: "Submit your refined pitch for a final AI-generated scorecard and ranking.",
               },
               {
                 step: "04",
                 icon: UserCheck,
+                iconColor: "text-orange-500",
                 title: "Entrepreneur Registration & Document Verification",
                 description: "Register and upload business documents, which the InvestorHunt team verifies for authenticity.",
               },
               {
                 step: "05",
                 icon: Users,
+                iconColor: "text-cyan-500",
                 title: "Internal Interview Screening",
                 description: "Our panel meets top-scoring founders online to assess their business clarity, team strength, and coachability.",
               },
               {
                 step: "06",
                 icon: CheckSquare,
+                iconColor: "text-pink-500",
                 title: "Finalist Selection for Live Investor Meetings",
                 description: "Founders who pass the internal screening qualify for live pitch sessions with real investors.",
               },
               {
                 step: "07",
                 icon: Video,
+                iconColor: "text-yellow-500",
                 title: "Live Investor Pitch & Follow-up",
                 description: "Pitch directly to verified investors in a live meeting, with post-meeting follow-up options for further interest.",
               },
@@ -301,7 +308,7 @@ export function LandingPageContent() {
                 <CardContent className="p-6 text-center space-y-4">
                   <div className="text-3xl font-bold text-muted-foreground/30 mb-2">{item.step}</div>
                   <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3 transition-transform duration-300 group-hover:scale-105">
-                    <item.icon className="h-8 w-8 text-primary transition-all duration-300" />
+                    <item.icon className={`h-8 w-8 ${item.iconColor} transition-all duration-300`} />
                   </div>
                   <h3 className="text-lg font-semibold">{item.title}</h3>
                   <p className="text-sm text-muted-foreground">{item.description}</p>
@@ -324,7 +331,7 @@ export function LandingPageContent() {
       </section>
 
       {/* Key Features Section */}
-      <section id="features" className="py-16 md:py-20 bg-muted/30">
+      <section id="features" className="py-16 md:py-20" style={{ backgroundColor: '#0A0A0A' }}>
         <div className="container mx-auto w-full max-w-[1400px] px-3 sm:px-4 md:px-6">
           <div className="text-center space-y-4 mb-12 md:mb-16">
             <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold">Key Features</h2>
@@ -385,7 +392,7 @@ export function LandingPageContent() {
       </section>
 
       {/* Testimonial Section */}
-      <section className="py-16 md:py-20 bg-gradient-to-br from-blue-600/10 to-purple-600/10">
+      <section className="py-16 md:py-20" style={{ backgroundColor: '#0A0A0A' }}>
         <div className="container mx-auto w-full max-w-[1400px] px-3 sm:px-4 md:px-6">
           <div className="text-center space-y-4 mb-12 md:mb-16">
             <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold">What Our Clients Say</h2>
