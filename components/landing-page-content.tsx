@@ -252,6 +252,7 @@ export function LandingPageContent() {
                 step: "01",
                 icon: Film,
                 iconColor: "text-blue-500",
+                iconBg: "bg-blue-500/10",
                 title: "Upload Pitch",
                 description: "Upload a 3–4 minute video pitch, then run AI analysis before final submission.",
               },
@@ -259,6 +260,7 @@ export function LandingPageContent() {
                 step: "02",
                 icon: BarChart3,
                 iconColor: "text-green-500",
+                iconBg: "bg-green-500/10",
                 title: "AI Scoring & Feedback",
                 description: "Receive objective feedback and parameter scores (confidence, creativity, clarity) from the AI.",
               },
@@ -266,6 +268,7 @@ export function LandingPageContent() {
                 step: "03",
                 icon: ClipboardCheck,
                 iconColor: "text-purple-500",
+                iconBg: "bg-purple-500/10",
                 title: "Submission & Final Scorecard",
                 description: "Submit your refined pitch for a final AI-generated scorecard and ranking.",
               },
@@ -273,6 +276,7 @@ export function LandingPageContent() {
                 step: "04",
                 icon: UserCheck,
                 iconColor: "text-orange-500",
+                iconBg: "bg-orange-500/10",
                 title: "Entrepreneur Registration & Document Verification",
                 description: "Register and upload business documents, which the InvestorHunt team verifies for authenticity.",
               },
@@ -280,6 +284,7 @@ export function LandingPageContent() {
                 step: "05",
                 icon: Users,
                 iconColor: "text-cyan-500",
+                iconBg: "bg-cyan-500/10",
                 title: "Internal Interview Screening",
                 description: "Our panel meets top-scoring founders online to assess their business clarity, team strength, and coachability.",
               },
@@ -287,6 +292,7 @@ export function LandingPageContent() {
                 step: "06",
                 icon: CheckSquare,
                 iconColor: "text-pink-500",
+                iconBg: "bg-pink-500/10",
                 title: "Finalist Selection for Live Investor Meetings",
                 description: "Founders who pass the internal screening qualify for live pitch sessions with real investors.",
               },
@@ -294,27 +300,32 @@ export function LandingPageContent() {
                 step: "07",
                 icon: Video,
                 iconColor: "text-yellow-500",
+                iconBg: "bg-yellow-500/10",
                 title: "Live Investor Pitch & Follow-up",
                 description: "Pitch directly to verified investors in a live meeting, with post-meeting follow-up options for further interest.",
               },
             ].map((item, index) => (
               <Card 
                 key={index} 
-                className="relative group hover:shadow-lg transition-all duration-300 cursor-default hover:bg-background/80 border border-transparent dark:border-purple-900/20"
+                className="relative group transition-all duration-300 cursor-default border-2 border-transparent bg-zinc-900/50 hover:border-purple-600"
                 style={{
-                  boxShadow: '0 0 0 1px rgba(139,92,246,0.05)',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.boxShadow = '0 20px 50px -12px rgba(147, 51, 234, 0.8), 0 10px 30px -5px rgba(147, 51, 234, 0.6), 0 0 40px rgba(147, 51, 234, 0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)';
                 }}
               >
                 <CardContent className="p-6 text-center space-y-4">
                   <div className="text-3xl font-bold text-muted-foreground/30 mb-2">{item.step}</div>
-                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3 transition-transform duration-300 group-hover:scale-105">
+                  <div className={`w-16 h-16 ${item.iconBg} rounded-full flex items-center justify-center mx-auto mb-3 transition-transform duration-300 group-hover:scale-110`}>
                     <item.icon className={`h-8 w-8 ${item.iconColor} transition-all duration-300`} />
                   </div>
                   <h3 className="text-lg font-semibold">{item.title}</h3>
                   <p className="text-sm text-muted-foreground">{item.description}</p>
                 </CardContent>
-                <div className="absolute inset-0 pointer-events-none border border-purple-500/40 dark:border-purple-400/30 rounded-xl transition-all duration-300 opacity-0 group-hover:opacity-100"></div>
-                <div className="absolute inset-0 pointer-events-none rounded-xl transition-all duration-300 group-hover:shadow-[0_8px_35px_-2px_rgba(139,92,246,0.6),0_0_15px_rgba(139,92,246,0.3)_inset] dark:group-hover:shadow-[0_10px_40px_-2px_rgba(139,92,246,0.7),0_0_20px_rgba(139,92,246,0.35)_inset]"></div>
               </Card>
             ))}
           </div>
@@ -346,7 +357,7 @@ export function LandingPageContent() {
                 icon: Brain,
                 iconColor: "text-purple-500",
                 iconBg: "bg-purple-500/10",
-                borderColor: "border-purple-500",
+                hoverBorderColor: "rgb(168, 85, 247)",
                 title: "AI Pitch Analyzer",
                 description: "Advanced AI evaluates your pitch for clarity, uniqueness, and market fit.",
               },
@@ -354,7 +365,7 @@ export function LandingPageContent() {
                 icon: Globe,
                 iconColor: "text-blue-500",
                 iconBg: "bg-blue-500/10",
-                borderColor: "border-blue-500",
+                hoverBorderColor: "rgb(59, 130, 246)",
                 title: "Inclusive Global Access",
                 description: "Connect with investors worldwide, breaking geographical barriers.",
               },
@@ -362,7 +373,7 @@ export function LandingPageContent() {
                 icon: Zap,
                 iconColor: "text-green-500",
                 iconBg: "bg-green-500/10",
-                borderColor: "border-green-500",
+                hoverBorderColor: "rgb(34, 197, 94)",
                 title: "Multilingual Support",
                 description: "Submit pitches in your native language with AI-powered translation.",
               },
@@ -370,7 +381,7 @@ export function LandingPageContent() {
                 icon: MessageSquare,
                 iconColor: "text-cyan-500",
                 iconBg: "bg-cyan-500/10",
-                borderColor: "border-cyan-500",
+                hoverBorderColor: "rgb(6, 182, 212)",
                 title: "Real-Time Community Feedback",
                 description: "Get instant feedback from fellow entrepreneurs and early backers.",
               },
@@ -378,7 +389,7 @@ export function LandingPageContent() {
                 icon: Shield,
                 iconColor: "text-red-500",
                 iconBg: "bg-red-500/10",
-                borderColor: "border-red-500",
+                hoverBorderColor: "rgb(239, 68, 68)",
                 title: "Transparent Evaluation",
                 description: "Clear scoring system helps you understand how investors see your idea.",
               },
@@ -386,16 +397,22 @@ export function LandingPageContent() {
                 icon: Star,
                 iconColor: "text-yellow-500",
                 iconBg: "bg-yellow-500/10",
-                borderColor: "border-yellow-500",
+                hoverBorderColor: "rgb(234, 179, 8)",
                 title: "Investor Chat + Follow-up Scheduling",
                 description: "Direct messaging and meeting scheduling with interested investors.",
               },
             ].map((feature, index) => (
               <Card 
                 key={index} 
-                className={`relative group hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:${feature.borderColor} bg-zinc-900/50`}
+                className="relative group hover:shadow-xl transition-all duration-300 border-2 border-transparent bg-zinc-900/50"
                 style={{
                   boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = feature.hoverBorderColor;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'transparent';
                 }}
               >
                 <CardContent className="p-6 space-y-4">
