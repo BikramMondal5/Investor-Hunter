@@ -4,6 +4,7 @@ import { Header } from "@/components/header"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { 
   Play, Upload, Brain, MessageSquare, Star, ArrowRight, Globe, Zap, Shield, 
   Film, BarChart3, ClipboardCheck, UserCheck, CheckSquare, Users, Video 
@@ -16,9 +17,18 @@ import useEmblaCarousel from "embla-carousel-react"
 import Autoplay from "embla-carousel-autoplay"
 import { useSearchParams } from 'next/navigation'
 import TestimonialCarousel from "@/components/TestimonialCarousel"
+import { useAppSession } from "@/hooks/use-app-session"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 export function LandingPageContent() {
   const searchParams = useSearchParams()
   const [showAuthModal, setShowAuthModal] = useState(false)
+  const { session } = useAppSession()
   
   useEffect(() => {
     // Check if user was redirected from a protected route
@@ -31,6 +41,8 @@ export function LandingPageContent() {
   const [isMounted, setIsMounted] = useState(false)
   const [authModalOpen, setAuthModalOpen] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [feedbackModalOpen, setFeedbackModalOpen] = useState(false)
+  const [feedbackText, setFeedbackText] = useState('')
 
   const [authError, setAuthError] = useState<string | null>(null);
 
@@ -74,6 +86,7 @@ export function LandingPageContent() {
   if (!isMounted) {
     return null // Return null on server-side rendering
   }
+  
   const handleSubmitPitch = (e: React.MouseEvent) => {
     e.preventDefault()
     if (isAuthenticated) {
@@ -82,6 +95,67 @@ export function LandingPageContent() {
       setAuthModalOpen(true)
     }
   }
+
+  const handleFeedbackSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    // Check if user is authenticated
+    if (!session?.user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to submit feedback.",
+        variant: "destructive",
+      })
+      setFeedbackModalOpen(false)
+      setAuthModalOpen(true)
+      return
+    }
+
+    try {
+      const response = await fetch('/api/submit-feedback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          feedback: feedbackText,
+        }),
+      })
+
+      if (response.ok) {
+        toast({
+          title: "Feedback Submitted!",
+          description: "Thank you for your feedback. It will appear shortly.",
+        })
+        setFeedbackModalOpen(false)
+        setFeedbackText('')
+        // Refresh the page to show new feedback
+        window.location.reload()
+      } else {
+        throw new Error('Failed to submit feedback')
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to submit feedback. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleFeedbackButtonClick = () => {
+    if (!session?.user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to submit feedback.",
+        variant: "destructive",
+      })
+      setAuthModalOpen(true)
+      return
+    }
+    setFeedbackModalOpen(true)
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -135,7 +209,7 @@ export function LandingPageContent() {
       </section>
 
       {/* Trusted Investors Section */}
-      <section className="py-12 md:py-16" style={{ backgroundColor: '#0A0A0A' }}>
+      <section className="py-12 md:py-16 bg-black">
         <div className="overflow-hidden">
           <div className="text-center mb-8 md:mb-10 animate-fade-in">
             <p className="text-sm md:text-base font-medium text-gray-300/80 uppercase tracking-widest">
@@ -240,7 +314,7 @@ export function LandingPageContent() {
       <section id="how-it-works" className="py-16 md:py-20" style={{ backgroundColor: '#0A0A0A' }}>
         <div className="container mx-auto w-full max-w-[1400px] px-3 sm:px-4 md:px-6">
           <div className="text-center space-y-4 mb-12 md:mb-16">
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold">How it Works</h2>
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">How it Works</h2>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
               The comprehensive journey from pitch to investor meeting
             </p>
@@ -345,7 +419,7 @@ export function LandingPageContent() {
       <section id="features" className="py-16 md:py-20" style={{ backgroundColor: '#0A0A0A' }}>
         <div className="container mx-auto w-full max-w-[1400px] px-3 sm:px-4 md:px-6">
           <div className="text-center space-y-4 mb-12 md:mb-16">
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold">Key Features</h2>
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Key Features</h2>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
               Everything you need to connect with the right investors
             </p>
@@ -432,7 +506,7 @@ export function LandingPageContent() {
       <section className="py-16 md:py-20" style={{ backgroundColor: '#0A0A0A' }}>
         <div className="container mx-auto w-full max-w-[1400px] px-3 sm:px-4 md:px-6">
           <div className="text-center space-y-4 mb-12 md:mb-16">
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold">What Our Clients Say</h2>
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">What Our Clients Say</h2>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
               Success stories from entrepreneurs who found their investors
             </p>
@@ -440,6 +514,16 @@ export function LandingPageContent() {
 
           <div className="relative">
             <TestimonialCarousel />
+            
+            {/* Submit Feedback Button */}
+            <div className="absolute bottom-0 right-0 z-10">
+              <Button 
+                onClick={handleFeedbackButtonClick}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg"
+              >
+                Submit Feedback
+              </Button>
+            </div>
           </div>
         </div>
       </section>
@@ -511,6 +595,69 @@ export function LandingPageContent() {
         }}
         initialError={authError} // Pass the error
       />
+
+      {/* Feedback Modal */}
+      <Dialog open={feedbackModalOpen} onOpenChange={setFeedbackModalOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Submit Your Feedback
+            </DialogTitle>
+            <DialogDescription>
+              Share your experience with InvestorHunt. Your feedback helps us improve!
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleFeedbackSubmit} className="space-y-4 mt-4">
+            {session?.user && (
+              <div className="bg-muted/50 p-4 rounded-lg space-y-2">
+                <div className="flex items-center gap-3">
+                  {session.user.avatar && (
+                    <img 
+                      src={session.user.avatar} 
+                      alt={session.user.name}
+                      className="w-12 h-12 rounded-full border-2 border-purple-500"
+                    />
+                  )}
+                  <div>
+                    <p className="font-semibold">{session.user.name}</p>
+                    <p className="text-sm text-muted-foreground capitalize">{session.user.role}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div>
+              <label htmlFor="feedback" className="text-sm font-medium mb-2 block">
+                Your Feedback
+              </label>
+              <Textarea
+                id="feedback"
+                placeholder="Share your experience..."
+                value={feedbackText}
+                onChange={(e) => setFeedbackText(e.target.value)}
+                required
+                rows={6}
+                className="resize-none"
+              />
+            </div>
+            <div className="flex gap-3 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setFeedbackModalOpen(false)}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+              >
+                Submit Feedback
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -1,11 +1,11 @@
 "use client"
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Card, CardContent } from "@/components/ui/card"
 import { Star } from "lucide-react"
 
-// Testimonial data with updated country for Koushik Ghosh
-const testimonials = [
+// Default testimonial data
+const defaultTestimonials = [
   {
     name: "Bikram Mondal",
     country: "India",
@@ -16,7 +16,7 @@ const testimonials = [
   },
   {
     name: "Koushik Ghosh",
-    country: "Singapore", // Updated country
+    country: "Singapore",
     type: "Entrepreneur",
     avatar: "Koushik-Ghosh.jpeg",
     feedback:
@@ -24,7 +24,7 @@ const testimonials = [
   },
   {
     name: "Arijit Sarkar",
-    country: "Mexico", // Updated from Nigeria to USA as shown in the image
+    country: "Mexico",
     type: "Entrepreneur",
     avatar: "Arijit-Sarker.jpeg",
     feedback:
@@ -57,6 +57,29 @@ const testimonials = [
 ]
 
 export default function TestimonialCarousel() {
+  const [testimonials, setTestimonials] = useState(defaultTestimonials)
+
+  useEffect(() => {
+    // Fetch testimonials from the database
+    const fetchTestimonials = async () => {
+      try {
+        const response = await fetch('/api/submit-feedback')
+        if (response.ok) {
+          const data = await response.json()
+          if (data.success && data.feedbacks.length > 0) {
+            // Combine database testimonials with default ones
+            setTestimonials([...data.feedbacks, ...defaultTestimonials])
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching testimonials:', error)
+        // Keep default testimonials on error
+      }
+    }
+
+    fetchTestimonials()
+  }, [])
+
   return (
     <div className="relative overflow-hidden">
       <div className="overflow-hidden relative w-full py-4">
