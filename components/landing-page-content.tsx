@@ -4,6 +4,7 @@ import { Header } from "@/components/header"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { 
   Play, Upload, Brain, MessageSquare, Star, ArrowRight, Globe, Zap, Shield, 
   Film, BarChart3, ClipboardCheck, UserCheck, CheckSquare, Users, Video 
@@ -16,9 +17,18 @@ import useEmblaCarousel from "embla-carousel-react"
 import Autoplay from "embla-carousel-autoplay"
 import { useSearchParams } from 'next/navigation'
 import TestimonialCarousel from "@/components/TestimonialCarousel"
+import { useAppSession } from "@/hooks/use-app-session"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 export function LandingPageContent() {
   const searchParams = useSearchParams()
   const [showAuthModal, setShowAuthModal] = useState(false)
+  const { session } = useAppSession()
   
   useEffect(() => {
     // Check if user was redirected from a protected route
@@ -31,6 +41,10 @@ export function LandingPageContent() {
   const [isMounted, setIsMounted] = useState(false)
   const [authModalOpen, setAuthModalOpen] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [feedbackModalOpen, setFeedbackModalOpen] = useState(false)
+  const [feedbackText, setFeedbackText] = useState('')
+  const [rating, setRating] = useState(0)
+  const [hoverRating, setHoverRating] = useState(0)
 
   const [authError, setAuthError] = useState<string | null>(null);
 
@@ -74,6 +88,7 @@ export function LandingPageContent() {
   if (!isMounted) {
     return null // Return null on server-side rendering
   }
+  
   const handleSubmitPitch = (e: React.MouseEvent) => {
     e.preventDefault()
     if (isAuthenticated) {
@@ -82,6 +97,79 @@ export function LandingPageContent() {
       setAuthModalOpen(true)
     }
   }
+
+  const handleFeedbackSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    // Check if user is authenticated
+    if (!session?.user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to submit feedback.",
+        variant: "destructive",
+      })
+      setFeedbackModalOpen(false)
+      setAuthModalOpen(true)
+      return
+    }
+
+    // Validate rating
+    if (rating === 0) {
+      toast({
+        title: "Rating Required",
+        description: "Please select a rating before submitting.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      const response = await fetch('/api/submit-feedback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          feedback: feedbackText,
+          rating: rating,
+        }),
+      })
+
+      if (response.ok) {
+        toast({
+          title: "Feedback Submitted!",
+          description: "Thank you for your feedback. It will appear shortly.",
+        })
+        setFeedbackModalOpen(false)
+        setFeedbackText('')
+        setRating(0)
+        // Refresh the page to show new feedback
+        window.location.reload()
+      } else {
+        throw new Error('Failed to submit feedback')
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to submit feedback. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleFeedbackButtonClick = () => {
+    if (!session?.user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to submit feedback.",
+        variant: "destructive",
+      })
+      setAuthModalOpen(true)
+      return
+    }
+    setFeedbackModalOpen(true)
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -237,10 +325,10 @@ export function LandingPageContent() {
       </section>
 
       {/* How it Works Section */}
-      <section id="how-it-works" className="py-16 md:py-20">
+      <section id="how-it-works" className="py-16 md:py-20" style={{ backgroundColor: '#0A0A0A' }}>
         <div className="container mx-auto w-full max-w-[1400px] px-3 sm:px-4 md:px-6">
           <div className="text-center space-y-4 mb-12 md:mb-16">
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold">How it Works</h2>
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">How it Works</h2>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
               The comprehensive journey from pitch to investor meeting
             </p>
@@ -251,63 +339,81 @@ export function LandingPageContent() {
               {
                 step: "01",
                 icon: Film,
+                iconColor: "text-blue-500",
+                iconBg: "bg-blue-500/10",
                 title: "Upload Pitch",
                 description: "Upload a 3–4 minute video pitch, then run AI analysis before final submission.",
               },
               {
                 step: "02",
                 icon: BarChart3,
+                iconColor: "text-green-500",
+                iconBg: "bg-green-500/10",
                 title: "AI Scoring & Feedback",
                 description: "Receive objective feedback and parameter scores (confidence, creativity, clarity) from the AI.",
               },
               {
                 step: "03",
                 icon: ClipboardCheck,
+                iconColor: "text-purple-500",
+                iconBg: "bg-purple-500/10",
                 title: "Submission & Final Scorecard",
                 description: "Submit your refined pitch for a final AI-generated scorecard and ranking.",
               },
               {
                 step: "04",
                 icon: UserCheck,
+                iconColor: "text-orange-500",
+                iconBg: "bg-orange-500/10",
                 title: "Entrepreneur Registration & Document Verification",
                 description: "Register and upload business documents, which the InvestorHunt team verifies for authenticity.",
               },
               {
                 step: "05",
                 icon: Users,
+                iconColor: "text-cyan-500",
+                iconBg: "bg-cyan-500/10",
                 title: "Internal Interview Screening",
                 description: "Our panel meets top-scoring founders online to assess their business clarity, team strength, and coachability.",
               },
               {
                 step: "06",
                 icon: CheckSquare,
+                iconColor: "text-pink-500",
+                iconBg: "bg-pink-500/10",
                 title: "Finalist Selection for Live Investor Meetings",
                 description: "Founders who pass the internal screening qualify for live pitch sessions with real investors.",
               },
               {
                 step: "07",
                 icon: Video,
+                iconColor: "text-yellow-500",
+                iconBg: "bg-yellow-500/10",
                 title: "Live Investor Pitch & Follow-up",
                 description: "Pitch directly to verified investors in a live meeting, with post-meeting follow-up options for further interest.",
               },
             ].map((item, index) => (
               <Card 
                 key={index} 
-                className="relative group hover:shadow-lg transition-all duration-300 cursor-default hover:bg-background/80 border border-transparent dark:border-purple-900/20"
+                className="relative group transition-all duration-300 cursor-default border-2 border-transparent bg-zinc-900/50 hover:border-purple-600"
                 style={{
-                  boxShadow: '0 0 0 1px rgba(139,92,246,0.05)',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.boxShadow = '0 20px 50px -12px rgba(147, 51, 234, 0.8), 0 10px 30px -5px rgba(147, 51, 234, 0.6), 0 0 40px rgba(147, 51, 234, 0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)';
                 }}
               >
                 <CardContent className="p-6 text-center space-y-4">
                   <div className="text-3xl font-bold text-muted-foreground/30 mb-2">{item.step}</div>
-                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3 transition-transform duration-300 group-hover:scale-105">
-                    <item.icon className="h-8 w-8 text-primary transition-all duration-300" />
+                  <div className={`w-16 h-16 ${item.iconBg} rounded-full flex items-center justify-center mx-auto mb-3 transition-transform duration-300 group-hover:scale-110`}>
+                    <item.icon className={`h-8 w-8 ${item.iconColor} transition-all duration-300`} />
                   </div>
                   <h3 className="text-lg font-semibold">{item.title}</h3>
                   <p className="text-sm text-muted-foreground">{item.description}</p>
                 </CardContent>
-                <div className="absolute inset-0 pointer-events-none border border-purple-500/40 dark:border-purple-400/30 rounded-xl transition-all duration-300 opacity-0 group-hover:opacity-100"></div>
-                <div className="absolute inset-0 pointer-events-none rounded-xl transition-all duration-300 group-hover:shadow-[0_8px_35px_-2px_rgba(139,92,246,0.6),0_0_15px_rgba(139,92,246,0.3)_inset] dark:group-hover:shadow-[0_10px_40px_-2px_rgba(139,92,246,0.7),0_0_20px_rgba(139,92,246,0.35)_inset]"></div>
               </Card>
             ))}
           </div>
@@ -324,10 +430,10 @@ export function LandingPageContent() {
       </section>
 
       {/* Key Features Section */}
-      <section id="features" className="py-16 md:py-20 bg-muted/30">
+      <section id="features" className="py-16 md:py-20" style={{ backgroundColor: '#0A0A0A' }}>
         <div className="container mx-auto w-full max-w-[1400px] px-3 sm:px-4 md:px-6">
           <div className="text-center space-y-4 mb-12 md:mb-16">
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold">Key Features</h2>
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Key Features</h2>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
               Everything you need to connect with the right investors
             </p>
@@ -337,47 +443,73 @@ export function LandingPageContent() {
             {[
               {
                 icon: Brain,
+                iconColor: "text-purple-500",
+                iconBg: "bg-purple-500/10",
+                hoverBorderColor: "rgb(168, 85, 247)",
                 title: "AI Pitch Analyzer",
                 description: "Advanced AI evaluates your pitch for clarity, uniqueness, and market fit.",
               },
               {
                 icon: Globe,
+                iconColor: "text-blue-500",
+                iconBg: "bg-blue-500/10",
+                hoverBorderColor: "rgb(59, 130, 246)",
                 title: "Inclusive Global Access",
                 description: "Connect with investors worldwide, breaking geographical barriers.",
               },
               {
                 icon: Zap,
+                iconColor: "text-green-500",
+                iconBg: "bg-green-500/10",
+                hoverBorderColor: "rgb(34, 197, 94)",
                 title: "Multilingual Support",
                 description: "Submit pitches in your native language with AI-powered translation.",
               },
               {
                 icon: MessageSquare,
+                iconColor: "text-cyan-500",
+                iconBg: "bg-cyan-500/10",
+                hoverBorderColor: "rgb(6, 182, 212)",
                 title: "Real-Time Community Feedback",
                 description: "Get instant feedback from fellow entrepreneurs and early backers.",
               },
               {
                 icon: Shield,
+                iconColor: "text-red-500",
+                iconBg: "bg-red-500/10",
+                hoverBorderColor: "rgb(239, 68, 68)",
                 title: "Transparent Evaluation",
                 description: "Clear scoring system helps you understand how investors see your idea.",
               },
               {
                 icon: Star,
+                iconColor: "text-yellow-500",
+                iconBg: "bg-yellow-500/10",
+                hoverBorderColor: "rgb(234, 179, 8)",
                 title: "Investor Chat + Follow-up Scheduling",
                 description: "Direct messaging and meeting scheduling with interested investors.",
               },
             ].map((feature, index) => (
-              <Card key={index} className="relative group hover:shadow-lg transition-all duration-300 border border-transparent dark:border-purple-900/20" style={{
-                boxShadow: '0 0 0 1px rgba(139,92,246,0.05)',
-              }}>
+              <Card 
+                key={index} 
+                className="relative group hover:shadow-xl transition-all duration-300 border-2 border-transparent bg-zinc-900/50"
+                style={{
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = feature.hoverBorderColor;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'transparent';
+                }}
+              >
                 <CardContent className="p-6 space-y-4">
-                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <feature.icon className="h-6 w-6 text-primary" />
+                  <div className={`w-12 h-12 ${feature.iconBg} rounded-lg flex items-center justify-center`}>
+                    <feature.icon className={`h-6 w-6 ${feature.iconColor}`} />
                   </div>
                   <h3 className="text-lg font-semibold">{feature.title}</h3>
                   <p className="text-muted-foreground text-sm">{feature.description}</p>
                 </CardContent>
-                <div className="absolute inset-0 pointer-events-none border border-purple-500/40 dark:border-purple-400/30 rounded-xl transition-all duration-300 opacity-0 group-hover:opacity-100"></div>
-                <div className="absolute inset-0 pointer-events-none rounded-xl transition-all duration-300 group-hover:shadow-[0_8px_35px_-2px_rgba(139,92,246,0.6),0_0_15px_rgba(139,92,246,0.3)_inset] dark:group-hover:shadow-[0_10px_40px_-2px_rgba(139,92,246,0.7),0_0_20px_rgba(139,92,246,0.35)_inset]"></div>
               </Card>
             ))}
           </div>
@@ -385,10 +517,10 @@ export function LandingPageContent() {
       </section>
 
       {/* Testimonial Section */}
-      <section className="py-16 md:py-20 bg-gradient-to-br from-blue-600/10 to-purple-600/10">
+      <section className="py-16 md:py-20" style={{ backgroundColor: '#0A0A0A' }}>
         <div className="container mx-auto w-full max-w-[1400px] px-3 sm:px-4 md:px-6">
           <div className="text-center space-y-4 mb-12 md:mb-16">
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold">What Our Clients Say</h2>
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">What Our Clients Say</h2>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
               Success stories from entrepreneurs who found their investors
             </p>
@@ -396,6 +528,16 @@ export function LandingPageContent() {
 
           <div className="relative">
             <TestimonialCarousel />
+            
+            {/* Submit Feedback Button */}
+            <div className="relative bottom-0 left-300 z-10">
+              <Button 
+                onClick={handleFeedbackButtonClick}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg"
+              >
+                Submit Feedback
+              </Button>
+            </div>
           </div>
         </div>
       </section>
@@ -467,6 +609,106 @@ export function LandingPageContent() {
         }}
         initialError={authError} // Pass the error
       />
+
+      {/* Feedback Modal */}
+      <Dialog open={feedbackModalOpen} onOpenChange={setFeedbackModalOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Submit Your Feedback
+            </DialogTitle>
+            <DialogDescription>
+              Share your experience with InvestorHunt. Your feedback helps us improve!
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleFeedbackSubmit} className="space-y-4 mt-4">
+            {session?.user && (
+              <div className="bg-muted/50 p-4 rounded-lg space-y-2">
+                <div className="flex items-center gap-3">
+                  {session.user.avatar && (
+                    <img 
+                      src={session.user.avatar} 
+                      alt={session.user.name}
+                      className="w-12 h-12 rounded-full border-2 border-purple-500"
+                    />
+                  )}
+                  <div>
+                    <p className="font-semibold">{session.user.name}</p>
+                    <p className="text-sm text-muted-foreground capitalize">{session.user.role}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Star Rating */}
+            <div>
+              <label className="text-sm font-medium mb-3 block">
+                Rate Your Experience
+              </label>
+              <div className="flex gap-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setRating(star)}
+                    onMouseEnter={() => setHoverRating(star)}
+                    onMouseLeave={() => setHoverRating(0)}
+                    className="transition-all duration-200 hover:scale-110"
+                  >
+                    <Star
+                      className={`h-8 w-8 transition-colors ${
+                        star <= (hoverRating || rating)
+                          ? 'fill-yellow-400 text-yellow-400'
+                          : 'fill-none text-gray-400 stroke-2'
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+              {rating > 0 && (
+                <p className="text-sm text-muted-foreground mt-2">
+                  You rated: {rating} star{rating > 1 ? 's' : ''}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label htmlFor="feedback" className="text-sm font-medium mb-2 block">
+                Your Feedback
+              </label>
+              <Textarea
+                id="feedback"
+                placeholder="Share your experience..."
+                value={feedbackText}
+                onChange={(e) => setFeedbackText(e.target.value)}
+                required
+                rows={6}
+                className="resize-none"
+              />
+            </div>
+            <div className="flex gap-3 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setFeedbackModalOpen(false)
+                  setRating(0)
+                  setHoverRating(0)
+                }}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+              >
+                Submit Feedback
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

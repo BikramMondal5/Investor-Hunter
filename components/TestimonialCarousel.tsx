@@ -1,11 +1,11 @@
 "use client"
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Card, CardContent } from "@/components/ui/card"
 import { Star } from "lucide-react"
 
-// Testimonial data with updated country for Koushik Ghosh
-const testimonials = [
+// Default testimonial data
+const defaultTestimonials = [
   {
     name: "Bikram Mondal",
     country: "India",
@@ -13,22 +13,25 @@ const testimonials = [
     avatar: "https://avatars.githubusercontent.com/u/170235967?v=4",
     feedback:
       "InvestorHunt helped me connect with 3 VCs in just 2 weeks. The AI feedback was incredibly valuable for refining my pitch.",
+    rating: 5,
   },
   {
     name: "Koushik Ghosh",
-    country: "Singapore", // Updated country
+    country: "Singapore",
     type: "Entrepreneur",
     avatar: "Koushik-Ghosh.jpeg",
     feedback:
       "The community feedback helped me identify blind spots in my business model. Raised $500K seed round within 3 months.",
+    rating: 5,
   },
   {
     name: "Arijit Sarkar",
-    country: "Mexico", // Updated from Nigeria to USA as shown in the image
+    country: "Mexico",
     type: "Entrepreneur",
     avatar: "Arijit-Sarker.jpeg",
     feedback:
       "As a non-native English speaker, the multilingual support was a game-changer. I pitched in my native language and still got funded!",
+    rating: 5,
   },
   {
     name: "Debashish Sarkar",
@@ -37,6 +40,7 @@ const testimonials = [
     avatar: "Debashish-Sarkar.jpeg",
     feedback:
       "The investor matching algorithm introduced me to partners I would never have found on my own. Secured pre-seed funding within a month.",
+    rating: 5,
   },
   {
     name: "Maria Lee",
@@ -45,6 +49,7 @@ const testimonials = [
     avatar: "Maria-Lee.jpg",
     feedback:
       "The quality of pitches on this platform is exceptional — I've discovered startups that truly stand out.",
+    rating: 5,
   },
   {
     name: "John Smith",
@@ -53,10 +58,34 @@ const testimonials = [
     avatar: "Jane-Smith.jpeg",
     feedback:
       "This platform bridges the gap between visionaries and investors perfectly — it's efficient, smart, and impactful.",
+    rating: 5,
   },
 ]
 
 export default function TestimonialCarousel() {
+  const [testimonials, setTestimonials] = useState(defaultTestimonials)
+
+  useEffect(() => {
+    // Fetch testimonials from the database
+    const fetchTestimonials = async () => {
+      try {
+        const response = await fetch('/api/submit-feedback')
+        if (response.ok) {
+          const data = await response.json()
+          if (data.success && data.feedbacks.length > 0) {
+            // Combine database testimonials with default ones
+            setTestimonials([...data.feedbacks, ...defaultTestimonials])
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching testimonials:', error)
+        // Keep default testimonials on error
+      }
+    }
+
+    fetchTestimonials()
+  }, [])
+
   return (
     <div className="relative overflow-hidden">
       <div className="overflow-hidden relative w-full py-4">
@@ -100,7 +129,7 @@ export default function TestimonialCarousel() {
 }
 
 // Testimonial Card Component with styling matching the image
-function TestimonialCard({ testimonial }) {
+function TestimonialCard({ testimonial }: { testimonial: any }) {
   return (
     <Card className="relative group transition-all duration-300 h-full bg-[#121521] border border-black/30 dark:border-white/10 rounded-xl overflow-hidden" style={{
       minHeight: '290px', // Reduced from 320px to 290px
@@ -123,7 +152,14 @@ function TestimonialCard({ testimonial }) {
         <div className="flex justify-between items-center mt-auto pt-2"> {/* Reduced padding top from pt-3 to pt-2 */}
           <div className="flex space-x-1">
             {[1, 2, 3, 4, 5].map((star) => (
-              <Star key={star} className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+              <Star 
+                key={star} 
+                className={`h-5 w-5 ${
+                  star <= (testimonial.rating || 5)
+                    ? 'fill-yellow-400 text-yellow-400'
+                    : 'fill-none text-gray-400'
+                }`} 
+              />
             ))}
           </div>
           <span className={`px-3 py-1 text-xs rounded-full ${

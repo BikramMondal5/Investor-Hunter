@@ -599,7 +599,7 @@ const handleMessage = (startup: StartupPitch) => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b bg-background/95 backdrop-blur">
+      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
         <div className="container mx-auto w-full max-w-[1400px] px-3 sm:px-4 md:px-6 flex h-16 items-center justify-between">
           <div className="flex items-center space-x-4">
             <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
@@ -607,7 +607,29 @@ const handleMessage = (startup: StartupPitch) => {
             </span>
           </div>
 
-          <div className="flex items-center space-x-4 flex-1 max-w-md mx-8">
+          {/* Navigation Links */}
+          <nav className="hidden lg:flex items-center space-x-6">
+            <a 
+              href="/" 
+              className="text-sm font-medium transition-colors hover:bg-gradient-to-r hover:from-purple-600 hover:to-purple-600 hover:bg-clip-text hover:text-transparent"
+            >
+              Home
+            </a>
+            <a 
+              href="/#how-it-works" 
+              className="text-sm font-medium transition-colors hover:bg-gradient-to-r hover:from-purple-600 hover:to-purple-600 hover:bg-clip-text hover:text-transparent"
+            >
+              How it Works
+            </a>
+            <a 
+              href="/#features" 
+              className="text-sm font-medium transition-colors hover:bg-gradient-to-r hover:from-purple-600 hover:to-purple-600 hover:bg-clip-text hover:text-transparent"
+            >
+              Features
+            </a>
+          </nav>
+
+          <div className="flex items-center space-x-4 flex-1 max-w-md mx-8 lg:mx-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input 
@@ -643,7 +665,11 @@ const handleMessage = (startup: StartupPitch) => {
           <nav className="p-4 space-y-2">
             <Button
               variant={activeTab === "discover" ? "default" : "ghost"}
-              className="w-full justify-start"
+              className={`w-full justify-start ${
+                activeTab === "discover" 
+                  ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700" 
+                  : ""
+              }`}
               onClick={() => setActiveTab("discover")}
             >
               <TrendingUp className="mr-2 h-4 w-4" />
@@ -651,7 +677,11 @@ const handleMessage = (startup: StartupPitch) => {
             </Button>
             <Button
               variant={activeTab === "saved" ? "default" : "ghost"}
-              className="w-full justify-start"
+              className={`w-full justify-start ${
+                activeTab === "saved" 
+                  ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700" 
+                  : ""
+              }`}
               onClick={() => setActiveTab("saved")}
             >
               <Bookmark className="mr-2 h-4 w-4" />
@@ -659,7 +689,11 @@ const handleMessage = (startup: StartupPitch) => {
             </Button>
             <Button
                 variant={activeTab === "messages" ? "default" : "ghost"}
-                className="w-full justify-start relative"
+                className={`w-full justify-start relative ${
+                  activeTab === "messages" 
+                    ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700" 
+                    : ""
+                }`}
                 onClick={() => setActiveTab("messages")}
               >
                 <MessageSquare className="mr-2 h-4 w-4" />
@@ -672,7 +706,11 @@ const handleMessage = (startup: StartupPitch) => {
               </Button>
             <Button
               variant={activeTab === "create-meeting" ? "default" : "ghost"}
-              className="w-full justify-start"
+              className={`w-full justify-start ${
+                activeTab === "create-meeting" 
+                  ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700" 
+                  : ""
+              }`}
               onClick={() => setActiveTab("create-meeting")}
             >
               <Play className="mr-2 h-4 w-4" />
@@ -680,7 +718,11 @@ const handleMessage = (startup: StartupPitch) => {
             </Button>
             <Button
               variant={activeTab === "settings" ? "default" : "ghost"}
-              className="w-full justify-start"
+              className={`w-full justify-start ${
+                activeTab === "settings" 
+                  ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700" 
+                  : ""
+              }`}
               onClick={() => setActiveTab("settings")}
             >
               <Settings className="mr-2 h-4 w-4" />
