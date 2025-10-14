@@ -90,6 +90,8 @@ export default function InvestorPortal() {
   const [updateSuccessDialogOpen, setUpdateSuccessDialogOpen] = useState(false)
   const router = useRouter()
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
+  const [meetingId, setMeetingId] = useState("")
+  const [isCopied, setIsCopied] = useState(false)
 
 const [messageModalOpen, setMessageModalOpen] = useState(false)
 const [selectedStartup, setSelectedStartup] = useState<StartupPitch | null>(null)
@@ -129,6 +131,15 @@ const handleMessage = (startup: StartupPitch) => {
   useEffect(() => {
     setIsMounted(true)
   }, [])
+  
+  useEffect(() => {
+    // Reset meeting ID when leaving create-meeting tab
+    if (activeTab !== 'create-meeting') {
+      setMeetingId('')
+      setIsCopied(false)
+    }
+  }, [activeTab])
+  
   useEffect(() => {
     if (activeTab === 'messages') {
       fetchConversations()
@@ -628,7 +639,7 @@ const handleMessage = (startup: StartupPitch) => {
 
       <div className="flex">
         {/* Sidebar */}
-        <aside className="w-64 border-r bg-muted/30 min-h-[calc(100vh-4rem)]">
+        <aside className="w-64 border-r bg-muted/30 h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto">
           <nav className="p-4 space-y-2">
             <Button
               variant={activeTab === "discover" ? "default" : "ghost"}
@@ -659,6 +670,14 @@ const handleMessage = (startup: StartupPitch) => {
                   </span>
                 )}
               </Button>
+            <Button
+              variant={activeTab === "create-meeting" ? "default" : "ghost"}
+              className="w-full justify-start"
+              onClick={() => setActiveTab("create-meeting")}
+            >
+              <Play className="mr-2 h-4 w-4" />
+              Create Meeting
+            </Button>
             <Button
               variant={activeTab === "settings" ? "default" : "ghost"}
               className="w-full justify-start"
@@ -1362,6 +1381,323 @@ const handleMessage = (startup: StartupPitch) => {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {activeTab === "create-meeting" && (
+          <div className="space-y-6 px-4 md:px-6 py-6">
+            {/* Header */}
+            <div className="space-y-2">
+              <h1 className="text-3xl font-bold tracking-tight">Create Meeting</h1>
+              <p className="text-muted-foreground">
+                Generate unique meeting IDs to host video calls with entrepreneurs
+              </p>
+            </div>
+
+            {/* Bento Grid Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Host New Meeting Card - Left Side */}
+              <Card className="border-2 bg-card/50 backdrop-blur-sm hover:shadow-lg transition-all">
+                <CardHeader className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                      <Play className="h-5 w-5 text-blue-500" />
+                    </div>
+                    <CardTitle className="text-xl">Host New Meeting</CardTitle>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Generate a secure meeting ID that entrepreneurs can use to join your video conference.
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {!meetingId ? (
+                    // Generate Meeting ID Button
+                    <Button
+                      onClick={() => {
+                        const uniqueId = `meeting-${Math.random().toString(36).substring(2, 10)}-${Date.now().toString(36)}`;
+                        setMeetingId(uniqueId);
+                      }}
+                      className="w-full h-12 text-base font-semibold relative overflow-hidden
+                                 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500
+                                 hover:from-blue-600 hover:via-purple-600 hover:to-pink-600
+                                 shadow-lg hover:shadow-xl
+                                 transition-all duration-300 transform hover:scale-[1.02]"
+                    >
+                      <div className="relative z-10 flex items-center justify-center gap-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                          <circle cx="9" cy="7" r="4" />
+                          <line x1="19" x2="19" y1="8" y2="14" />
+                          <line x1="22" x2="16" y1="11" y2="11" />
+                        </svg>
+                        <span>Generate Meeting ID</span>
+                      </div>
+                    </Button>
+                  ) : (
+                    // Show Meeting ID and Join Button
+                    <div className="space-y-4">
+                      {/* Meeting ID Display */}
+                      <div className="space-y-2">
+                        <label className="text-sm font-semibold">Your Meeting ID</label>
+                        <div className="relative group">
+                          <Input
+                            type="text"
+                            readOnly
+                            value={meetingId}
+                            className="text-center font-mono text-base font-bold pr-20 bg-white/70 dark:bg-gray-800/70 border-2 border-purple-200 dark:border-purple-800 transition-all"
+                            id="meetingIdInput"
+                          />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors"
+                            onClick={() => {
+                              navigator.clipboard.writeText(meetingId);
+                              setIsCopied(true);
+                              setTimeout(() => setIsCopied(false), 2000);
+                            }}
+                          >
+                            {isCopied ? (
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="text-green-600 dark:text-green-400"
+                              >
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                            ) : (
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                                <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                              </svg>
+                            )}
+                          </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground text-center">
+                          Share this ID with entrepreneurs to invite them
+                        </p>
+                      </div>
+
+                      {/* Join Meeting Button */}
+                      <Button
+                        onClick={() => {
+                          window.open('https://investo-streaming.vercel.app/', '_blank');
+                        }}
+                        className="w-full h-12 text-base font-semibold relative overflow-hidden
+                                   bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500
+                                   hover:from-blue-600 hover:via-purple-600 hover:to-pink-600
+                                   shadow-lg hover:shadow-xl
+                                   transition-all duration-300 transform hover:scale-[1.02]
+                                   before:absolute before:inset-0 
+                                   before:bg-gradient-to-r before:from-white/0 before:via-white/20 before:to-white/0
+                                   before:translate-x-[-200%] hover:before:translate-x-[200%]
+                                   before:transition-transform before:duration-700"
+                      >
+                        <div className="relative z-10 flex items-center justify-center gap-2">
+                          <Play className="h-5 w-5" />
+                          <span>Join Meeting</span>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="group-hover:translate-x-1 transition-transform"
+                          >
+                            <path d="M5 12h14" />
+                            <path d="m12 5 7 7-7 7" />
+                          </svg>
+                        </div>
+                      </Button>
+
+                      {/* Generate New ID Button */}
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          const uniqueId = `meeting-${Math.random().toString(36).substring(2, 10)}-${Date.now().toString(36)}`;
+                          setMeetingId(uniqueId);
+                        }}
+                        className="w-full text-sm"
+                      >
+                        Generate New ID
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* How It Works Card - Right Side */}
+              <Card className="border-2 bg-card/50 backdrop-blur-sm hover:shadow-lg transition-all">
+                <CardHeader className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="text-purple-500"
+                      >
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                        <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                      </svg>
+                    </div>
+                    <CardTitle className="text-xl">How It Works</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex gap-3">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-500 text-white text-sm font-bold">
+                      1
+                    </div>
+                    <div className="space-y-1 flex-1">
+                      <p className="font-semibold text-sm">Generate Meeting ID</p>
+                      <p className="text-xs text-muted-foreground">
+                        Click "Generate Meeting ID" to create a unique room
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-purple-500 text-white text-sm font-bold">
+                      2
+                    </div>
+                    <div className="space-y-1 flex-1">
+                      <p className="font-semibold text-sm">Share with Entrepreneurs</p>
+                      <p className="text-xs text-muted-foreground">
+                        Copy and send the Meeting ID to entrepreneurs
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-500 text-white text-sm font-bold">
+                      3
+                    </div>
+                    <div className="space-y-1 flex-1">
+                      <p className="font-semibold text-sm">Start Video Meeting</p>
+                      <p className="text-xs text-muted-foreground">
+                        Click "Start Meeting Room" to enter the call
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg flex gap-2">
+                    <span className="text-sm">💡</span>
+                    <p className="text-xs text-muted-foreground">
+                      <span className="font-semibold">Tip:</span> Entrepreneurs can join from their dashboard&apos;s &quot;Join Meeting&quot; feature using your Meeting ID
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* How it works - Full Width Bottom Section */}
+            <Card className="border-2 bg-card/50 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="text-xl">How it works</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid md:grid-cols-2 gap-8">
+                  {/* For Hosting Meetings */}
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-lg">For Hosting Meetings:</h3>
+                    <div className="space-y-3">
+                      <div className="flex gap-3">
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-500 text-white text-xs font-bold">
+                          1
+                        </div>
+                        <p className="text-sm text-muted-foreground pt-1">
+                          Click &quot;Generate Meeting ID&quot; to create a unique meeting room
+                        </p>
+                      </div>
+                      <div className="flex gap-3">
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-500 text-white text-xs font-bold">
+                          2
+                        </div>
+                        <p className="text-sm text-muted-foreground pt-1">
+                          Share the Meeting ID with entrepreneurs via email or messaging
+                        </p>
+                      </div>
+                      <div className="flex gap-3">
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-500 text-white text-xs font-bold">
+                          3
+                        </div>
+                        <p className="text-sm text-muted-foreground pt-1">
+                          Click &quot;Join Meeting&quot; to enter the video conference room
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Best Practices for Investors */}
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-lg">Best Practices:</h3>
+                    <div className="space-y-3">
+                      <div className="flex gap-3">
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-purple-500 text-white text-xs font-bold">
+                          💡
+                        </div>
+                        <p className="text-sm text-muted-foreground pt-1">
+                          Send the Meeting ID to entrepreneurs at least 15 minutes before
+                        </p>
+                      </div>
+                      <div className="flex gap-3">
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-purple-500 text-white text-xs font-bold">
+                          💡
+                        </div>
+                        <p className="text-sm text-muted-foreground pt-1">
+                          Review the entrepreneur&apos;s pitch materials beforehand
+                        </p>
+                      </div>
+                      <div className="flex gap-3">
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-purple-500 text-white text-xs font-bold">
+                          💡
+                        </div>
+                        <p className="text-sm text-muted-foreground pt-1">
+                          Prepare questions and talking points for a productive meeting
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         )}
 
