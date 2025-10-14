@@ -91,6 +91,7 @@ export default function InvestorPortal() {
   const router = useRouter()
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
   const [meetingId, setMeetingId] = useState("")
+  const [isCopied, setIsCopied] = useState(false)
 
 const [messageModalOpen, setMessageModalOpen] = useState(false)
 const [selectedStartup, setSelectedStartup] = useState<StartupPitch | null>(null)
@@ -135,6 +136,7 @@ const handleMessage = (startup: StartupPitch) => {
     // Reset meeting ID when leaving create-meeting tab
     if (activeTab !== 'create-meeting') {
       setMeetingId('')
+      setIsCopied(false)
     }
   }, [activeTab])
   
@@ -1458,25 +1460,44 @@ const handleMessage = (startup: StartupPitch) => {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="absolute right-2 top-1/2 -translate-y-1/2 hover:bg-purple-100 dark:hover:bg-purple-900/30"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors"
                             onClick={() => {
                               navigator.clipboard.writeText(meetingId);
+                              setIsCopied(true);
+                              setTimeout(() => setIsCopied(false), 2000);
                             }}
                           >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="16"
-                              height="16"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
-                              <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
-                            </svg>
+                            {isCopied ? (
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="text-green-600 dark:text-green-400"
+                              >
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                            ) : (
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                                <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                              </svg>
+                            )}
                           </Button>
                         </div>
                         <p className="text-xs text-muted-foreground text-center">
