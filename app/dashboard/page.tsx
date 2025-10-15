@@ -525,7 +525,7 @@ export default function Dashboard() {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 md:p-4 lg:p-6 overflow-y-auto pt-250 ml-64">
+        <main className="flex-1 md:p-4 lg:p-6 overflow-y-auto lg:pt-20 ml-64">
           {/* Dashboard Tab */}
           {activeTab === "dashboard" && (
             <div className="space-y-4 max-w-5xl mx-auto">
