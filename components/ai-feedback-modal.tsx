@@ -112,7 +112,7 @@ export function AIFeedbackModal({ isOpen, onClose, videoFile, onReupload }: AIFe
           <div className="py-12 flex flex-col items-center justify-center space-y-4">
             <Brain className="h-12 w-12 text-primary animate-pulse" />
             <p className="text-sm text-muted-foreground">Analyzing your pitch video...</p>
-            <Progress value={65} className="w-[250px]" />
+            <Progress value={65} className="w-[250px] [&>div]:bg-linear-to-r/oklab [&>div]:from-indigo-500 [&>div]:to-teal-400" />
           </div>
         ) : (
           <Tabs defaultValue="summary" value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden h-[500px]">

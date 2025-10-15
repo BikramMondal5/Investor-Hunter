@@ -417,15 +417,6 @@ export function LandingPageContent() {
               </Card>
             ))}
           </div>
-
-          <div className="text-center mt-12">
-            <Link href="/submit">
-              <Button size="lg" onClick={handleSubmitPitch}>
-                Start Your Journey
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-          </div>
         </div>
       </section>
 
@@ -689,13 +680,12 @@ export function LandingPageContent() {
             <div className="flex gap-3 pt-4">
               <Button
                 type="button"
-                variant="outline"
+                className="flex-1 bg-[#3591e2] text-white hover:bg-[#2a7bc8]"
                 onClick={() => {
                   setFeedbackModalOpen(false)
                   setRating(0)
                   setHoverRating(0)
                 }}
-                className="flex-1"
               >
                 Cancel
               </Button>

@@ -779,7 +779,7 @@ export default function AdminVerificationPage() {
               <p className="text-xs text-muted-foreground mt-1">This score will be visible to investors in search filters</p>
             </div>
             <div className="flex gap-2 mt-4">
-              <Button variant="outline" className="flex-1" onClick={() => setShowApproveDialog(false)}>
+              <Button className="flex-1 bg-[#3591e2] text-white hover:bg-[#2a7bc8]" onClick={() => setShowApproveDialog(false)}>
                 Cancel
               </Button>
               <Button className="flex-1 bg-green-600 hover:bg-green-700" onClick={() => {

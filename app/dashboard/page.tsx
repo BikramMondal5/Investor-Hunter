@@ -483,7 +483,7 @@ export default function Dashboard() {
 
       <div className="flex">
         {/* Sidebar */}
-        <aside className="w-64 border-r bg-muted/30 h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto">
+        <aside className="w-64 border-r bg-muted/30 h-screen fixed top-16 left-0 overflow-y-auto z-40">
           <nav className="p-4 space-y-2">
               {sidebarItems.map((item) => (
                 <Button
@@ -526,12 +526,12 @@ export default function Dashboard() {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-2 md:p-4 lg:p-6 overflow-y-auto pt-0 md:pt-1">
+        <main className="flex-1 p-2 md:p-4 lg:p-6 overflow-y-auto pt-0 md:pt-1 ml-64">
           {/* Dashboard Tab */}
           {activeTab === "dashboard" && (
             <div className="space-y-4 max-w-5xl mx-auto">
               <div className="mb-3 mt-0">
-                <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Founder Dashboard</h1>
+                <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-[#3591e2]">Founder Dashboard</h1>
                 <p className="text-muted-foreground">Your startup journey at a glance</p>
               </div>
 
@@ -599,15 +599,15 @@ export default function Dashboard() {
 
               {/* Quick Actions */}
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                <Button onClick={() => setActiveTab("pitch")} className="flex flex-col h-24 items-center justify-center space-y-2">
+                <Button onClick={() => setActiveTab("pitch")} className="flex flex-col h-24 items-center justify-center space-y-2 bg-[#3591e2] text-white hover:bg-[#2a7bc8]">
                   <Play className="h-5 w-5" />
                   <span>View Pitch</span>
                 </Button>
-                <Button onClick={() => setActiveTab("analytics")} variant="outline" className="flex flex-col h-24 items-center justify-center space-y-2">
+                <Button onClick={() => setActiveTab("analytics")} className="flex flex-col h-24 items-center justify-center space-y-2 bg-[#3591e2] text-white hover:bg-[#2a7bc8]">
                   <TrendingUp className="h-5 w-5" />
                   <span>View Analytics</span>
                 </Button>
-                <Button onClick={() => setActiveTab("messages")} variant="outline" className="flex flex-col h-24 items-center justify-center space-y-2">
+                <Button onClick={() => setActiveTab("messages")} className="flex flex-col h-24 items-center justify-center space-y-2 bg-[#3591e2] text-white hover:bg-[#2a7bc8]">
                   <MessageSquare className="h-5 w-5" />
                   <span>Messages</span>
                 </Button>
@@ -627,7 +627,7 @@ export default function Dashboard() {
           {activeTab === "pitch" && (
             <div className="space-y-4 max-w-5xl mx-auto">
               <div className="mb-3 mt-0">
-                <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+                <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-[#3591e2]">
                   Your Submitted Pitch
                 </h1>
                 <p className="text-muted-foreground">
@@ -648,7 +648,7 @@ export default function Dashboard() {
                         Your pitch is either pending approval or you haven't submitted one yet.
                       </p>
                     </div>
-                    <Button onClick={() => router.push("/submit")} size="lg">
+                    <Button onClick={() => router.push("/submit")} size="lg" className="bg-[#3591e2] text-white hover:bg-[#2a7bc8]">
                       <Users className="mr-2 h-4 w-4" />
                       Submit Your Pitch
                     </Button>
@@ -712,7 +712,7 @@ export default function Dashboard() {
                                   <div className="w-full mt-2">
                                     <Progress 
                                       value={pitch.pitchScore * 10} 
-                                      className="h-3"
+                                      className="h-3 [&>div]:bg-linear-to-r/oklab [&>div]:from-indigo-500 [&>div]:to-teal-400"
                                     />
                                   </div>
                                 )}
@@ -781,7 +781,7 @@ export default function Dashboard() {
           {activeTab === "analytics" && (
             <div className="space-y-4 max-w-5xl mx-auto">
               <div className="mb-3 mt-0">
-                <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Feedback & Analytics</h1>
+                <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-[#3591e2]">Feedback & Analytics</h1>
                 <p className="text-muted-foreground">Detailed insights on your pitch performance</p>
               </div>
 
@@ -1046,7 +1046,7 @@ export default function Dashboard() {
           {activeTab === "messages" && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-2xl font-bold">Messages</h2>
+                <h2 className="text-2xl font-bold text-[#3591e2]">Messages</h2>
                 <p className="text-muted-foreground">Connect with interested investors</p>
               </div>
 
@@ -1269,7 +1269,7 @@ export default function Dashboard() {
           {activeTab === "settings" && (
             <div className="space-y-4 max-w-5xl mx-auto">
               <div className="mb-3 mt-0">
-                <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Account Settings</h1>
+                <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-[#3591e2]">Account Settings</h1>
                 <p className="text-muted-foreground">Manage your account preferences</p>
               </div>
 
@@ -1363,7 +1363,7 @@ export default function Dashboard() {
                               />
                             </div>
                           </div>
-                          <Button type="submit" className="w-full md:w-auto">Save Changes</Button>
+                          <Button type="submit" className="w-full md:w-auto bg-[#3591e2] text-white hover:bg-[#2a7bc8]">Save Changes</Button>
                         </form>
                       </CardContent>
                     </Card>
@@ -1423,7 +1423,7 @@ export default function Dashboard() {
             <div className="space-y-6 px-4 md:px-6 py-6">
               {/* Header */}
               <div className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tight">Join Meeting</h1>
+                <h1 className="text-3xl font-bold tracking-tight text-[#3591e2]">Join Meeting</h1>
                 <p className="text-muted-foreground">
                   Enter the meeting ID provided by investors to join video calls
                 </p>
@@ -1649,7 +1649,7 @@ export default function Dashboard() {
             </video>
           </div>
           <div className="p-2 flex justify-end">
-            <Button size="sm" onClick={() => setVideoModalOpen(false)}>Close</Button>
+            <Button size="sm" className="bg-[#3591e2] text-white hover:bg-[#2a7bc8]" onClick={() => setVideoModalOpen(false)}>Close</Button>
           </div>
         </DialogContent>
       </Dialog>

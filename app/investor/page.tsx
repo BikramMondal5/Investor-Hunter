@@ -870,8 +870,7 @@ const handleMessage = (startup: StartupPitch) => {
                         </p>
                         {startups.length > 0 && (
                           <Button 
-                            variant="outline" 
-                            className="mt-4"
+                            className="mt-4 bg-[#3591e2] text-white hover:bg-[#2a7bc8]"
                             onClick={handleClearFilters}
                           >
                             Clear All Filters
@@ -1005,7 +1004,7 @@ const handleMessage = (startup: StartupPitch) => {
                       <p className="text-muted-foreground mb-4">
                         Start exploring startups and save the ones that interest you
                       </p>
-                      <Button onClick={() => setActiveTab("discover")}>Discover Startups</Button>
+                      <Button className="bg-[#3591e2] text-white hover:bg-[#2a7bc8]" onClick={() => setActiveTab("discover")}>Discover Startups</Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -1416,7 +1415,7 @@ const handleMessage = (startup: StartupPitch) => {
                             onChange={(e) => setEditedProfile(prev => prev ? ({ ...prev, email: e.target.value }) : null)}
                           />
                         </div>
-                        <Button type="submit" className="w-full md:w-auto">Save Changes</Button>
+                        <Button type="submit" className="w-full md:w-auto bg-[#3591e2] text-white hover:bg-[#2a7bc8]">Save Changes</Button>
                       </form>
                     </CardContent>
                   </Card>
@@ -1766,7 +1765,7 @@ const handleMessage = (startup: StartupPitch) => {
             </video>
           </div>
           <div className="p-2 flex justify-end">
-            <Button size="sm" onClick={() => setVideoModalOpen(false)}>Close</Button>
+            <Button size="sm" className="bg-[#3591e2] text-white hover:bg-[#2a7bc8]" onClick={() => setVideoModalOpen(false)}>Close</Button>
           </div>
         </DialogContent>
       </Dialog>

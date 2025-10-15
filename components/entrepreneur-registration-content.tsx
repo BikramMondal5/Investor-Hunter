@@ -323,7 +323,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ document, onUpload, upl
         )}
         {uploading && (
           <div className="mt-4">
-            <Progress value={progress} className="h-1" />
+            <Progress value={progress} className="h-1 [&>div]:bg-linear-to-r/oklab [&>div]:from-indigo-500 [&>div]:to-teal-400" />
             <p className="text-center text-xs text-gray-500 mt-1">Uploading... {progress}%</p>
           </div>
         )}
