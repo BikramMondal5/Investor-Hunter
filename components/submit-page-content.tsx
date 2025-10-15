@@ -255,7 +255,7 @@ export function SubmitPageContent() {
                       
                       {isUploading && (
                         <div className="space-y-2">
-                          <Progress value={uploadProgress} />
+                          <Progress value={uploadProgress} className="[&>div]:bg-linear-to-r/oklab [&>div]:from-indigo-500 [&>div]:to-teal-400" />
                           <p className="text-xs text-muted-foreground text-center">Uploading... {uploadProgress}%</p>
                         </div>
                       )}

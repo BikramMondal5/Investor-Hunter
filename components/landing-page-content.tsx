@@ -171,7 +171,7 @@ export function LandingPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <Header />
 
       {/* Hero Section */}
@@ -195,7 +195,7 @@ export function LandingPageContent() {
 
               <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
                 <Link href="/submit" className="w-full sm:w-auto">
-                  <Button size="lg" className="w-full sm:w-auto" onClick={handleSubmitPitch}>
+                  <Button size="lg" className="w-full sm:w-auto bg-[#3591e2] text-white hover:bg-[#2a7bc8]" onClick={handleSubmitPitch}>
                     Submit Your Pitch
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
@@ -417,15 +417,6 @@ export function LandingPageContent() {
               </Card>
             ))}
           </div>
-
-          <div className="text-center mt-12">
-            <Link href="/submit">
-              <Button size="lg" onClick={handleSubmitPitch}>
-                Start Your Journey
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-          </div>
         </div>
       </section>
 
@@ -589,7 +580,7 @@ export function LandingPageContent() {
               <p className="text-sm text-muted-foreground">Get the latest updates and funding opportunities.</p>
               <div className="flex space-x-2">
                 <Input placeholder="Enter your email" className="flex-1" />
-                <Button>Subscribe</Button>
+                <Button className="bg-[#3591e2] text-white hover:bg-[#2a7bc8]">Subscribe</Button>
               </div>
             </div>
           </div>
@@ -689,13 +680,12 @@ export function LandingPageContent() {
             <div className="flex gap-3 pt-4">
               <Button
                 type="button"
-                variant="outline"
+                className="flex-1 bg-[#3591e2] text-white hover:bg-[#2a7bc8]"
                 onClick={() => {
                   setFeedbackModalOpen(false)
                   setRating(0)
                   setHoverRating(0)
                 }}
-                className="flex-1"
               >
                 Cancel
               </Button>

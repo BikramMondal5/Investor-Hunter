@@ -297,7 +297,7 @@ export function InterviewScreeningContent() {
                       <p>AI Score</p>
                       <p className="font-medium">87/100</p>
                     </div>
-                    <Progress value={87} className="h-1.5" />
+                    <Progress value={87} className="h-1.5 [&>div]:bg-linear-to-r/oklab [&>div]:from-indigo-500 [&>div]:to-teal-400" />
                   </div>
 
                   <div className="pt-4">
@@ -325,7 +325,7 @@ export function InterviewScreeningContent() {
         <div className="mb-10">
           <h2 className="text-xl font-semibold mb-4">Application Status</h2>
           <div className="space-y-5">
-            <Progress value={progressPercentage} className="h-2" />
+            <Progress value={progressPercentage} className="h-2 [&>div]:bg-linear-to-r/oklab [&>div]:from-indigo-500 [&>div]:to-teal-400" />
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
               {processSteps.map((step) => (
                 <div 
@@ -366,7 +366,7 @@ export function InterviewScreeningContent() {
                   <MessageCircle className="h-4 w-4" />
                   Chat with Clara
                 </Button>
-                <Button variant="outline" className="flex items-center gap-2">
+                <Button className="flex items-center gap-2 bg-[#3591e2] text-white hover:bg-[#2a7bc8]">
                   <Mail className="h-4 w-4" />
                   Email Support
                 </Button>
