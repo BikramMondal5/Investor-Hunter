@@ -430,7 +430,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
+      <header className="fixed top-0 z-50 border-b bg-background/95 backdrop-blur w-full">
         <div className="flex h-16 items-center justify-between px-6">
           <div className="flex items-center space-x-4">
             <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
@@ -483,7 +483,7 @@ export default function Dashboard() {
 
       <div className="flex">
         {/* Sidebar */}
-        <aside className="w-64 border-r bg-muted/30 h-screen fixed top-16 left-0 overflow-y-auto z-40">
+        <aside className="w-64 border-r bg-muted/30 h-[calc(100vh-4rem)] fixed top-16 left-0 overflow-y-auto z-40">
           <nav className="p-4 space-y-2">
               {sidebarItems.map((item) => (
                 <Button
@@ -526,7 +526,7 @@ export default function Dashboard() {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-2 md:p-4 lg:p-6 overflow-y-auto pt-0 md:pt-1 ml-64">
+        <main className="flex-1 md:p-4 lg:p-6 overflow-y-auto pt-250 ml-64">
           {/* Dashboard Tab */}
           {activeTab === "dashboard" && (
             <div className="space-y-4 max-w-5xl mx-auto">
