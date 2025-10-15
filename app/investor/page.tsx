@@ -661,7 +661,7 @@ const handleMessage = (startup: StartupPitch) => {
 
       <div className="flex">
         {/* Sidebar */}
-        <aside className="w-64 border-r bg-muted/30 h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto">
+        <aside className="w-64 border-r bg-muted/30 h-[calc(100vh-4rem)] fixed top-16 left-0 overflow-y-auto z-40">
           <nav className="p-4 space-y-2">
             <Button
               variant={activeTab === "discover" ? "default" : "ghost"}
@@ -742,7 +742,7 @@ const handleMessage = (startup: StartupPitch) => {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1">
+        <main className="flex-1 ml-64">
           {/* Top Banner */}
           <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 p-6 border-b">
             <div className="container mx-auto w-full max-w-[1400px] px-3 sm:px-4 md:px-6">
@@ -831,7 +831,7 @@ const handleMessage = (startup: StartupPitch) => {
                 {/* Results Header */}
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="text-2xl font-bold">Discover Startups</h2>
+                    <h2 className="text-2xl font-bold text-[#3591e2]">Discover Startups</h2>
                     <p className="text-muted-foreground">
                       Found {filteredStartups.length} startup{filteredStartups.length !== 1 ? 's' : ''}
                       {searchQuery && ` matching "${searchQuery}"`}
@@ -991,7 +991,7 @@ const handleMessage = (startup: StartupPitch) => {
             {activeTab === "saved" && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-2xl font-bold">My Saved Pitches</h2>
+                <h2 className="text-2xl font-bold text-[#3591e2]">My Saved Pitches</h2>
                 <p className="text-muted-foreground">Startups you've bookmarked for later review</p>
               </div>
 
@@ -1104,7 +1104,7 @@ const handleMessage = (startup: StartupPitch) => {
           {activeTab === "messages" && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-2xl font-bold">Messages</h2>
+                <h2 className="text-2xl font-bold text-[#3591e2]">Messages</h2>
                 <p className="text-muted-foreground">Connect with startup founders</p>
               </div>
 
@@ -1322,7 +1322,7 @@ const handleMessage = (startup: StartupPitch) => {
           {activeTab === "settings" && (
           <div className="space-y-6 pl-4 md:pl-6">
             <div>
-              <h2 className="text-2xl font-bold">Account Settings</h2>
+              <h2 className="text-2xl font-bold text-[#3591e2]">Account Settings</h2>
               <p className="text-muted-foreground">Manage your account preferences</p>
             </div>
 
@@ -1429,7 +1429,7 @@ const handleMessage = (startup: StartupPitch) => {
           <div className="space-y-6 px-4 md:px-6 py-6">
             {/* Header */}
             <div className="space-y-2">
-              <h1 className="text-3xl font-bold tracking-tight">Create Meeting</h1>
+              <h1 className="text-3xl font-bold tracking-tight text-[#3591e2]">Create Meeting</h1>
               <p className="text-muted-foreground">
                 Generate unique meeting IDs to host video calls with entrepreneurs
               </p>
