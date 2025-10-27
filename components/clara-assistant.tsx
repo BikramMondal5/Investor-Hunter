@@ -1,15 +1,30 @@
 "use client"
-
+import ReactMarkdown, { Components } from "react-markdown";
 import React, { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import { FiSend, FiMic, FiMinimize2, FiMaximize2 } from "react-icons/fi";
+import { FiSend, FiMic, FiMinimize2, FiMaximize2, FiVolume2, FiVolumeX } from "react-icons/fi";
 import { FaAt } from "react-icons/fa";
-import { BsThreeDots } from "react-icons/bs";
-import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize from 'rehype-sanitize';
 import remarkGfm from 'remark-gfm';
 import { GoogleGenerativeAI } from "@google/generative-ai";
+
+// Extended Window interface for Speech Recognition
+declare global {
+  interface Window {
+    SpeechRecognition: any;
+    webkitSpeechRecognition: any;
+  }
+}
+
+// Message interface
+interface Message {
+  id: number | string;
+  text: string;
+  sender: "user" | "bot";
+  timestamp: Date;
+  isTemporary?: boolean;
+}
 
 // Create a SafeSpeechRecognition type and initialization
 let recognition: any = null;
@@ -17,7 +32,7 @@ let SpeechRecognition: any = null;
 
 // Only initialize speech recognition on the client side
 if (typeof window !== 'undefined') {
-  SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
+  SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (SpeechRecognition) {
     recognition = new SpeechRecognition();
     recognition.continuous = false;
@@ -75,9 +90,9 @@ If unsure, suggest reviewing the pitch video or contacting the founder directly.
 
 Always maintain privacy and neutrality. Your purpose is to help investors make informed, confident, and independent decisions on the platform.`;
 
-// Initialize the Gemini API client - get API key from environment variable
+// Initialize the Gemini API client
 const geminiApiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || "";
-const genAI = new GoogleGenerativeAI(geminiApiKey);
+const genAI = geminiApiKey ? new GoogleGenerativeAI(geminiApiKey) : null;
 
 // Fallback responses for when the API fails
 const FALLBACK_RESPONSES = [
@@ -107,7 +122,7 @@ const INVESTOR_SUGGESTED_PROMPTS = [
 
 export function ClaraAssistant() {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState([
+  const [messages, setMessages] = useState<Message[]>([
     { id: 1, text: "👋 Hi, I'm Clara! I'm here to help you pitch smarter, get investor-ready, or answer your startup questions anytime.", sender: "bot", timestamp: new Date() },
   ]);
   const [inputMessage, setInputMessage] = useState("");
@@ -115,11 +130,13 @@ export function ClaraAssistant() {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const [minimized, setMinimized] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
-  const maxRetries = 2; // Maximum number of retry attempts
+  const maxRetries = 2;
   const [isListening, setIsListening] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [activeMode, setActiveMode] = useState("entrepreneur"); // Default to entrepreneur mode
+  const [activeMode, setActiveMode] = useState<"entrepreneur" | "investor">("entrepreneur");
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   // Auto scroll to bottom of chat
   useEffect(() => {
@@ -155,13 +172,42 @@ export function ClaraAssistant() {
     recognition.onerror = (event: any) => {
       console.error("Speech recognition error", event.error);
       setIsListening(false);
+      if (event.error !== 'no-speech') {
+        alert(`Speech recognition error: ${event.error}`);
+      }
     };
     
     return () => {
       if (recognition) {
-        recognition.stop();
+        try {
+          recognition.stop();
+        } catch (e) {
+          // Ignore errors on cleanup
+        }
       }
     };
+  }, []);
+
+  // Cleanup speech when component unmounts or chat closes
+  useEffect(() => {
+    return () => {
+      if (!isOpen) {
+        stopSpeaking();
+      }
+    };
+  }, [isOpen]);
+
+  // Load voices when component mounts
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      // Load voices
+      window.speechSynthesis.getVoices();
+      
+      // Chrome needs this event
+      window.speechSynthesis.onvoiceschanged = () => {
+        window.speechSynthesis.getVoices();
+      };
+    }
   }, []);
 
   // Get random fallback response
@@ -170,38 +216,79 @@ export function ClaraAssistant() {
     return FALLBACK_RESPONSES[randomIndex];
   };
 
+  // Text-to-speech function
+  const speakText = (text: string) => {
+    if (!voiceEnabled) return;
+    
+    if ('speechSynthesis' in window) {
+      // Cancel any ongoing speech
+      window.speechSynthesis.cancel();
+      
+      // Remove markdown formatting for better speech
+      const cleanText = text
+        .replace(/[#*_~`]/g, '') // Remove markdown symbols
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Remove links but keep text
+        .replace(/```[\s\S]*?```/g, '') // Remove code blocks
+        .replace(/`([^`]+)`/g, '$1'); // Remove inline code
+      
+      // Create utterance
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+      
+      // Configure voice settings
+      utterance.rate = 0.95; // Slightly slower for clarity
+      utterance.pitch = 1.1; // Slightly higher for female voice
+      utterance.volume = 1;
+      
+      // Try to get a female voice
+      const voices = window.speechSynthesis.getVoices();
+      const femaleVoice = voices.find(voice => 
+        voice.name.includes('Female') || 
+        voice.name.includes('Samantha') ||
+        voice.name.includes('Google US English') ||
+        voice.name.includes('Microsoft Zira') ||
+        voice.name.includes('Karen') ||
+        voice.lang === 'en-US' && voice.name.includes('Google')
+      );
+      
+      if (femaleVoice) {
+        utterance.voice = femaleVoice;
+      }
+      
+      // Event handlers
+      utterance.onstart = () => setIsSpeaking(true);
+      utterance.onend = () => setIsSpeaking(false);
+      utterance.onerror = () => setIsSpeaking(false);
+      
+      // Speak
+      window.speechSynthesis.speak(utterance);
+    }
+  };
+
+  // Stop speaking function
+  const stopSpeaking = () => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+    }
+  };
+
   // Real AI response using Gemini API
   const getAIResponse = async (userMessage: string): Promise<string> => {
+    if (!genAI) {
+      throw new Error("Gemini API key not configured");
+    }
+
     try {
-      // Get the model - using the gemini-1.5-flash model
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" }); 
       
-      // Customize the system prompt based on active mode
-      let systemPrompt = activeMode === "entrepreneur" ? ENTREPRENEUR_SYSTEM_PROMPT : INVESTOR_SYSTEM_PROMPT;
+      const systemPrompt = activeMode === "entrepreneur" ? ENTREPRENEUR_SYSTEM_PROMPT : INVESTOR_SYSTEM_PROMPT;
 
-      // Generate content with the model
-      const result = await model.generateContent({
-        contents: [
-          {
-            role: "user",
-            parts: [{ text: systemPrompt }]
-          },
-          {
-            role: "model",
-            parts: [{ text: "I understand my role. I'll help the user according to their needs." }]
-          },
-          {
-            role: "user",
-            parts: [{ text: userMessage }]
-          }
-        ],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 800,
-        },
-      });
+      const result = await model.generateContent([
+        systemPrompt,
+        "\n\nUser: " + userMessage
+      ]);
 
-      const response = result.response;
+      const response = await result.response;
       return response.text();
     } catch (error) {
       console.error("Error calling Gemini API:", error);
@@ -212,8 +299,7 @@ export function ClaraAssistant() {
   const handleSendMessage = async () => {
     if (inputMessage.trim() === "") return;
 
-    // Add user message
-    const newUserMessage = {
+    const newUserMessage: Message = {
       id: messages.length + 1,
       text: inputMessage,
       sender: "user",
@@ -221,19 +307,13 @@ export function ClaraAssistant() {
     };
     
     setMessages((prev) => [...prev, newUserMessage]);
+    const currentMessage = inputMessage;
     setInputMessage("");
-    
-    // Show bot typing indicator
     setIsTyping(true);
     
-    // Store the message to use in retries
-    const currentMessage = inputMessage;
-    
-    // Set a timeout for the typing indicator in case of very long delays
     const typingTimeout = setTimeout(() => {
-      // If still typing after 10 seconds, show a temporary message
       if (isTyping) {
-        const tempMessage = {
+        const tempMessage: Message = {
           id: `temp-${Date.now()}`,
           text: "I'm still thinking about your question. One moment please...",
           sender: "bot",
@@ -245,29 +325,24 @@ export function ClaraAssistant() {
       }
     }, 10000);
     
-    // Get response with retry logic
     try {
       let response;
       try {
         response = await getAIResponse(currentMessage);
       } catch (error) {
-        // First retry attempt if we haven't exceeded max retries
         if (retryCount < maxRetries) {
           setRetryCount(prev => prev + 1);
           console.log(`Retry attempt ${retryCount + 1}/${maxRetries}`);
-          // Small delay before retry
           await new Promise(resolve => setTimeout(resolve, 1000));
           response = await getAIResponse(currentMessage);
         } else {
-          // All retries failed, use fallback
           throw new Error("Max retries reached");
         }
       }
       
-      // Remove any temporary messages first
       setMessages(prev => prev.filter(msg => !msg.isTemporary));
       
-      const botResponse = {
+      const botResponse: Message = {
         id: messages.length + 2,
         text: response,
         sender: "bot",
@@ -275,14 +350,17 @@ export function ClaraAssistant() {
       };
       
       setMessages((prev) => [...prev, botResponse]);
+      
+      // Speak the response
+      speakText(response);
+      
     } catch (error) {
       console.error("Error in AI response:", error);
       
-      // Remove any temporary messages first
       setMessages(prev => prev.filter(msg => !msg.isTemporary));
       
       const fallbackText = getFallbackResponse();
-      const errorResponse = {
+      const errorResponse: Message = {
         id: messages.length + 2,
         text: fallbackText,
         sender: "bot",
@@ -290,10 +368,14 @@ export function ClaraAssistant() {
       };
       
       setMessages((prev) => [...prev, errorResponse]);
+      
+      // Speak the fallback response
+      speakText(fallbackText);
+      
     } finally {
       clearTimeout(typingTimeout);
       setIsTyping(false);
-      setRetryCount(0); // Reset retry count after handling is complete
+      setRetryCount(0);
     }
   };
 
@@ -301,32 +383,35 @@ export function ClaraAssistant() {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  // Handle microphone button click
   const handleMicClick = () => {
-    if (!recognition) {
-      alert("Speech recognition is not supported in your browser");
+    if (!SpeechRecognition) {
+      alert("Speech recognition is not supported in your browser. Please use Chrome, Edge, or Safari.");
       return;
     }
 
     if (isListening) {
-      recognition.stop();
-      setIsListening(false);
+      try {
+        recognition.stop();
+        setIsListening(false);
+      } catch (error) {
+        console.error("Error stopping recognition:", error);
+        setIsListening(false);
+      }
     } else {
-      recognition.start();
-      setIsListening(true);
+      try {
+        recognition.start();
+        setIsListening(true);
+      } catch (error) {
+        console.error("Error starting recognition:", error);
+        alert("Could not start speech recognition. Please check your microphone permissions.");
+        setIsListening(false);
+      }
     }
   };
 
-  // Handle suggested prompts
   const handleSuggestedPrompt = (prompt: string) => {
     setInputMessage(prompt);
-    handleSendMessage();
-  };
-
-  // Animation variants
-  const fadeIn = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 },
+    setTimeout(() => handleSendMessage(), 100);
   };
 
   const widgetVariants = {
@@ -339,12 +424,10 @@ export function ClaraAssistant() {
     visible: { opacity: 1, x: 0 },
   };
 
-  // Suggested prompts
   const suggestedPrompts = activeMode === "entrepreneur" ? ENTREPRENEUR_SUGGESTED_PROMPTS : INVESTOR_SUGGESTED_PROMPTS;
 
   return (
     <>
-      {/* Chat toggle button */}
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
         className="fixed bottom-5 right-5 w-16 h-16 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white flex items-center justify-center shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 p-0 border-2 border-white/20 z-50"
@@ -358,14 +441,13 @@ export function ClaraAssistant() {
           </svg>
         ) : (
           <img 
-            src="/Clara.jpeg" 
+            src="/clara.jpeg" 
             alt="Clara AI" 
             className="w-11 h-11 rounded-full object-cover"
           />
         )}
       </motion.button>
 
-      {/* Chat widget */}
       {isOpen && (
         <motion.div
           className="fixed bottom-24 right-5 w-96 sm:w-[420px] rounded-2xl overflow-hidden shadow-2xl border-2 border-purple-600/30 z-50"
@@ -375,12 +457,11 @@ export function ClaraAssistant() {
           exit="closed"
           transition={{ type: "spring", stiffness: 300, damping: 24 }}
         >
-          {/* Header */}
           <div className="bg-gradient-to-r from-[#7c3aed] to-[#9b5de5] p-5 flex justify-between items-center">
             <div className="flex items-center gap-4">
               <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center overflow-hidden p-1">
                 <img 
-                  src="/Clara.jpeg" 
+                  src="/clara.jpeg" 
                   alt="Clara AI"
                   className="w-full h-full rounded-full object-cover"
                 />
@@ -392,6 +473,22 @@ export function ClaraAssistant() {
             </div>
             <div className="flex items-center gap-1">
               <button 
+                className="p-1.5 rounded-full hover:bg-white/10 transition-colors"
+                onClick={() => {
+                  setVoiceEnabled(!voiceEnabled);
+                  if (!voiceEnabled === false) {
+                    stopSpeaking();
+                  }
+                }}
+                title={voiceEnabled ? "Disable voice" : "Enable voice"}
+              >
+                {voiceEnabled ? (
+                  <FiVolume2 className="text-white h-5 w-5" />
+                ) : (
+                  <FiVolumeX className="text-white h-5 w-5" />
+                )}
+              </button>
+              <button 
                 className="p-1 rounded-full hover:bg-white/10 transition-colors"
                 onClick={() => setMinimized(!minimized)}
               >
@@ -400,7 +497,6 @@ export function ClaraAssistant() {
             </div>
           </div>
 
-          {/* Chat messages */}
           {!minimized && (
             <div 
               className="bg-[#121212] dark:bg-gray-900 h-[420px] overflow-y-auto p-5 flex flex-col gap-4 scrollbar-thin scrollbar-thumb-purple-600 scrollbar-track-transparent"
@@ -429,22 +525,20 @@ export function ClaraAssistant() {
                           rehypePlugins={[rehypeRaw, rehypeSanitize]}
                           className="text-sm prose prose-invert max-w-none"
                           components={{
-                            h1: ({node, ...props}) => <h1 className="text-xl font-bold my-2" {...props} />,
-                            h2: ({node, ...props}) => <h2 className="text-lg font-bold my-2" {...props} />,
-                            h3: ({node, ...props}) => <h3 className="text-base font-bold my-1" {...props} />,
-                            p: ({node, ...props}) => <p className="my-1" {...props} />,
-                            ul: ({node, ordered, className, ...props}) => <ul className="list-disc pl-4 my-1" {...props} />,
-                            ol: ({node, ...props}) => <ol className="list-decimal pl-4 my-1" {...props} />,
-                            li: ({node, className, ordered, ...props}) => {
-                              // Filter out boolean props that can't be directly passed to HTML
-                              return <li className="my-0.5" {...props} />;
-                            },
-                            a: ({node, ...props}) => <a className="text-blue-400 hover:underline" target="_blank" rel="noopener noreferrer" {...props} />,
-                            code: ({node, inline, ...props}) => 
-                              inline ? 
-                                <code className="bg-gray-800 px-1 py-0.5 rounded text-xs" {...props} /> :
-                                <code className="block bg-gray-800 rounded p-2 my-2 overflow-x-auto text-xs" {...props} />
-                          }}
+                            h1: ({node, ...props}: any) => <h1 className="text-xl font-bold my-2" {...props} />,
+                            h2: ({node, ...props}: any) => <h2 className="text-lg font-bold my-2" {...props} />,
+                            h3: ({node, ...props}: any) => <h3 className="text-base font-bold my-1" {...props} />,
+                            p: ({node, ...props}: any) => <p className="my-1" {...props} />,
+                            ul: ({node, ...props}: any) => <ul className="list-disc pl-4 my-1" {...props} />,
+                            ol: ({node, ...props}: any) => <ol className="list-decimal pl-4 my-1" {...props} />,
+                            li: ({node, ...props}: any) => <li className="my-0.5" {...props} />,
+                            a: ({node, ...props}: any) => <a className="text-blue-400 hover:underline" target="_blank" rel="noopener noreferrer" {...props} />,
+                            code: ({node, inline, className, children, ...rest}: any) => {
+                              return inline ? 
+                                <code className="bg-gray-800 px-1 py-0.5 rounded text-xs" {...rest}>{children}</code> :
+                                <code className="block bg-gray-800 rounded p-2 my-2 overflow-x-auto text-xs" {...rest}>{children}</code>
+                            }
+                          } as Components}
                         >
                           {message.text}
                         </ReactMarkdown>
@@ -461,7 +555,6 @@ export function ClaraAssistant() {
                 </motion.div>
               ))}
 
-              {/* Typing indicator */}
               {isTyping && (
                 <motion.div
                   className="flex justify-start"
@@ -478,7 +571,19 @@ export function ClaraAssistant() {
                 </motion.div>
               )}
 
-              {/* Suggested prompts - show only at the beginning */}
+              {isSpeaking && (
+                <motion.div
+                  className="flex justify-start"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                >
+                  <div className="bg-purple-900/30 rounded-2xl rounded-tl-none px-4 py-2 max-w-[80%] flex items-center gap-2">
+                    <FiVolume2 className="text-purple-400 animate-pulse" />
+                    <span className="text-xs text-purple-300">Speaking...</span>
+                  </div>
+                </motion.div>
+              )}
+
               {messages.length === 1 && (
                 <div className="mt-2">
                   <p className="text-xs text-gray-400 mb-2">Try asking about:</p>
@@ -500,7 +605,6 @@ export function ClaraAssistant() {
             </div>
           )}
 
-          {/* Input area - Fixed spacing issues */}
           {!minimized && (
             <div className="bg-[#1a1a1a] dark:bg-gray-900 p-3 border-t border-[#333] flex items-center gap-2">
               <div className="relative" ref={dropdownRef}>
@@ -515,7 +619,7 @@ export function ClaraAssistant() {
                   <div className="absolute bottom-12 left-0 bg-[#262626] dark:bg-gray-800 rounded-lg shadow-lg border border-[#333] w-39 overflow-hidden z-10">
                     <div className="py-1">
                       <button 
-                        className={`w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-[#333] hover:bg-gray-700 ${activeMode === "entrepreneur" ? "bg-purple-900/30" : ""}`}
+                        className={`w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-[#333] ${activeMode === "entrepreneur" ? "bg-purple-900/30" : ""}`}
                         onClick={() => {
                           setActiveMode("entrepreneur");
                           setDropdownOpen(false);
@@ -527,7 +631,7 @@ export function ClaraAssistant() {
                         💡 Entrepreneurs
                       </button>
                       <button 
-                        className={`w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-[#333] hover:bg-gray-700 ${activeMode === "investor" ? "bg-purple-900/30" : ""}`}
+                        className={`w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-[#333] ${activeMode === "investor" ? "bg-purple-900/30" : ""}`}
                         onClick={() => {
                           setActiveMode("investor");
                           setDropdownOpen(false);
@@ -547,21 +651,26 @@ export function ClaraAssistant() {
                 type="text"
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+                onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSendMessage()}
                 placeholder="Ask me anything..."
                 className="flex-1 bg-[#262626] dark:bg-gray-800 text-gray-200 rounded-full px-4 py-2.5 focus:outline-none focus:ring-1 focus:ring-purple-500 text-sm placeholder:text-gray-500"
               />
               <button 
-                className="text-purple-400 hover:text-purple-300 p-1.5 rounded-full hover:bg-white/5 transition-colors" 
+                className={`p-1.5 rounded-full transition-colors ${
+                  isListening 
+                    ? 'bg-purple-600 text-white animate-pulse' 
+                    : 'text-purple-400 hover:text-purple-300 hover:bg-white/5'
+                }`}
                 onClick={handleMicClick}
+                title={isListening ? "Stop listening" : "Start voice input"}
               >
-                <FiMic className={`w-4 h-4 ${isListening ? "animate-pulse text-purple-300" : ""}`} />
+                <FiMic className="w-4 h-4" />
               </button>
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleSendMessage}
-                className="bg-gradient-to-r from-purple-600 to-[#9b5de5] text-white p-2.5 rounded-full flex items-center justify-center"
+                className="bg-gradient-to-r from-purple-600 to-[#9b5de5] text-white p-2.5 rounded-full flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={isTyping || !inputMessage.trim()}
                 suppressHydrationWarning
               >

@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { writeFile, mkdir } from 'fs/promises'
-import path from 'path'
-import { existsSync } from 'fs'
+import { put } from '@vercel/blob'
 
 export async function POST(request: NextRequest) {
   try {
@@ -42,33 +40,23 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'videos')
-    if (!existsSync(uploadsDir)) {
-      await mkdir(uploadsDir, { recursive: true })
-    }
-
     // Generate unique filename
     const timestamp = Date.now()
     const sessionData = JSON.parse(sessionCookie)
     const fileExtension = videoFile.name.split('.').pop()
     const fileName = `pitch_${sessionData.userId}_${timestamp}.${fileExtension}`
-    const filePath = path.join(uploadsDir, fileName)
 
-    // Convert file to buffer and save
-    const bytes = await videoFile.arrayBuffer()
-    const buffer = Buffer.from(bytes)
-    await writeFile(filePath, buffer)
-
-    // Return the public URL
-    const videoUrl = `/uploads/videos/${fileName}`
+    // Upload to Vercel Blob
+    const blob = await put(fileName, videoFile, {
+      access: 'public',
+      addRandomSuffix: false,
+    })
 
     return NextResponse.json({
       success: true,
-      videoUrl,
+      videoUrl: blob.url,
       message: 'Video uploaded successfully'
     })
-
   } catch (error: any) {
     console.error('Error uploading video:', error)
     return NextResponse.json(

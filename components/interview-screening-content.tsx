@@ -244,7 +244,7 @@ export function InterviewScreeningContent() {
                 <div className="flex items-start gap-3">
                   <div className="size-8 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center flex-shrink-0">
                     <Image 
-                      src="/Clara.png" 
+                      src="/clara.jpeg" 
                       width={24} 
                       height={24} 
                       alt="Clara AI Assistant" 

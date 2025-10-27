@@ -409,10 +409,13 @@ export default function Dashboard() {
       })
 
       if (res.ok) {
-        setProfile(prev => ({
-          ...prev,
-          notifications: updatedNotifications
-        }))
+        setProfile(prev => {
+          if (!prev) return null
+          return {
+            ...prev,
+            notifications: updatedNotifications
+          }
+        })
       }
     } catch (error) {
       console.error('Failed to update notifications:', error)
