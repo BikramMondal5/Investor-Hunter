@@ -83,33 +83,30 @@ export function SubmitPageContent() {
     }
     
     try {
-      // Get form values
-      const form = e.target as HTMLFormElement
-      const formElements = form.elements as any
+      console.log('Uploading video directly to Blob...')
       
-      // First, upload the video using FormData to your API route
-      const videoFormData = new FormData()
-      videoFormData.append('video', videoFile)
+      // Generate unique filename with timestamp
+      const timestamp = Date.now()
+      const fileExtension = videoFile.name.split('.').pop()
+      const uniqueFileName = `pitch_${timestamp}.${fileExtension}`
       
-      const uploadResponse = await fetch('/api/upload-video', {
-        method: 'POST',
-        body: videoFormData
+      // Upload directly to Vercel Blob from client
+      const newBlob = await upload(uniqueFileName, videoFile, {
+        access: 'public',
+        handleUploadUrl: '/api/get-upload-url',
       })
       
-      const uploadData = await uploadResponse.json()
-      
-      if (!uploadData.success) {
-        throw new Error(uploadData.error || 'Failed to upload video')
-      }
-      
-      const videoUrl = uploadData.videoUrl
+      const videoUrl = newBlob.url
       console.log('Video uploaded:', videoUrl)
       
       if (submitButton) {
         submitButton.textContent = 'Submitting pitch...'
       }
       
-      // Create pitch data with the uploaded video URL
+      // Get form values
+      const form = e.target as HTMLFormElement
+      const formElements = form.elements as any
+      
       const pitchData = {
         fullName: formElements.fullName.value,
         startupName: formElements.startupName.value,
@@ -124,7 +121,6 @@ export function SubmitPageContent() {
       
       console.log('Submitting pitch data:', pitchData)
       
-      // Submit the pitch
       const response = await fetch('/api/submit-pitch', {
         method: 'POST',
         headers: {
@@ -247,7 +243,7 @@ export function SubmitPageContent() {
                           <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                           <div className="space-y-2">
                             <p className="text-sm font-medium">Drop your video here or click to browse</p>
-                            <p className="text-xs text-muted-foreground">MP4, MOV, AVI up to 100MB</p>
+                            <p className="text-xs text-muted-foreground">MP4, MOV, AVI up to 200MB</p>
                           </div>
                           <input
                             type="file"

@@ -31,11 +31,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validate file size (100MB max)
-    const maxSize = 100 * 1024 * 1024 // 100MB in bytes
+    // Validate file size (200MB max)
+    const maxSize = 200 * 1024 * 1024 // 200MB in bytes
     if (videoFile.size > maxSize) {
       return NextResponse.json(
-        { success: false, error: 'File size exceeds 100MB limit' },
+        { success: false, error: 'File size exceeds 200MB limit' },
         { status: 400 }
       )
     }

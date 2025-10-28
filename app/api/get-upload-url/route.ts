@@ -26,6 +26,7 @@ export async function POST(request: NextRequest) {
           
           return {
             allowedContentTypes: ['video/mp4', 'video/mov', 'video/avi', 'video/quicktime'],
+            maximumSizeInBytes: 200 * 1024 * 1024, // 200MB limit
             tokenPayload: JSON.stringify({
               userId: sessionData.userId,
             }),
