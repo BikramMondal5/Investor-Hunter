@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { writeFile, mkdir } from 'fs/promises'
-import path from 'path'
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,21 +12,10 @@ export async function POST(request: NextRequest) {
     }
    
     const sessionData = JSON.parse(sessionCookie);
-    const formData = await request.formData()
-   
-    // Extract pitch data
-    const pitchData = {
-      fullName: formData.get('fullName') as string,
-      startupName: formData.get('startupName') as string,
-      oneLiner: formData.get('oneLiner') as string,
-      videoUrl: formData.get('videoUrl') as string,
-      industry: formData.get('industry') as string,
-      location: formData.get('location') as string,
-      stage: formData.get('stage') as string,
-      email: formData.get('email') as string,
-      isPublic: formData.get('public') === 'on'
-    }
-
+    
+    // Parse JSON body instead of FormData
+    const pitchData = await request.json()
+    
     // Validate required fields
     if (!pitchData.videoUrl || !pitchData.startupName || !pitchData.email) {
       return NextResponse.json(
@@ -36,19 +23,29 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
-
-    // Store pitch data in enhanced session cookie (don't save to database yet)
+    
+    // Store pitch data in enhanced session cookie
     const enhancedSession = {
       ...sessionData,
-      pitchData: pitchData,
+      pitchData: {
+        fullName: pitchData.fullName,
+        startupName: pitchData.startupName,
+        oneLiner: pitchData.oneLiner,
+        videoUrl: pitchData.videoUrl,
+        industry: pitchData.industry,
+        location: pitchData.location,
+        stage: pitchData.stage,
+        email: pitchData.email,
+        isPublic: pitchData.public === 'on'
+      },
       pitchSubmittedAt: new Date().toISOString()
     }
-
+    
     const response = NextResponse.json({
       success: true,
       message: 'Pitch data saved. Please complete document verification.'
     })
-
+    
     // Update session cookie with pitch data
     response.cookies.set('user_session', JSON.stringify(enhancedSession), {
       httpOnly: true,
@@ -56,7 +53,7 @@ export async function POST(request: NextRequest) {
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 // 24 hours
     })
-
+    
     return response
    
   } catch (error: any) {

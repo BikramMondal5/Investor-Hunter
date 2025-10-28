@@ -1,5 +1,5 @@
 "use client"
-
+import { upload } from "@vercel/blob/client"
 import React, { useState, useEffect } from "react"
 import { Header } from "@/components/header"
 import { Button } from "@/components/ui/button"
@@ -76,49 +76,61 @@ export function SubmitPageContent() {
       return
     }
 
-    // Show loading state
     const submitButton = e.currentTarget.querySelector('button[type="submit"]') as HTMLButtonElement
     if (submitButton) {
       submitButton.disabled = true
-      submitButton.textContent = 'Submitting...'
+      submitButton.textContent = 'Uploading video...'
     }
     
     try {
-      // First, upload the video
+      // Get form values
+      const form = e.target as HTMLFormElement
+      const formElements = form.elements as any
+      
+      // First, upload the video using FormData to your API route
       const videoFormData = new FormData()
       videoFormData.append('video', videoFile)
       
-      console.log('Uploading video...')
-      const videoUploadRes = await fetch('/api/upload-video', {
+      const uploadResponse = await fetch('/api/upload-video', {
         method: 'POST',
         body: videoFormData
       })
       
-      if (!videoUploadRes.ok) {
-        const errorData = await videoUploadRes.json()
-        throw new Error(errorData.error || 'Failed to upload video')
+      const uploadData = await uploadResponse.json()
+      
+      if (!uploadData.success) {
+        throw new Error(uploadData.error || 'Failed to upload video')
       }
       
-      const { videoUrl } = await videoUploadRes.json()
+      const videoUrl = uploadData.videoUrl
       console.log('Video uploaded:', videoUrl)
       
-      // Create FormData from the form
-      const form = e.target as HTMLFormElement
-      const formData = new FormData(form)
-      
-      // Add the video URL
-      formData.append('videoUrl', videoUrl)
-      
-      // Debug: Log all form data
-      console.log('Form data being sent:')
-      for (const [key, value] of formData.entries()) {
-        console.log(`${key}:`, value)
+      if (submitButton) {
+        submitButton.textContent = 'Submitting pitch...'
       }
       
-      console.log('Submitting pitch...')
+      // Create pitch data with the uploaded video URL
+      const pitchData = {
+        fullName: formElements.fullName.value,
+        startupName: formElements.startupName.value,
+        oneLiner: formElements.oneLiner.value,
+        industry: formElements.industry.value,
+        location: formElements.location.value,
+        stage: formElements.stage.value,
+        email: formElements.email.value,
+        public: formElements.public.checked ? 'on' : 'off',
+        videoUrl: videoUrl
+      }
+      
+      console.log('Submitting pitch data:', pitchData)
+      
+      // Submit the pitch
       const response = await fetch('/api/submit-pitch', {
         method: 'POST',
-        body: formData
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(pitchData)
       })
       
       const data = await response.json()
@@ -126,25 +138,18 @@ export function SubmitPageContent() {
       
       if (data.success) {
         setIsSubmitted(true)
-        // Redirect after showing success message
         setTimeout(() => {
           window.location.href = "/entrepreneur-registration"
         }, 2000)
       } else {
-        alert(data.error || 'Failed to submit pitch')
-        // Reset button
-        if (submitButton) {
-          submitButton.disabled = false
-          submitButton.innerHTML = 'Submit Pitch'
-        }
+        throw new Error(data.error || 'Failed to submit pitch')
       }
     } catch (error: any) {
       console.error('Error submitting pitch:', error)
       alert(error.message || 'Failed to submit pitch. Please try again.')
-      // Reset button
       if (submitButton) {
         submitButton.disabled = false
-        submitButton.innerHTML = 'Submit Pitch'
+        submitButton.textContent = 'Submit Pitch'
       }
     }
   }
