@@ -1,5 +1,5 @@
 "use client"
-
+import { upload } from "@vercel/blob/client"
 import React, { useState, useEffect } from "react"
 import { Header } from "@/components/header"
 import { Button } from "@/components/ui/button"
@@ -76,49 +76,57 @@ export function SubmitPageContent() {
       return
     }
 
-    // Show loading state
     const submitButton = e.currentTarget.querySelector('button[type="submit"]') as HTMLButtonElement
     if (submitButton) {
       submitButton.disabled = true
-      submitButton.textContent = 'Submitting...'
+      submitButton.textContent = 'Uploading video...'
     }
     
     try {
-      // First, upload the video
-      const videoFormData = new FormData()
-      videoFormData.append('video', videoFile)
+      console.log('Uploading video directly to Blob...')
       
-      console.log('Uploading video...')
-      const videoUploadRes = await fetch('/api/upload-video', {
-        method: 'POST',
-        body: videoFormData
+      // Generate unique filename with timestamp
+      const timestamp = Date.now()
+      const fileExtension = videoFile.name.split('.').pop()
+      const uniqueFileName = `pitch_${timestamp}.${fileExtension}`
+      
+      // Upload directly to Vercel Blob from client
+      const newBlob = await upload(uniqueFileName, videoFile, {
+        access: 'public',
+        handleUploadUrl: '/api/get-upload-url',
       })
       
-      if (!videoUploadRes.ok) {
-        const errorData = await videoUploadRes.json()
-        throw new Error(errorData.error || 'Failed to upload video')
-      }
-      
-      const { videoUrl } = await videoUploadRes.json()
+      const videoUrl = newBlob.url
       console.log('Video uploaded:', videoUrl)
       
-      // Create FormData from the form
-      const form = e.target as HTMLFormElement
-      const formData = new FormData(form)
-      
-      // Add the video URL
-      formData.append('videoUrl', videoUrl)
-      
-      // Debug: Log all form data
-      console.log('Form data being sent:')
-      for (const [key, value] of formData.entries()) {
-        console.log(`${key}:`, value)
+      if (submitButton) {
+        submitButton.textContent = 'Submitting pitch...'
       }
       
-      console.log('Submitting pitch...')
+      // Get form values
+      const form = e.target as HTMLFormElement
+      const formElements = form.elements as any
+      
+      const pitchData = {
+        fullName: formElements.fullName.value,
+        startupName: formElements.startupName.value,
+        oneLiner: formElements.oneLiner.value,
+        industry: formElements.industry.value,
+        location: formElements.location.value,
+        stage: formElements.stage.value,
+        email: formElements.email.value,
+        public: formElements.public.checked ? 'on' : 'off',
+        videoUrl: videoUrl
+      }
+      
+      console.log('Submitting pitch data:', pitchData)
+      
       const response = await fetch('/api/submit-pitch', {
         method: 'POST',
-        body: formData
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(pitchData)
       })
       
       const data = await response.json()
@@ -126,25 +134,18 @@ export function SubmitPageContent() {
       
       if (data.success) {
         setIsSubmitted(true)
-        // Redirect after showing success message
         setTimeout(() => {
           window.location.href = "/entrepreneur-registration"
         }, 2000)
       } else {
-        alert(data.error || 'Failed to submit pitch')
-        // Reset button
-        if (submitButton) {
-          submitButton.disabled = false
-          submitButton.innerHTML = 'Submit Pitch'
-        }
+        throw new Error(data.error || 'Failed to submit pitch')
       }
     } catch (error: any) {
       console.error('Error submitting pitch:', error)
       alert(error.message || 'Failed to submit pitch. Please try again.')
-      // Reset button
       if (submitButton) {
         submitButton.disabled = false
-        submitButton.innerHTML = 'Submit Pitch'
+        submitButton.textContent = 'Submit Pitch'
       }
     }
   }
@@ -242,7 +243,7 @@ export function SubmitPageContent() {
                           <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                           <div className="space-y-2">
                             <p className="text-sm font-medium">Drop your video here or click to browse</p>
-                            <p className="text-xs text-muted-foreground">MP4, MOV, AVI up to 100MB</p>
+                            <p className="text-xs text-muted-foreground">MP4, MOV, AVI up to 200MB</p>
                           </div>
                           <input
                             type="file"

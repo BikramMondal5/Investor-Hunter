@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { writeFile, mkdir } from 'fs/promises'
-import path from 'path'
-import { existsSync } from 'fs'
+import { put } from '@vercel/blob'
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,19 +31,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validate file size (100MB max)
-    const maxSize = 100 * 1024 * 1024 // 100MB in bytes
+    // Validate file size (200MB max)
+    const maxSize = 200 * 1024 * 1024 // 200MB in bytes
     if (videoFile.size > maxSize) {
       return NextResponse.json(
-        { success: false, error: 'File size exceeds 100MB limit' },
+        { success: false, error: 'File size exceeds 200MB limit' },
         { status: 400 }
       )
-    }
-
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'videos')
-    if (!existsSync(uploadsDir)) {
-      await mkdir(uploadsDir, { recursive: true })
     }
 
     // Generate unique filename
@@ -53,22 +45,18 @@ export async function POST(request: NextRequest) {
     const sessionData = JSON.parse(sessionCookie)
     const fileExtension = videoFile.name.split('.').pop()
     const fileName = `pitch_${sessionData.userId}_${timestamp}.${fileExtension}`
-    const filePath = path.join(uploadsDir, fileName)
 
-    // Convert file to buffer and save
-    const bytes = await videoFile.arrayBuffer()
-    const buffer = Buffer.from(bytes)
-    await writeFile(filePath, buffer)
-
-    // Return the public URL
-    const videoUrl = `/uploads/videos/${fileName}`
+    // Upload to Vercel Blob
+    const blob = await put(fileName, videoFile, {
+      access: 'public',
+      addRandomSuffix: false,
+    })
 
     return NextResponse.json({
       success: true,
-      videoUrl,
+      videoUrl: blob.url,
       message: 'Video uploaded successfully'
     })
-
   } catch (error: any) {
     console.error('Error uploading video:', error)
     return NextResponse.json(

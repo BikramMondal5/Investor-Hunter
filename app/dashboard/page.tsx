@@ -409,10 +409,13 @@ export default function Dashboard() {
       })
 
       if (res.ok) {
-        setProfile(prev => ({
-          ...prev,
-          notifications: updatedNotifications
-        }))
+        setProfile(prev => {
+          if (!prev) return null
+          return {
+            ...prev,
+            notifications: updatedNotifications
+          }
+        })
       }
     } catch (error) {
       console.error('Failed to update notifications:', error)
@@ -780,9 +783,9 @@ export default function Dashboard() {
           {/* Analytics Tab */}
           {activeTab === "analytics" && (
             <div className="space-y-4 max-w-5xl mx-auto">
-              <div className="mb-3 mt-0">
+              <div className="mb-3 mt-13">
                 <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-[#3591e2]">Feedback & Analytics</h1>
-                <p className="text-muted-foreground">Detailed insights on your pitch performance</p>
+                <p className="mt-2 text-muted-foreground">Detailed insights on your pitch performance</p>
               </div>
 
               {/* Analytics Overview */}
@@ -809,11 +812,11 @@ export default function Dashboard() {
                         <text x="30" y="160" fontSize="10" fill="currentColor" className="text-muted-foreground" textAnchor="end">150</text>
                         
                         {/* X-axis labels */}
-                        <text x="60" y="195" fontSize="9" fill="currentColor" className="text-muted-foreground">Sept 10</text>
-                        <text x="120" y="195" fontSize="9" fill="currentColor" className="text-muted-foreground">Sept 20</text>
-                        <text x="180" y="195" fontSize="9" fill="currentColor" className="text-muted-foreground">Sept 30</text>
-                        <text x="240" y="195" fontSize="9" fill="currentColor" className="text-muted-foreground">Oct 10</text>
-                        <text x="300" y="195" fontSize="9" fill="currentColor" className="text-muted-foreground">Oct 20</text>
+                        <text x="60" y="195" fontSize="9" fill="currentColor" className="text-muted-foreground">Sept 20</text>
+                        <text x="120" y="195" fontSize="9" fill="currentColor" className="text-muted-foreground">Sept 30</text>
+                        <text x="180" y="195" fontSize="9" fill="currentColor" className="text-muted-foreground">Oct 10</text>
+                        <text x="240" y="195" fontSize="9" fill="currentColor" className="text-muted-foreground">Oct 20</text>
+                        <text x="300" y="195" fontSize="9" fill="currentColor" className="text-muted-foreground">Oct 30</text>
                         
                         {/* Animated line path */}
                         <path
@@ -903,7 +906,7 @@ export default function Dashboard() {
                       <Users className="h-5 w-5 text-primary" />
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="h-64">
+                  <CardContent className="h-64 overflow-hidden">
                     <div className="w-full h-full flex flex-col justify-around py-2">
                       {[
                         {label: 'VC Firms', percentage: 35, color: 'bg-gradient-to-r from-blue-500 to-blue-600', delay: 0},
@@ -922,7 +925,7 @@ export default function Dashboard() {
                               className={`h-full ${item.color} rounded-lg transition-all duration-1000 ease-out flex items-center justify-end pr-3`}
                               style={{
                                 width: '0%',
-                                animation: `expandBar 1s ease-out ${item.delay}s forwards`
+                                animation: `expandBar${i} 1s ease-out ${item.delay}s forwards`
                               }}
                             >
                               <span className="text-white text-xs font-bold opacity-0" style={{
@@ -936,33 +939,11 @@ export default function Dashboard() {
                       ))}
                       
                       <style jsx>{`
-                        @keyframes expandBar {
-                          to {
-                            width: ${35}%;
-                          }
-                        }
-                        
-                        div:nth-child(1) .${''} {
-                          animation: expandBar-35 1s ease-out 0s forwards;
-                        }
-                        div:nth-child(2) .${''} {
-                          animation: expandBar-25 1s ease-out 0.2s forwards;
-                        }
-                        div:nth-child(3) .${''} {
-                          animation: expandBar-20 1s ease-out 0.4s forwards;
-                        }
-                        div:nth-child(4) .${''} {
-                          animation: expandBar-10 1s ease-out 0.6s forwards;
-                        }
-                        div:nth-child(5) .${''} {
-                          animation: expandBar-10-2 1s ease-out 0.8s forwards;
-                        }
-                        
-                        @keyframes expandBar-35 { to { width: 35%; } }
-                        @keyframes expandBar-25 { to { width: 25%; } }
-                        @keyframes expandBar-20 { to { width: 20%; } }
-                        @keyframes expandBar-10 { to { width: 10%; } }
-                        @keyframes expandBar-10-2 { to { width: 10%; } }
+                        @keyframes expandBar0 { to { width: 35%; } }
+                        @keyframes expandBar1 { to { width: 25%; } }
+                        @keyframes expandBar2 { to { width: 20%; } }
+                        @keyframes expandBar3 { to { width: 10%; } }
+                        @keyframes expandBar4 { to { width: 10%; } }
                       `}</style>
                     </div>
                   </CardContent>
